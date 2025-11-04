@@ -47,7 +47,6 @@ public class Incident {
     @Column(nullable = false)
     private EntityType entityType;
 
-    // dudosa
     @Column(nullable = false)
     private Long entityId;
 

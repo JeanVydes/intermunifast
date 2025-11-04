@@ -71,8 +71,6 @@ public class Parcel {
     @JoinColumn(name = "to_stop_id", nullable = false)
     private Stop toStop;
     
-    //(1:N) → Incident.entityId (cuando entityType = TICKET)
-    // — un tiquete puede tener incidentes asociados.
     @Transient
     private List<Incident> incidents;
     

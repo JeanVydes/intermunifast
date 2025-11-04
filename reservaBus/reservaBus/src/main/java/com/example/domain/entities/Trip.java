@@ -52,8 +52,6 @@ public class Trip {
     @Builder.Default
     private List<Assignment> assignments = new ArrayList<>();
 
-    //(1:N) → Incident.entityId (cuando entityType = TRIP)
-    // — un viaje puede tener incidentes asociados.
     @Transient 
     private List<Incident> incidents;
 

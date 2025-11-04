@@ -75,8 +75,6 @@ public class Ticket {
     @Builder.Default
     private List<Baggage> baggages = new ArrayList<>();
 
-    //(1:N) → Incident.entityId (cuando entityType = TICKET)
-    // — un tiquete puede tener incidentes asociados.
     @Transient
     private List<Incident> incidents;
 
