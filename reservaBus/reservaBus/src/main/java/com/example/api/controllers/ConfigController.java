@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.api.dto.ConfigDTOs;
+import com.example.services.definitions.ConfigService;
 
 @RestController
 @RequestMapping("/api/configs")

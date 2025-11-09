@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.api.dto.SeatHoldDTOs;
+import com.example.services.definitions.SeatHoldService;
 
 @RestController
 @RequestMapping("/api/seat-holds")

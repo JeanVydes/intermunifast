@@ -18,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.example.api.dto.BaggageDTOs;
 import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.TicketDTOs;
+import com.example.services.definitions.TicketService;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -44,7 +45,8 @@ public class TicketController {
         return ResponseEntity.ok(ticket);
     }
 
-    // we use this endpoints to cancel or modify ticket details, the required specs not follow the REST conventions
+    // we use this endpoints to cancel or modify ticket details, the required specs
+    // not follow the REST conventions
     @PatchMapping("/{id}")
     public ResponseEntity<TicketDTOs.TicketResponse> update(
             @PathVariable Long id,

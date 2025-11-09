@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.api.dto.ParcelDTOs;
+import com.example.services.definitions.ParcelService;
 
 @RestController
 @RequestMapping("/api/parcels")
@@ -39,7 +40,8 @@ public class ParcelController {
         return ResponseEntity.ok(parcel);
     }
 
-    // we use this endpoint to modify parcel details, the required specs not follow the REST conventions
+    // we use this endpoint to modify parcel details, the required specs not follow
+    // the REST conventions
     @PatchMapping("/{id}")
     public ResponseEntity<ParcelDTOs.ParcelResponse> update(
             @PathVariable Long id,

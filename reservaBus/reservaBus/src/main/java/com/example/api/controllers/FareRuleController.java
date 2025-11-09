@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.api.dto.FareRuleDTOs;
+import com.example.services.definitions.FareRuleService;
 
 @RestController
 @RequestMapping("/api/fare-rules")

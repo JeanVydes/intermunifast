@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.api.dto.AssignmentDTOs;
+import com.example.services.definitions.AssignmentService;
 
 @RestController
 @RequestMapping("/api/assignments")

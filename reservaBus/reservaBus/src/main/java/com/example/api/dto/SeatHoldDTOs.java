@@ -6,6 +6,11 @@ public class SeatHoldDTOs {
             Long tripId
     ) implements java.io.Serializable {}
 
+    public record UpdateSeatHoldRequest(
+            String seatNumber,
+            Long tripId
+    ) implements java.io.Serializable {}
+
     public record SeatHoldResponse(
             Long id,
             String seatNumber,

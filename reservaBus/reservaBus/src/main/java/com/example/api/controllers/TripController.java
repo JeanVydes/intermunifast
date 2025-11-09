@@ -20,6 +20,7 @@ import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.SeatDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.api.dto.TripDTOs;
+import com.example.services.definitions.TripService;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -41,12 +42,13 @@ public class TripController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TripDTOs.TripResponse> getById(@PathVariable Long id, @RequestParam(required = false) String routeId, @RequestParam(required = false) String status) {
+    public ResponseEntity<TripDTOs.TripResponse> getById(@PathVariable Long id,
+            @RequestParam(required = false) String routeId, @RequestParam(required = false) String status) {
         if (routeId != null || status != null) {
             TripDTOs.TripResponse trip = tripService.getTripByIdAndFilters(id, routeId, status);
             return ResponseEntity.ok(trip);
         }
-        
+
         TripDTOs.TripResponse trip = tripService.getTripById(id);
         return ResponseEntity.ok(trip);
     }
@@ -66,7 +68,8 @@ public class TripController {
     }
 
     @GetMapping("/{id}/tickets")
-    public ResponseEntity<List<TicketDTOs.TicketResponse>> getTicketsByTripId(@PathVariable Long id, @RequestParam(required = false) String status) {
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> getTicketsByTripId(@PathVariable Long id,
+            @RequestParam(required = false) String status) {
         List<TicketDTOs.TicketResponse> tickets = tripService.getTicketsByTripIdAndStatus(id, status);
         return ResponseEntity.ok(tickets);
     }
