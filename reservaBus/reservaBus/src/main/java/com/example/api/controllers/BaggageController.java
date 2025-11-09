@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.api.dto.BaggageDTOs;
+import com.example.services.definitions.BaggageService;
 
 @RestController
 @RequestMapping("/api/baggages")

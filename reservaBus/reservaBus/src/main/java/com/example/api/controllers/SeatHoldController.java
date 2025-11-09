@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.api.dto.SeatHoldDTOs;
+import com.example.services.definitions.SeatHoldService;
 
 @RestController
 @RequestMapping("/api/seat-holds")
@@ -43,8 +44,7 @@ public class SeatHoldController {
     public ResponseEntity<SeatHoldDTOs.SeatHoldResponse> update(
             @PathVariable Long id,
             @Validated @RequestBody SeatHoldDTOs.UpdateSeatHoldRequest req) {
-        SeatHoldDTOs.SeatHoldResponse updatedSeatHold = seatHoldService.updateSeatHold(id, req);
-        return ResponseEntity.ok(updatedSeatHold);
+        return ResponseEntity.ok(seatHoldService.updateSeatHold(id, req));
     }
 
     @DeleteMapping("/{id}")
