@@ -44,8 +44,7 @@ public class SeatHoldController {
     public ResponseEntity<SeatHoldDTOs.SeatHoldResponse> update(
             @PathVariable Long id,
             @Validated @RequestBody SeatHoldDTOs.UpdateSeatHoldRequest req) {
-        SeatHoldDTOs.SeatHoldResponse updatedSeatHold = seatHoldService.updateSeatHold(id, req);
-        return ResponseEntity.ok(updatedSeatHold);
+        return ResponseEntity.ok(seatHoldService.updateSeatHold(id, req));
     }
 
     @DeleteMapping("/{id}")
