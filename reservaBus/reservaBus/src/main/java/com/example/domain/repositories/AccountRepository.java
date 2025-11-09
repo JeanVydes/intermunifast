@@ -11,9 +11,14 @@ import com.example.domain.enums.AccountStatus;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
-     Optional<Account> findByEmail(String email);
-     List<Account> findByRole(AccountRole role);
-     List<Account> findByStatus(AccountStatus status);
+      Optional<Account> findByEmailIgnoreCase(String email);
+
+      List<Account> findByRole(AccountRole role);
+
+      List<Account> findByStatus(AccountStatus status);
+
       Optional<Account> findByPhone(String phone);
+
+      boolean existsByEmail(String email);
 
 }
