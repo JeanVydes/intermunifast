@@ -2,6 +2,8 @@ package com.example.domain.entities;
 
 import java.time.LocalDateTime;
 
+import com.example.domain.common.TimestampedEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,7 +26,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Assignment {
+public class Assignment extends TimestampedEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -38,11 +40,11 @@ public class Assignment {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "driver_id", nullable = false)
-    private User driver;
+    private Account driver;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "dispatcher_id", nullable = false)
-    private User dispatcher;
+    private Account dispatcher;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "trip_id", nullable = false)

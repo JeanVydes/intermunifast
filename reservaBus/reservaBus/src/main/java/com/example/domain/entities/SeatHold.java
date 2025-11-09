@@ -2,6 +2,7 @@ package com.example.domain.entities;
 
 import java.time.LocalDateTime;
 
+import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.SeatHoldStatus;
 
 import jakarta.persistence.Column;
@@ -28,7 +29,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class SeatHold {
+public class SeatHold extends TimestampedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -49,7 +50,7 @@ public class SeatHold {
     private Trip trip;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
 }

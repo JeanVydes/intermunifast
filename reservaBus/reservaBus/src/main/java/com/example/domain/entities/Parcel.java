@@ -2,6 +2,7 @@ package com.example.domain.entities;
 
 import java.util.List;
 
+import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.ParcelStatus;
 
 import jakarta.persistence.Column;
@@ -29,7 +30,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Parcel {
+public class Parcel  extends TimestampedEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

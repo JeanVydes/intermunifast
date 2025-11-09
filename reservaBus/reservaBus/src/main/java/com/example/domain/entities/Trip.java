@@ -3,6 +3,8 @@ package com.example.domain.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.domain.common.TimestampedEntity;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,8 +28,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Trip {
-
+public class Trip extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

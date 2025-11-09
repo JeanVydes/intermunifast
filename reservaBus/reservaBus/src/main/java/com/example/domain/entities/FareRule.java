@@ -1,5 +1,12 @@
 package com.example.domain.entities;
 
+import java.util.List;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.example.domain.common.TimestampedEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,7 +29,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class FareRule {
+public class FareRule extends TimestampedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -31,8 +38,9 @@ public class FareRule {
     @Column(nullable = false)
     private Double basePrice;
 
-    @Column(columnDefinition = "TEXT")
-    private String discounts;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Builder.Default
+    private List<Double> discounts = List.of();
 
     @Column(nullable = false)
     private Boolean dynamicPricing;

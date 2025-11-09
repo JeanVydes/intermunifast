@@ -1,11 +1,11 @@
 package com.example.domain.entities;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.domain.enums.UserRole;
-import com.example.domain.enums.UserStatus;
+import com.example.domain.common.TimestampedEntity;
+import com.example.domain.enums.AccountRole;
+import com.example.domain.enums.AccountStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,14 +21,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users")
+@Table(name = "accounts")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 
-public class User {
+public class Account extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -43,18 +43,15 @@ public class User {
     private String phone;
 
     @Column(nullable = false)
-    private UserRole role;
+    private AccountRole role;
 
     @Column(nullable = false)
-    private UserStatus status;
+    private AccountStatus status;
 
     @Column(nullable = false)
     private String passwordHash;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "account")
     @Builder.Default
     private List<SeatHold> seatHolds = new ArrayList<>();
 

@@ -3,6 +3,8 @@ package com.example.domain.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.domain.common.TimestampedEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,7 +28,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Stop {
+public class Stop extends TimestampedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -35,14 +37,15 @@ public class Stop {
     @Column(nullable = false)
     private String name;
 
+    // changed `order` in favor of `sequence`
     @Column(nullable = false)
-    private Integer order;
+    private Integer sequence;
 
     @Column(nullable = false)
-    private Double lat;
+    private Double latitude;
 
     @Column(nullable = false)
-    private Double lng;
+    private Double longitude;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "route_id", nullable = false)

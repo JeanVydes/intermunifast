@@ -2,6 +2,8 @@ package com.example.domain.entities;
 
 import java.math.BigDecimal;
 
+import com.example.domain.common.TimestampedEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,14 +26,15 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Baggage {
+public class Baggage extends TimestampedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    // Weight in kilograms
     @Column(nullable = false)
-    private Integer weightKg;
+    private Double weight;
 
     @Column(nullable = false)
     private BigDecimal fee;
