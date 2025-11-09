@@ -1,7 +1,6 @@
 package com.example.domain.entities;
 
-import java.time.LocalDateTime;
-
+import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.EntityType;
 import com.example.domain.enums.IncidentType;
 
@@ -27,7 +26,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Incident {
+public class Incident  extends TimestampedEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -39,9 +38,6 @@ public class Incident {
 
     @Column(nullable = false)
     private String note;
-
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

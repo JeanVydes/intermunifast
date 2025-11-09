@@ -1,5 +1,6 @@
 package com.example.domain.entities;
 
+import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.SeatType;
 
 import jakarta.persistence.Column;
@@ -26,7 +27,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Seat {
+public class Seat extends TimestampedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

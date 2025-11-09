@@ -3,6 +3,7 @@ package com.example.domain.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.PaymentMethod;
 import com.example.domain.enums.TicketStatus;
 
@@ -32,7 +33,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Ticket {
+public class Ticket extends TimestampedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -52,6 +53,9 @@ public class Ticket {
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
 
+    @Column(nullable = true)
+    private String paymentIntentId;
+
     @Column(nullable = false)
     private String qrCode;
 
@@ -60,8 +64,8 @@ public class Ticket {
     private Trip trip;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "from_stop_id", nullable = false)

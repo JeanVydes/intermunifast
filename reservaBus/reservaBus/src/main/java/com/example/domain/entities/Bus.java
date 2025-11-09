@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.BusStatus;
 
 import jakarta.persistence.Column;
@@ -31,8 +32,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Bus {
-
+public class Bus extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

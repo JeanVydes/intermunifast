@@ -1,5 +1,7 @@
 package com.example.domain.entities;
 
+import com.example.domain.common.TimestampedEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,7 +22,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Config {
+public class Config extends TimestampedEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
