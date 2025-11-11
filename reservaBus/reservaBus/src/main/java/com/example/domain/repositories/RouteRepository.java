@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.domain.entities.Route;
 
-public interface RouteRepositoy extends JpaRepository<Route, Long> {
+public interface RouteRepository extends JpaRepository<Route, Long> {
 
     List<Route> findAll();
 

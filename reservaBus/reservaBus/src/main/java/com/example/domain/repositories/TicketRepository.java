@@ -13,7 +13,11 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByTripIdAndStatus(Long tripId, TicketStatus status);
 
-    List<Ticket> findByPassengerId(Long passengerId);
+    List<Ticket> findByAccountId(Long accountId);
+
+    List<Ticket> findBySeatNumber(String seatNumber);
+
+    List<Ticket> findByAccountIdAndSeatNumber(Long accountId, String seatNumber);
 
     Ticket findByQrCode(String qrCode);
 

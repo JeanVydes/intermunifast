@@ -15,6 +15,9 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
 
     List<Incident> findByEntityTypeAndEntityId(EntityType entityType, Long entityId);
     
+    List<Incident> findByTicketId(Long ticketId);
+    
+    List<Incident> findByTripId(Long tripId);
 
     List<Incident> findByType(IncidentType type);
 

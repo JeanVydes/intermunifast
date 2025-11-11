@@ -13,6 +13,7 @@ import com.example.domain.entities.Seat;
 public interface SeatRepository extends JpaRepository<Seat, Long> {
 
     List<Seat> findByBusId(Long busId);
+    List<Seat> findByTripIdAndStatus(Long tripId, String status);
 
     @Modifying
     @Query("DELETE FROM SeatHold h WHERE h.expiresAt < :now")

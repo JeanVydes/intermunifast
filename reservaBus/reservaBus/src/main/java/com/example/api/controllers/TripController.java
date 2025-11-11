@@ -20,6 +20,7 @@ import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.SeatDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.api.dto.TripDTOs;
+import com.example.domain.enums.TicketStatus;
 import com.example.services.definitions.TripService;
 
 @RestController
@@ -69,7 +70,7 @@ public class TripController {
 
     @GetMapping("/{id}/tickets")
     public ResponseEntity<List<TicketDTOs.TicketResponse>> getTicketsByTripId(@PathVariable Long id,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) TicketStatus status) {
         List<TicketDTOs.TicketResponse> tickets = tripService.getTicketsByTripIdAndStatus(id, status);
         return ResponseEntity.ok(tickets);
     }

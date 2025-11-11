@@ -7,6 +7,7 @@ import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.SeatDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.api.dto.TripDTOs;
+import com.example.domain.enums.TicketStatus;
 
 public interface TripService {
     TripDTOs.TripResponse createTrip(TripDTOs.CreateTripRequest req);
@@ -19,7 +20,7 @@ public interface TripService {
 
     void deleteTrip(Long id);
 
-    List<TicketDTOs.TicketResponse> getTicketsByTripIdAndStatus(Long id, String status);
+    List<TicketDTOs.TicketResponse> getTicketsByTripIdAndStatus(Long id, TicketStatus status);
 
     List<SeatDTOs.SeatResponse> getSeatsByTripId(Long id, String status);
 
