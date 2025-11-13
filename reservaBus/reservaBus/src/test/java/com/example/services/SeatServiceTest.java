@@ -78,7 +78,10 @@ class SeatServiceTest {
 
         seatResponse = new SeatDTOs.SeatResponse(1L, "A1", SeatType.STANDARD, 1L);
         createRequest = new SeatDTOs.CreateSeatRequest("A1", SeatType.STANDARD, 1L);
-        updateRequest = new SeatDTOs.UpdateSeatRequest("A2", SeatType.PREFERENTIAL, 1L);
+        updateRequest = new SeatDTOs.UpdateSeatRequest(
+                Optional.of("A2"),
+                Optional.of(SeatType.PREFERENTIAL),
+                Optional.of(1L));
     }
 
     @Test
@@ -154,7 +157,6 @@ class SeatServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(seatMapper).patch(seat, updateRequest);
         verify(seatRepository).save(seat);
     }
 

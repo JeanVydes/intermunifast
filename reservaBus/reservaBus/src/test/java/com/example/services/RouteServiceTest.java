@@ -65,7 +65,14 @@ class RouteServiceTest {
 
         routeResponse = new RouteDTOs.RouteResponse(1L, "RT001", "Test Route", "Lima", "Cusco", 120, 100.0, 0.5);
         createRequest = new RouteDTOs.CreateRouteRequest("RT001", "Test Route", "Lima", "Cusco", 120, 100.0, 0.5);
-        updateRequest = new RouteDTOs.UpdateRouteRequest("RT002", "Updated Route", "Arequipa", "Puno", 180, 150.0, 0.6);
+        updateRequest = new RouteDTOs.UpdateRouteRequest(
+                Optional.of("RT002"),
+                Optional.of("Updated Route"),
+                Optional.of("Arequipa"),
+                Optional.of("Puno"),
+                Optional.of(180),
+                Optional.of(150.0),
+                Optional.of(0.6));
     }
 
     @Test
@@ -126,7 +133,6 @@ class RouteServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(routeMapper).patch(route, updateRequest);
         verify(routeRepository).save(route);
     }
 

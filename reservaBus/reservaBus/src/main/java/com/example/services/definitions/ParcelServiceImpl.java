@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.api.dto.ParcelDTOs;
 import com.example.domain.entities.Parcel;
 import com.example.domain.entities.Stop;
+import com.example.domain.enums.ParcelStatus;
 import com.example.domain.repositories.ParcelRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
@@ -75,5 +76,17 @@ public class ParcelServiceImpl implements ParcelService {
                 .orElseThrow(() -> new NotFoundException("Parcel %d not found".formatted(id)));
         mapper.patch(parcel, req);
         return mapper.toResponse(repo.save(parcel));
+    }
+
+    public boolean deliverParcel(Long id, ParcelDTOs.ParcelDeliveryRequest req) {
+        var parcel = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Parcel %d not found".formatted(id)));
+        if (parcel.getDeliveryOtp().equals(req.deliveryOtp()) && parcel.getStatus() != ParcelStatus.DELIVERED) {
+            parcel.setStatus(ParcelStatus.DELIVERED);
+            repo.save(parcel);
+            return true;
+        } else {
+            return false;
+        }
     }
 }

@@ -1,5 +1,7 @@
 package com.example.services.definitions;
 
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAmount;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -46,6 +48,7 @@ public class TicketServiceImpl implements TicketService {
     private final StopRepository stopRepo;
     private final AuthenticationService authenticationService;
     private final FareRuleRepository fareRuleRepo;
+    private final SeatAvailabilityService seatAvailabilityService;
 
     @Override
     public TicketDTOs.TicketResponse createTicket(TicketDTOs.CreateTicketRequest req) {
@@ -60,12 +63,13 @@ public class TicketServiceImpl implements TicketService {
         Stop toStop = stopRepo.findById(req.toStopId())
                 .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId())));
 
-        Ticket existingTicket = repo.findByTripIdAndSeatNumberAndFromStopIdAndToStopId(req.tripId(), req.seatNumber(),
-                req.fromStopId(), req.toStopId());
-
-        if (existingTicket.getStatus().equals(TicketStatus.SOLD)) {
+        // Validar disponibilidad del asiento para el tramo especificado
+        if (!seatAvailabilityService.isSeatAvailable(req.tripId(), req.seatNumber(), fromStop, toStop)) {
+            String reason = seatAvailabilityService.getAvailabilityConflictReason(
+                    req.tripId(), req.seatNumber(), fromStop, toStop);
             throw new IllegalStateException(
-                    "Seat %s is already sold for trip %d".formatted(req.seatNumber(), req.tripId()));
+                    "Seat %s is not available for trip %d (segment %s -> %s): %s"
+                            .formatted(req.seatNumber(), req.tripId(), fromStop.getName(), toStop.getName(), reason));
         }
 
         Route route = trip.getRoute();
@@ -179,6 +183,16 @@ public class TicketServiceImpl implements TicketService {
         Account account = authenticationService.getCurrentAccount();
         if (ticket.getAccount().getId() != account.getId()) {
             throw new NotFoundException("Ticket %d not found".formatted(id));
+        }
+
+        Trip trip = ticket.getTrip();
+        if (trip.getDepartureAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("Cannot cancel ticket for past trips");
+        }
+
+        // cannot cancel ticket 5 minutes before trip
+        if (trip.getDepartureAt().isBefore(LocalDateTime.now().plusMinutes(5))) {
+            throw new IllegalStateException("Cannot cancel ticket within 5 minutes of departure");
         }
 
         ticket.setStatus(TicketStatus.CANCELLED);

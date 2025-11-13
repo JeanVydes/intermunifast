@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,7 +70,7 @@ class ParcelServiceTest {
         createRequest = new ParcelDTOs.CreateParcelRequest("PCL001", "John Doe", "123456789", "Jane Doe", "987654321",
                 1L, 2L);
         updateRequest = new ParcelDTOs.UpdateParcelRequest("PCL002", "John Smith", "111222333", "Jane Smith",
-                "444555666", 1L, 2L, "IN_TRANSIT", null, 60.0);
+                "444555666", 1L, 2L, "IN_TRANSIT", "https://example.com/proof.jpg", 60.0);
     }
 
     @Test
@@ -78,8 +79,7 @@ class ParcelServiceTest {
         // Given
         when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
         when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
-        when(parcelMapper.toEntity(createRequest)).thenReturn(parcel);
-        when(parcelRepository.save(parcel)).thenReturn(parcel);
+        when(parcelRepository.save(any(Parcel.class))).thenReturn(parcel);
         when(parcelMapper.toResponse(parcel)).thenReturn(parcelResponse);
 
         // When
@@ -88,7 +88,7 @@ class ParcelServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(1L);
-        verify(parcelRepository).save(parcel);
+        verify(parcelRepository).save(any(Parcel.class));
     }
 
     @Test
@@ -124,6 +124,8 @@ class ParcelServiceTest {
     void shouldUpdateParcel() {
         // Given
         when(parcelRepository.findById(1L)).thenReturn(Optional.of(parcel));
+        when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
+        when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
         when(parcelRepository.save(parcel)).thenReturn(parcel);
         when(parcelMapper.toResponse(parcel)).thenReturn(parcelResponse);
 

@@ -1,16 +1,14 @@
 package com.example.services;
 
 import com.example.api.dto.TicketDTOs;
-import com.example.domain.entities.Stop;
-import com.example.domain.entities.Ticket;
-import com.example.domain.entities.Trip;
+import com.example.domain.entities.*;
 import com.example.domain.enums.FareRulePassengerType;
 import com.example.domain.enums.PaymentMethod;
 import com.example.domain.enums.TicketStatus;
-import com.example.domain.repositories.StopRepository;
-import com.example.domain.repositories.TicketRepository;
-import com.example.domain.repositories.TripRepository;
+import com.example.domain.repositories.*;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.AuthenticationService;
+import com.example.services.definitions.SeatAvailabilityService;
 import com.example.services.definitions.TicketServiceImpl;
 import com.example.services.mappers.TicketMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +23,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,11 +44,26 @@ class TicketServiceTest {
     @Mock
     private StopRepository stopRepository;
 
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private AuthenticationService authenticationService;
+
+    @Mock
+    private FareRuleRepository fareRuleRepository;
+
+    @Mock
+    private SeatAvailabilityService seatAvailabilityService;
+
     @InjectMocks
     private TicketServiceImpl ticketService;
 
     private Ticket ticket;
     private Trip trip;
+    private Route route;
+    private Account account;
+    private FareRule fareRule;
     private Stop fromStop;
     private Stop toStop;
     private TicketDTOs.TicketResponse ticketResponse;
@@ -56,14 +72,44 @@ class TicketServiceTest {
 
     @BeforeEach
     void setUp() {
-        trip = Trip.builder().id(1L).build();
-        fromStop = Stop.builder().id(1L).name("Stop A").build();
-        toStop = Stop.builder().id(2L).name("Stop B").build();
+        account = Account.builder().id(1L).email("test@test.com").build();
+
+        route = Route.builder()
+                .id(1L)
+                .distanceKm(100.0)
+                .pricePerKm(0.5)
+                .build();
+
+        fareRule = FareRule.builder()
+                .id(1L)
+                .route(route)
+                .childrenDiscount(0.5)
+                .seniorDiscount(0.3)
+                .studentDiscount(0.2)
+                .build();
+
+        trip = Trip.builder()
+                .id(1L)
+                .route(route)
+                .build();
+
+        fromStop = Stop.builder()
+                .id(1L)
+                .name("Stop A")
+                .sequence(0)
+                .build();
+
+        toStop = Stop.builder()
+                .id(2L)
+                .name("Stop B")
+                .sequence(1)
+                .build();
 
         ticket = Ticket.builder()
                 .id(1L)
                 .seatNumber("A1")
                 .trip(trip)
+                .account(account)
                 .fromStop(fromStop)
                 .toStop(toStop)
                 .paymentMethod(PaymentMethod.CASH)
@@ -80,11 +126,15 @@ class TicketServiceTest {
     @DisplayName("Should create ticket successfully")
     void shouldCreateTicket() {
         // Given
+        when(authenticationService.getCurrentAccount()).thenReturn(account);
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
         when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
         when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
-        when(ticketMapper.toEntity(createRequest)).thenReturn(ticket);
-        when(ticketRepository.save(ticket)).thenReturn(ticket);
+        when(seatAvailabilityService.isSeatAvailable(any(), any(), any(Stop.class), any(Stop.class)))
+                .thenReturn(true);
+        when(fareRuleRepository.findByRouteId(1L)).thenReturn(fareRule);
+        when(accountRepository.getReferenceById(1L)).thenReturn(account);
+        when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
         when(ticketMapper.toResponse(ticket)).thenReturn(ticketResponse);
 
         // When
@@ -93,7 +143,7 @@ class TicketServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(1L);
-        verify(ticketRepository).save(ticket);
+        verify(ticketRepository).save(any(Ticket.class));
     }
 
     @Test
@@ -128,7 +178,12 @@ class TicketServiceTest {
     @DisplayName("Should update ticket successfully")
     void shouldUpdateTicket() {
         // Given
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+        when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
+        when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
         when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+        when(authenticationService.getCurrentAccount()).thenReturn(account);
+        when(fareRuleRepository.findByRouteId(1L)).thenReturn(fareRule);
         when(ticketRepository.save(ticket)).thenReturn(ticket);
         when(ticketMapper.toResponse(ticket)).thenReturn(ticketResponse);
 

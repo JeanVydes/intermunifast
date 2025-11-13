@@ -48,11 +48,6 @@ public class TripController {
     public ResponseEntity<TripDTOs.TripResponse> getById(@PathVariable Long id,
             @RequestParam(required = false) String routeId, @RequestParam(required = false) String status) {
 
-        if (routeId != null || status != null) {
-         TripDTOs.TripResponse trip = tripService.getTripByIdAndFilters(id, routeId,
-        status);
-         return ResponseEntity.ok(trip);
-         }
 
         TripDTOs.TripResponse trip = tripService.getTripById(id);
         return ResponseEntity.ok(trip);

@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -90,8 +91,7 @@ class AssignmentServiceTest {
         when(accountRepository.findById(1L)).thenReturn(Optional.of(driver));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(dispatcher));
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
-        when(assignmentMapper.toEntity(createRequest)).thenReturn(assignment);
-        when(assignmentRepository.save(assignment)).thenReturn(assignment);
+        when(assignmentRepository.save(any(Assignment.class))).thenReturn(assignment);
         when(assignmentMapper.toResponse(assignment)).thenReturn(assignmentResponse);
 
         // When
@@ -100,7 +100,7 @@ class AssignmentServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(1L);
-        verify(assignmentRepository).save(assignment);
+        verify(assignmentRepository).save(any(Assignment.class));
     }
 
     @Test
@@ -136,6 +136,9 @@ class AssignmentServiceTest {
     void shouldUpdateAssignment() {
         // Given
         when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(driver));
+        when(accountRepository.findById(2L)).thenReturn(Optional.of(dispatcher));
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
         when(assignmentRepository.save(assignment)).thenReturn(assignment);
         when(assignmentMapper.toResponse(assignment)).thenReturn(assignmentResponse);
 
