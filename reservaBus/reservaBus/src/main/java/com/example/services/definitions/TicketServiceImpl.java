@@ -9,6 +9,7 @@ import com.example.api.dto.BaggageDTOs;
 import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.domain.entities.Account;
+import com.example.domain.entities.FareRule;
 import com.example.domain.entities.Route;
 import com.example.domain.entities.Stop;
 import com.example.domain.entities.Ticket;
@@ -16,6 +17,7 @@ import com.example.domain.entities.Trip;
 import com.example.domain.enums.TicketStatus;
 import com.example.domain.repositories.AccountRepository;
 import com.example.domain.repositories.BaggageRepository;
+import com.example.domain.repositories.FareRuleRepository;
 import com.example.domain.repositories.IncidentRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.domain.repositories.TicketRepository;
@@ -43,6 +45,7 @@ public class TicketServiceImpl implements TicketService {
     private final TripRepository tripRepo;
     private final StopRepository stopRepo;
     private final AuthenticationService authenticationService;
+    private final FareRuleRepository fareRuleRepo;
 
     @Override
     public TicketDTOs.TicketResponse createTicket(TicketDTOs.CreateTicketRequest req) {
@@ -66,6 +69,7 @@ public class TicketServiceImpl implements TicketService {
         }
 
         Route route = trip.getRoute();
+        FareRule fareRule = fareRuleRepo.findByRouteId(route.getId());
 
         Double discount = 0.0;
 
@@ -74,15 +78,17 @@ public class TicketServiceImpl implements TicketService {
                 // no discount
             }
             case CHILD -> {
-                discount = 0.5;
+                discount = fareRule.getChildrenDiscount();
             }
             case SENIOR -> {
-                discount = 0.7;
+                discount = fareRule.getSeniorDiscount();
+            }
+            case STUDENT -> {
+                discount = fareRule.getStudentDiscount();
             }
         }
 
-        Double configPricePerKm = 0.05;
-        Double price = route.getDistanceKm() * configPricePerKm * (1 - discount);
+        Double price = route.getDistanceKm() * route.getPricePerKm() * (1 - discount);
 
         Ticket ticket = Ticket.builder()
                 .seatNumber(req.seatNumber())
@@ -134,6 +140,31 @@ public class TicketServiceImpl implements TicketService {
         Account account = authenticationService.getCurrentAccount();
         if (ticket.getAccount().getId() != account.getId()) {
             throw new NotFoundException("Ticket %d not found".formatted(id));
+        }
+
+        if (req.passengerType() != null) {
+            Route route = ticket.getTrip().getRoute();
+            FareRule fareRule = fareRuleRepo.findByRouteId(route.getId());
+
+            Double discount = 0.0;
+
+            switch (req.passengerType()) {
+                case ADULT -> {
+                    // no discount
+                }
+                case CHILD -> {
+                    discount = fareRule.getChildrenDiscount();
+                }
+                case SENIOR -> {
+                    discount = fareRule.getSeniorDiscount();
+                }
+                case STUDENT -> {
+                    discount = fareRule.getStudentDiscount();
+                }
+            }
+
+            Double price = route.getDistanceKm() * route.getPricePerKm() * (1 - discount);
+            ticket.setPrice(price);
         }
 
         mapper.patch(ticket, req);

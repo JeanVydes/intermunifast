@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,6 +51,9 @@ public class Route extends TimestampedEntity {
     @Column(nullable = false)
     private Double distanceKm;
 
+    @Column(nullable = false)
+    private Double pricePerKm;
+
     @OneToMany(mappedBy = "route")
     @Builder.Default
     private List<Stop> stops = new ArrayList<>();
@@ -58,8 +62,6 @@ public class Route extends TimestampedEntity {
     @Builder.Default
     private List<Trip> trips = new ArrayList<>();
 
-    @OneToMany(mappedBy = "route")
-    @Builder.Default
-    private List<FareRule> fareRules = new ArrayList<>();
-
+    @OneToOne
+    private FareRule fareRule;
 }

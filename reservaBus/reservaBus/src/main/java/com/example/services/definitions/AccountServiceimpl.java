@@ -1,5 +1,7 @@
 package com.example.services.definitions;
 
+import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class AccountServiceimpl implements AccountService {
     private final AccountRepository repo;
     private final AccountMapper mapper;
+    private final AuthenticationService authenticationService;
 
     @Override
     public AccountDTOs.AccountResponse createAccount(AccountDTOs.CreateAccountRequest req) {
@@ -33,12 +36,19 @@ public class AccountServiceimpl implements AccountService {
 
     @Override
     public AccountDTOs.AccountResponse updateAccount(Long id, AccountDTOs.UpdateAccountRequest req) {
+        Account currentAccount = authenticationService.getCurrentAccount();
+
+        if (!currentAccount.getId().equals(id)) {
+            throw new IllegalStateException("You can only update your own account");
+        }
+
         Account account = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Account %d not found".formatted(id)));
         mapper.patch(account, req);
         return mapper.toResponse(repo.save(account));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @Override
     public void deleteAccount(Long id) {
         Account account = repo.findById(id)
@@ -46,6 +56,7 @@ public class AccountServiceimpl implements AccountService {
         repo.delete(account);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @Override
     @Transactional(readOnly = true)
     public AccountDTOs.AccountResponse getAccountByEmail(String email) {
