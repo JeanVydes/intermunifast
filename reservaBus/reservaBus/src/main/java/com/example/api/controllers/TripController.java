@@ -3,6 +3,7 @@ package com.example.api.controllers;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +33,7 @@ public class TripController {
         this.tripService = tripService;
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PostMapping
     public ResponseEntity<TripDTOs.TripResponse> create(
             @Validated @RequestBody TripDTOs.CreateTripRequest req,
@@ -54,6 +56,7 @@ public class TripController {
         return ResponseEntity.ok(trip);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<TripDTOs.TripResponse> update(
             @PathVariable Long id,
@@ -62,6 +65,7 @@ public class TripController {
         return ResponseEntity.ok(updatedTrip);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         tripService.deleteTrip(id);
@@ -89,6 +93,7 @@ public class TripController {
         return ResponseEntity.ok(assignments);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @GetMapping("/{id}/incidents")
     public ResponseEntity<List<IncidentDTOs.IncidentResponse>> getIncidentsByTripId(@PathVariable Long id) {
         List<IncidentDTOs.IncidentResponse> incidents = tripService.getIncidentsByTripId(id);

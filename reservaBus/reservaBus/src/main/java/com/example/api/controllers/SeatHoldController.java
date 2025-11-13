@@ -28,7 +28,7 @@ public class SeatHoldController {
     public ResponseEntity<SeatHoldDTOs.SeatHoldResponse> create(
             @Validated @RequestBody SeatHoldDTOs.CreateSeatHoldRequest req,
             UriComponentsBuilder uriBuilder) {
-        SeatHoldDTOs.SeatHoldResponse createdSeatHold = seatHoldService.createSeatHold(req);
+        SeatHoldDTOs.SeatHoldResponse createdSeatHold = seatHoldService.reserveSeat(req);
         return ResponseEntity.created(
                 uriBuilder.path("/api/seat-holds/{id}").buildAndExpand(createdSeatHold.id()).toUri())
                 .body(createdSeatHold);
@@ -36,7 +36,7 @@ public class SeatHoldController {
 
     @GetMapping("/{id}")
     public ResponseEntity<SeatHoldDTOs.SeatHoldResponse> getById(@PathVariable Long id) {
-        SeatHoldDTOs.SeatHoldResponse seatHold = seatHoldService.getSeatHoldById(id);
+        SeatHoldDTOs.SeatHoldResponse seatHold = seatHoldService.getSeatReserveById(id);
         return ResponseEntity.ok(seatHold);
     }
 
@@ -44,7 +44,7 @@ public class SeatHoldController {
     public ResponseEntity<SeatHoldDTOs.SeatHoldResponse> update(
             @PathVariable Long id,
             @Validated @RequestBody SeatHoldDTOs.UpdateSeatHoldRequest req) {
-        return ResponseEntity.ok(seatHoldService.updateSeatHold(id, req));
+        return ResponseEntity.ok(seatHoldService.updateSeatReserve(id, req));
     }
 
     @DeleteMapping("/{id}")

@@ -4,7 +4,6 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,26 +20,22 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
-    private final AccountRepository accountRepository;
+        private final JwtService jwtService;
+        private final AuthenticationManager authenticationManager;
+        private final AccountRepository accountRepository;
 
-    @PostMapping("/signin")
-    public ResponseEntity<AuthenticationDTOs.SignInResponse> signIn(
-            @RequestBody AuthenticationDTOs.SignInRequest authRequest) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                authRequest.email(),
-                authRequest.password()));
+        @PostMapping("/signin")
+        public ResponseEntity<AuthenticationDTOs.SignInResponse> signIn(
+                        @RequestBody AuthenticationDTOs.SignInRequest authRequest) {
+                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                                authRequest.email(),
+                                authRequest.password()));
 
-        Account account = accountRepository.findByEmailIgnoreCase(authRequest.email()).orElseThrow();
+                Account account = accountRepository.findByEmailIgnoreCase(authRequest.email()).orElseThrow();
 
-        var principal = User.withUsername(account.getEmail())
-                .password(account.getPasswordHash())
-                .authorities(account.getRole().name())
-                .build();
-
-        var token = jwtService.generateToken(principal, Map.of("roles", account.getRole().name()));
-        return ResponseEntity.ok()
-                .body(new AuthenticationDTOs.SignInResponse(token, account.getId(), account.getRole().name()));
-    }
+                var token = jwtService.generateToken(account, Map.of("roles", account.getRole().name()));
+                return ResponseEntity.ok()
+                                .body(new AuthenticationDTOs.SignInResponse(token, account.getId(),
+                                                account.getRole().name()));
+        }
 }

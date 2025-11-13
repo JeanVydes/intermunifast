@@ -28,4 +28,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT DISTINCT t.paymentMethod FROM Ticket t WHERE t.tripId = :tripId")
     List<String> findPaymentMethodsUsedInTrip(@Param("tripId") Long tripId);
 
+    @Query("SELECT t FROM Ticket t WHERE t.seatNumber IN :seatNumbers AND t.trip.id = :tripId")
+    List<Ticket> findTicketsByListOfSeatNumbersFilteredByTripId(List<String> seatNumbers, Long tripId);
+
+    Ticket findByTripIdAndSeatNumber(Long tripId, String seatNumber);
+
+    @Query("SELECT t FROM Ticket t WHERE t.trip.id = :tripId AND t.seatNumber = :seatNumber AND t.fromStop.id = :fromStopId AND t.toStop.id = :toStopId")
+    Ticket findByTripIdAndSeatNumberAndFromStopIdAndToStopId(Long tripId, String seatNumber, Long fromStopId,
+            Long toStopId);
 }

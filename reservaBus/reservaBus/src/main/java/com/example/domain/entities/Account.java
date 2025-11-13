@@ -1,7 +1,12 @@
 package com.example.domain.entities;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.AccountRole;
@@ -28,7 +33,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 
-public class Account extends TimestampedEntity {
+public class Account extends TimestampedEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -66,5 +71,40 @@ public class Account extends TimestampedEntity {
     @OneToMany(mappedBy = "dispatcher")
     @Builder.Default
     private List<Assignment> dispatcherAssignments = new ArrayList<>();
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return status != AccountStatus.INACTIVE;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return status == AccountStatus.ACTIVE;
+    }
 
 }
