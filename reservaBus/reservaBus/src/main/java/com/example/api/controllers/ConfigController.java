@@ -1,6 +1,7 @@
 package com.example.api.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ public class ConfigController {
         this.configService = configService;
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<ConfigDTOs.ConfigResponse> create(
             @Validated @RequestBody ConfigDTOs.CreateConfigRequest req,
@@ -40,6 +42,7 @@ public class ConfigController {
         return ResponseEntity.ok(config);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<ConfigDTOs.ConfigResponse> update(
             @PathVariable Long id,
@@ -48,6 +51,7 @@ public class ConfigController {
         return ResponseEntity.ok(updatedConfig);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         configService.deleteConfig(id);

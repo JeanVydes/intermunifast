@@ -13,13 +13,13 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-    
+
 public class BusServiceImpl implements BusService {
 
     private final BusRepository repo;
     private final BusMapper mapper;
 
-    @Override 
+    @Override
     public BusDTOs.BusResponse createBus(BusDTOs.CreateBusRequest req) {
         var bus = mapper.toEntity(req);
         return mapper.toResponse(repo.save(bus));
@@ -43,7 +43,11 @@ public class BusServiceImpl implements BusService {
     public BusDTOs.BusResponse updateBus(Long id, BusDTOs.UpdateBusRequest req) {
         var bus = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Bus %d not found".formatted(id)));
-        mapper.patch( bus, req);
+
+        req.plate().ifPresent(bus::setPlate);
+        req.capacity().ifPresent(bus::setCapacity);
+        req.status().ifPresent(bus::setStatus);
+
         return mapper.toResponse(repo.save(bus));
     }
 

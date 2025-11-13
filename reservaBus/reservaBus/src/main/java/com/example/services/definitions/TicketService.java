@@ -12,6 +12,7 @@ public interface TicketService {
     TicketDTOs.TicketResponse getTicketById(Long id);
 
     TicketDTOs.TicketResponse updateTicket(Long id, TicketDTOs.UpdateTicketRequest req);
+    TicketDTOs.TicketResponse cancelTicket(Long id);
 
     void deleteTicket(Long id);
 

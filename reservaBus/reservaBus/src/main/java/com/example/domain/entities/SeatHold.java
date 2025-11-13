@@ -3,12 +3,8 @@ package com.example.domain.entities;
 import java.time.LocalDateTime;
 
 import com.example.domain.common.TimestampedEntity;
-import com.example.domain.enums.SeatHoldStatus;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -40,10 +36,6 @@ public class SeatHold extends TimestampedEntity {
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SeatHoldStatus status;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "trip_id", nullable = false)

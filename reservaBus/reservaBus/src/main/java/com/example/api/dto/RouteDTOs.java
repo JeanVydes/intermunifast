@@ -9,7 +9,8 @@ public class RouteDTOs {
         String origin,
         String destination,
         Integer durationMinutes,
-        Double distanceKm
+        Double distanceKm,
+        Double pricePerKm
     ) implements Serializable {}
 
     public record UpdateRouteRequest(
@@ -18,7 +19,8 @@ public class RouteDTOs {
         String origin,
         String destination,
         Integer durationMinutes,
-        Double distanceKm
+        Double distanceKm,
+        Double pricePerKm
     ) implements Serializable {}
 
     public record RouteResponse(
@@ -28,6 +30,7 @@ public class RouteDTOs {
         String origin,
         String destination,
         Integer durationMinutes,
-        Double distanceKm
+        Double distanceKm,
+        Double pricePerKm
     ) implements Serializable {}
 }
