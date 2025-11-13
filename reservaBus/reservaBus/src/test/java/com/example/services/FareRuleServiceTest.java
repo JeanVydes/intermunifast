@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,8 +68,7 @@ class FareRuleServiceTest {
     void shouldCreateFareRule() {
         // Given
         when(routeRepository.findById(1L)).thenReturn(Optional.of(route));
-        when(fareRuleMapper.toEntity(createRequest)).thenReturn(fareRule);
-        when(fareRuleRepository.save(fareRule)).thenReturn(fareRule);
+        when(fareRuleRepository.save(any(FareRule.class))).thenReturn(fareRule);
         when(fareRuleMapper.toResponse(fareRule)).thenReturn(fareRuleResponse);
 
         // When
@@ -77,7 +77,7 @@ class FareRuleServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(1L);
-        verify(fareRuleRepository).save(fareRule);
+        verify(fareRuleRepository).save(any(FareRule.class));
     }
 
     @Test
@@ -113,6 +113,7 @@ class FareRuleServiceTest {
     void shouldUpdateFareRule() {
         // Given
         when(fareRuleRepository.findById(1L)).thenReturn(Optional.of(fareRule));
+        when(routeRepository.findById(1L)).thenReturn(Optional.of(route));
         when(fareRuleRepository.save(fareRule)).thenReturn(fareRule);
         when(fareRuleMapper.toResponse(fareRule)).thenReturn(fareRuleResponse);
 

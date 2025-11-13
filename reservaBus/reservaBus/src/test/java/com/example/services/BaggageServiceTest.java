@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,8 +68,7 @@ class BaggageServiceTest {
     void shouldCreateBaggage() {
         // Given
         when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
-        when(baggageMapper.toEntity(createRequest)).thenReturn(baggage);
-        when(baggageRepository.save(baggage)).thenReturn(baggage);
+        when(baggageRepository.save(any(Baggage.class))).thenReturn(baggage);
         when(baggageMapper.toResponse(baggage)).thenReturn(baggageResponse);
 
         // When
@@ -77,7 +77,7 @@ class BaggageServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(1L);
-        verify(baggageRepository).save(baggage);
+        verify(baggageRepository).save(any(Baggage.class));
     }
 
     @Test
@@ -113,6 +113,7 @@ class BaggageServiceTest {
     void shouldUpdateBaggage() {
         // Given
         when(baggageRepository.findById(1L)).thenReturn(Optional.of(baggage));
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
         when(baggageRepository.save(baggage)).thenReturn(baggage);
         when(baggageMapper.toResponse(baggage)).thenReturn(baggageResponse);
 

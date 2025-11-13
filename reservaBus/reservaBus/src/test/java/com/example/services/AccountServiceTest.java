@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -36,6 +37,9 @@ class AccountServiceTest {
 
     @Mock
     private AuthenticationService authenticationService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private AccountServiceimpl accountService;
@@ -109,6 +113,7 @@ class AccountServiceTest {
     void shouldCreateAccountSuccessfully() {
         // Given
         when(accountMapper.toEntity(createRequest)).thenReturn(testAccount);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
         when(accountMapper.toResponse(testAccount)).thenReturn(accountResponse);
 

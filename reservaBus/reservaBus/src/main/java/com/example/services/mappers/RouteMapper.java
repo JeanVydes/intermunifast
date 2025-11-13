@@ -7,16 +7,11 @@ import org.mapstruct.MappingTarget;
 import com.example.api.dto.RouteDTOs;
 import com.example.domain.entities.Route;
 
-
-
-
 @Mapper(componentModel = "spring")
 public interface RouteMapper {
 
     @Mapping(target = "id", ignore = true)
     Route toEntity(RouteDTOs.CreateRouteRequest dto);
-    
-    RouteDTOs.RouteResponse toResponse(Route entity);
 
-    void patch(@MappingTarget Route entity, RouteDTOs.UpdateRouteRequest dto);
+    RouteDTOs.RouteResponse toResponse(Route entity);
 }

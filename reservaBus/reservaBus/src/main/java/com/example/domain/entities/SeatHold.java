@@ -45,4 +45,11 @@ public class SeatHold extends TimestampedEntity {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "from_stop_id", nullable = false)
+    private Stop fromStop;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "to_stop_id", nullable = false)
+    private Stop toStop;
 }

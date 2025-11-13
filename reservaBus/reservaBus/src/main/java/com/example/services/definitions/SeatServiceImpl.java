@@ -61,14 +61,18 @@ public class SeatServiceImpl implements SeatService {
 
         @Override
         public SeatDTOs.SeatResponse updateSeat(Long id, SeatDTOs.UpdateSeatRequest req) {
-                if (req.busId() != null) {
-                        busRepo.findById(req.busId())
-                                        .orElseThrow(() -> new NotFoundException(
-                                                        "Bus %d not found".formatted(req.busId())));
-                }
                 var seat = repo.findById(id)
                                 .orElseThrow(() -> new NotFoundException("Seat %d not found".formatted(id)));
-                mapper.patch(seat, req);
+
+                // Update only fields that are present
+                req.number().ifPresent(seat::setNumber);
+                req.type().ifPresent(seat::setType);
+                req.busId().ifPresent(busId -> {
+                        var bus = busRepo.findById(busId)
+                                        .orElseThrow(() -> new NotFoundException("Bus %d not found".formatted(busId)));
+                        seat.setBus(bus);
+                });
+
                 return mapper.toResponse(repo.save(seat));
         }
 

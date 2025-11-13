@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,8 +73,7 @@ class TripServiceTest {
         // Given
         when(routeRepository.findById(1L)).thenReturn(Optional.of(route));
         when(busRepository.findById(1L)).thenReturn(Optional.of(bus));
-        when(tripMapper.toEntity(createRequest)).thenReturn(trip);
-        when(tripRepository.save(trip)).thenReturn(trip);
+        when(tripRepository.save(any(Trip.class))).thenReturn(trip);
         when(tripMapper.toResponse(trip)).thenReturn(tripResponse);
 
         // When
@@ -82,7 +82,7 @@ class TripServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(1L);
-        verify(tripRepository).save(trip);
+        verify(tripRepository).save(any(Trip.class));
     }
 
     @Test
@@ -118,6 +118,8 @@ class TripServiceTest {
     void shouldUpdateTrip() {
         // Given
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+        when(routeRepository.findById(1L)).thenReturn(Optional.of(route));
+        when(busRepository.findById(1L)).thenReturn(Optional.of(bus));
         when(tripRepository.save(trip)).thenReturn(trip);
         when(tripMapper.toResponse(trip)).thenReturn(tripResponse);
 
