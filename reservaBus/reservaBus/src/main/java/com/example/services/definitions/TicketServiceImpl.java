@@ -8,9 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.api.dto.BaggageDTOs;
 import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.TicketDTOs;
+import com.example.domain.entities.Stop;
+import com.example.domain.entities.Ticket;
+import com.example.domain.entities.Trip;
 import com.example.domain.repositories.BaggageRepository;
 import com.example.domain.repositories.IncidentRepository;
+import com.example.domain.repositories.StopRepository;
 import com.example.domain.repositories.TicketRepository;
+import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
 import com.example.services.mappers.BaggageMapper;
 import com.example.services.mappers.IncidentMapper;
@@ -30,10 +35,25 @@ public class TicketServiceImpl implements TicketService {
     private final BaggageRepository baggageRepo;
     private final IncidentMapper incidentMapper;
     private final IncidentRepository incidentRepo;
+    private final TripRepository tripRepo;
+    private final StopRepository stopRepo;
 
     @Override 
     public TicketDTOs.TicketResponse createTicket(TicketDTOs.CreateTicketRequest req) {
-        var ticket = mapper.toEntity(req);
+        Trip trip = tripRepo.findById(req.tripId())
+                .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(req.tripId())));
+        Stop fromStop = stopRepo.findById(req.fromStopId())
+                .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId())));
+        Stop toStop = stopRepo.findById(req.toStopId())
+                .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId())));
+        Ticket ticket =  Ticket.builder()
+            .seatNumber(req.seatNumber())
+            .trip(trip)
+            .fromStop(fromStop)
+            .toStop(toStop)
+            .paymentMethod(req.paymentMethod())
+            .paymentIntentId(req.paymentIntentId())
+            .build();
         return mapper.toResponse(repo.save(ticket));
     }
 
@@ -53,6 +73,18 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public TicketDTOs.TicketResponse updateTicket(Long id, TicketDTOs.UpdateTicketRequest req) {
+        if (req.tripId() != null) {
+            tripRepo.findById(req.tripId())
+                    .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(req.tripId())));
+        }
+        if (req.fromStopId() != null) {
+            stopRepo.findById(req.fromStopId())
+                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId())));
+        }
+        if (req.toStopId() != null) {
+            stopRepo.findById(req.toStopId())
+                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId())));
+        }
         var ticket = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
         mapper.patch( ticket, req);
@@ -74,8 +106,7 @@ public class TicketServiceImpl implements TicketService {
             var tickets = repo.findByAccountIdAndSeatNumber(accountId, seatNumber);
             return tickets.stream().map(mapper::toResponse).toList();
         }
-        var tickets = repo.findAll();
-        return tickets.stream().map(mapper::toResponse).toList();
+        return List.of();
     }
 
     @Override

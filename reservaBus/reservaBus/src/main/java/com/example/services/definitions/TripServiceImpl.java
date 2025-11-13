@@ -10,9 +10,14 @@ import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.SeatDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.api.dto.TripDTOs;
+import com.example.domain.entities.Bus;
+import com.example.domain.entities.Route;
+import com.example.domain.entities.Trip;
 import com.example.domain.enums.TicketStatus;
 import com.example.domain.repositories.AssignmentRepository;
+import com.example.domain.repositories.BusRepository;
 import com.example.domain.repositories.IncidentRepository;
+import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.SeatRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.domain.repositories.TripRepository;
@@ -41,10 +46,19 @@ public class TripServiceImpl implements TripService {
     private final AssignmentRepository assignmentRepo;
     private final IncidentMapper incidentMapper;
     private final IncidentRepository incidentRepo;
+    private final RouteRepository routeRepo;
+    private final BusRepository busRepo;
 
     @Override 
     public TripDTOs.TripResponse createTrip(TripDTOs.CreateTripRequest req) {
-        var trip = mapper.toEntity(req);
+        Route route = routeRepo.findById(req.routeId())
+                .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(req.routeId())));
+         Bus bus = busRepo.findById(req.busId())
+                .orElseThrow(() -> new NotFoundException("Bus %d not found".formatted(req.busId())));
+        Trip trip =  Trip.builder()
+            .route(route)
+            .bus(bus)
+            .build();
         return mapper.toResponse(repo.save(trip));
     }
 
@@ -64,6 +78,14 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public TripDTOs.TripResponse updateTrip(Long id, TripDTOs.UpdateTripRequest req) {
+        if (req.routeId() != null) {
+            routeRepo.findById(req.routeId())
+                    .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(req.routeId())));
+        }
+        if (req.busId() != null) {
+            busRepo.findById(req.busId())
+                    .orElseThrow(() -> new NotFoundException("Bus %d not found".formatted(req.busId())));
+        }
         var trip = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(id)));
         mapper.patch( trip, req);

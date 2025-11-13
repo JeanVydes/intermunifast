@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.api.dto.StopDTOs;
+import com.example.domain.entities.Route;
+import com.example.domain.entities.Stop;
+import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
 import com.example.services.mappers.StopMapper;
@@ -18,10 +21,18 @@ public class StopServiceImpl implements StopService {
 
     private final StopRepository repo;
     private final StopMapper mapper;
+    private final RouteRepository routeRepo;
 
     @Override 
     public StopDTOs.StopResponse createStop(StopDTOs.CreateStopRequest req) {
-        var stop = mapper.toEntity(req);
+        Route route = routeRepo.findById(req.routeId())
+            .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(req.routeId())));
+        Stop stop =  Stop.builder().route(route)
+            .name(req.name())
+            .sequence(req.sequence())
+            .latitude(req.latitude())
+            .longitude(req.longitude())
+            .build();
         return mapper.toResponse(repo.save(stop));
     }
 
@@ -41,6 +52,10 @@ public class StopServiceImpl implements StopService {
 
     @Override
     public StopDTOs.StopResponse updateStop(Long id, StopDTOs.UpdateStopRequest req) {
+        if (req.routeId() != null) {
+            routeRepo.findById(req.routeId())
+                    .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(req.routeId())));
+        }
         var stop = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(id)));
         mapper.patch( stop, req);

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.api.dto.SeatDTOs;
+import com.example.domain.entities.Seat;
+import com.example.domain.repositories.BusRepository;
 import com.example.domain.repositories.SeatRepository;
 import com.example.exceptions.NotFoundException;
 import com.example.services.mappers.SeatMapper;
@@ -20,10 +22,17 @@ public class SeatServiceImpl implements SeatService {
 
     private final SeatRepository repo;
     private final SeatMapper mapper;
+    private final BusRepository busRepo;
 
     @Override
     public SeatDTOs.SeatResponse createSeat(SeatDTOs.CreateSeatRequest req) {
-        var seat = mapper.toEntity(req);
+        busRepo.findById(req.busId())
+                .orElseThrow(() -> new NotFoundException("Bus %d not found".formatted(req.busId())));
+        Seat seat = Seat.builder()
+                .number(req.number())
+                .type(req.type())
+                .bus(busRepo.getReferenceById(req.busId()))
+                .build();
         return mapper.toResponse(repo.save(seat));
     }
 
@@ -43,6 +52,10 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     public SeatDTOs.SeatResponse updateSeat(Long id, SeatDTOs.UpdateSeatRequest req) {
+        if (req.busId() != null) {
+            busRepo.findById(req.busId())
+                    .orElseThrow(() -> new NotFoundException("Bus %d not found".formatted(req.busId())));
+        }
         var seat = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Seat %d not found".formatted(id)));
         mapper.patch(seat, req);
@@ -50,7 +63,7 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-    @Transactional(readOnly = true) 
+    @Transactional(readOnly = true)
     public List<SeatDTOs.SeatResponse> getSeatsByBusId(Long busId) {
         var seats = repo.findByBusId(busId);
         return seats.stream()

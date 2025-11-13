@@ -37,6 +37,7 @@ public class ParcelDTOs {
         Long toStopId,
         String status,
         String proofPhotoUrl,
+        String deliveryOtp,
         Double price
     ) implements Serializable {}
 }
