@@ -19,9 +19,10 @@ import lombok.RequiredArgsConstructor;
 
 public class BaggageServiceImpl implements BaggageService {
 
+    private static final Integer MAX_WEIGHT_KG = 25;
+
     private final BaggageRepository repo;
     private final BaggageMapper mapper;
-    private final static Integer MAX_WEIGHT_KG = 25;
     private final TicketRepository ticketRepo;
 
     @Override

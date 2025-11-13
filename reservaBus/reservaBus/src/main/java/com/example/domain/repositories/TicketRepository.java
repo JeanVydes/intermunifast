@@ -36,4 +36,28 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT t FROM Ticket t WHERE t.trip.id = :tripId AND t.seatNumber = :seatNumber AND t.fromStop.id = :fromStopId AND t.toStop.id = :toStopId")
     Ticket findByTripIdAndSeatNumberAndFromStopIdAndToStopId(Long tripId, String seatNumber, Long fromStopId,
             Long toStopId);
+
+    /**
+     * Encuentra tickets vendidos (SOLD) que solapen con el tramo especificado.
+     * Solapamiento ocurre cuando:
+     * - El nuevo tramo empieza dentro de un tramo existente, O
+     * - El nuevo tramo termina dentro de un tramo existente, O
+     * - El nuevo tramo contiene completamente a un tramo existente
+     */
+    @Query("""
+                SELECT t FROM Ticket t
+                WHERE t.trip.id = :tripId
+                AND t.seatNumber = :seatNumber
+                AND t.status = 'SOLD'
+                AND (
+                    (t.fromStop.sequence <= :newFromSeq AND t.toStop.sequence > :newFromSeq)
+                    OR (t.fromStop.sequence < :newToSeq AND t.toStop.sequence >= :newToSeq)
+                    OR (t.fromStop.sequence >= :newFromSeq AND t.toStop.sequence <= :newToSeq)
+                )
+            """)
+    List<Ticket> findOverlappingSoldTickets(
+            @Param("tripId") Long tripId,
+            @Param("seatNumber") String seatNumber,
+            @Param("newFromSeq") Integer newFromSequence,
+            @Param("newToSeq") Integer newToSequence);
 }

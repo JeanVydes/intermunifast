@@ -63,7 +63,12 @@ class StopServiceTest {
 
         stopResponse = new StopDTOs.StopResponse(1L, "Stop A", 1, -12.046373, -77.042754, 1L);
         createRequest = new StopDTOs.CreateStopRequest("Stop A", 1, -12.046373, -77.042754, 1L);
-        updateRequest = new StopDTOs.UpdateStopRequest("Stop B", 2, -12.056373, -77.052754, 1L);
+        updateRequest = new StopDTOs.UpdateStopRequest(
+                Optional.of("Stop B"),
+                Optional.of(2),
+                Optional.of(-12.056373),
+                Optional.of(-77.052754),
+                Optional.of(1L));
     }
 
     @Test
@@ -139,7 +144,6 @@ class StopServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(stopMapper).patch(stop, updateRequest);
         verify(stopRepository).save(stop);
     }
 

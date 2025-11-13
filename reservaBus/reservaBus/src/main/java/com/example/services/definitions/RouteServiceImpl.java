@@ -51,7 +51,16 @@ public class RouteServiceImpl implements RouteService {
     public RouteDTOs.RouteResponse updateRoute(Long id, RouteDTOs.UpdateRouteRequest req) {
         var route = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(id)));
-        mapper.patch(route, req);
+
+        // Update only fields that are present
+        req.code().ifPresent(route::setCode);
+        req.name().ifPresent(route::setName);
+        req.origin().ifPresent(route::setOrigin);
+        req.destination().ifPresent(route::setDestination);
+        req.durationMinutes().ifPresent(route::setDurationMinutes);
+        req.distanceKm().ifPresent(route::setDistanceKm);
+        req.pricePerKm().ifPresent(route::setPricePerKm);
+
         return mapper.toResponse(repo.save(route));
     }
 

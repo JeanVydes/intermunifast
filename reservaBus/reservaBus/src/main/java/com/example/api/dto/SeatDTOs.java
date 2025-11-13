@@ -13,9 +13,9 @@ public class SeatDTOs {
         }
 
         public record UpdateSeatRequest(
-                        String number,
-                        SeatType type,
-                        Long busId) implements java.io.Serializable {
+                        Optional<String> number,
+                        Optional<SeatType> type,
+                        Optional<Long> busId) implements java.io.Serializable {
         }
 
         public record SeatResponse(
@@ -38,6 +38,6 @@ public class SeatDTOs {
                         // Ticket details
                         Optional<Long> ticketId,
                         Optional<StopDTOs.StopResponse> fromStop,
-                        Optional<StopDTOs.StopResponse> toStop
-        ) implements java.io.Serializable {}
+                        Optional<StopDTOs.StopResponse> toStop) implements java.io.Serializable {
+        }
 }

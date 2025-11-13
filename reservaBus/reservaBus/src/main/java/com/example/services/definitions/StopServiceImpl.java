@@ -23,16 +23,16 @@ public class StopServiceImpl implements StopService {
     private final StopMapper mapper;
     private final RouteRepository routeRepo;
 
-    @Override 
+    @Override
     public StopDTOs.StopResponse createStop(StopDTOs.CreateStopRequest req) {
         Route route = routeRepo.findById(req.routeId())
-            .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(req.routeId())));
-        Stop stop =  Stop.builder().route(route)
-            .name(req.name())
-            .sequence(req.sequence())
-            .latitude(req.latitude())
-            .longitude(req.longitude())
-            .build();
+                .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(req.routeId())));
+        Stop stop = Stop.builder().route(route)
+                .name(req.name())
+                .sequence(req.sequence())
+                .latitude(req.latitude())
+                .longitude(req.longitude())
+                .build();
         return mapper.toResponse(repo.save(stop));
     }
 
@@ -52,13 +52,20 @@ public class StopServiceImpl implements StopService {
 
     @Override
     public StopDTOs.StopResponse updateStop(Long id, StopDTOs.UpdateStopRequest req) {
-        if (req.routeId() != null) {
-            routeRepo.findById(req.routeId())
-                    .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(req.routeId())));
-        }
         var stop = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(id)));
-        mapper.patch( stop, req);
+
+        // Update only fields that are present
+        req.name().ifPresent(stop::setName);
+        req.sequence().ifPresent(stop::setSequence);
+        req.latitude().ifPresent(stop::setLatitude);
+        req.longitude().ifPresent(stop::setLongitude);
+        req.routeId().ifPresent(routeId -> {
+            Route route = routeRepo.findById(routeId)
+                    .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(routeId)));
+            stop.setRoute(route);
+        });
+
         return mapper.toResponse(repo.save(stop));
     }
 
