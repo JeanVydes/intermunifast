@@ -31,10 +31,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String method = request.getMethod();
 
         // Rutas siempre públicas
-        if (path.startsWith("/api/auth/") ||
+        if (path.equals("/api/auth/signin") ||
                 path.startsWith("/actuator/health") ||
-                (path.equals("/api/accounts") && method.equals("POST")) ||
-                method.equals("GET")) {
+                (path.equals("/api/accounts") && method.equals("POST"))) {
             filterChain.doFilter(request, response);
             return;
         }

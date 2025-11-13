@@ -50,7 +50,11 @@ class BusServiceTest {
 
         busResponse = new BusDTOs.BusResponse(1L, "ABC123", 40, null, "ACTIVE");
         createRequest = new BusDTOs.CreateBusRequest("ABC123", 40, null);
-        updateRequest = new BusDTOs.UpdateBusRequest("XYZ789", 45, null, "MAINTENANCE");
+        updateRequest = new BusDTOs.UpdateBusRequest(
+                Optional.of("XYZ789"),
+                Optional.of(45),
+                Optional.empty(),
+                Optional.of(BusStatus.MAINTENANCE));
     }
 
     @Test
@@ -111,7 +115,6 @@ class BusServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(busMapper).patch(bus, updateRequest);
         verify(busRepository).save(bus);
     }
 

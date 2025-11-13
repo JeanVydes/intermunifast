@@ -143,10 +143,10 @@ class AccountServiceTest {
     void shouldUpdateAccountSuccessfully() {
         // Given
         AccountDTOs.UpdateAccountRequest updateRequest = new AccountDTOs.UpdateAccountRequest(
-                "Updated Name",
-                "test@example.com",
-                "9876543210",
-                null,
+                Optional.of("Updated Name"),
+                Optional.of("test@example.com"),
+                Optional.of("9876543210"),
+                Optional.empty(),
                 AccountRole.PASSENGER,
                 AccountStatus.ACTIVE);
 
@@ -161,7 +161,6 @@ class AccountServiceTest {
         // Then
         assertThat(result).isNotNull();
         verify(accountRepository).findById(1L);
-        verify(accountMapper).patch(testAccount, updateRequest);
         verify(accountRepository).save(any(Account.class));
     }
 

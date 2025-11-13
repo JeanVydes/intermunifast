@@ -95,17 +95,6 @@ public class TripServiceImpl implements TripService {
                 return mapper.toResponse(repo.save(trip));
         }
 
-        // NOTA: Método comentado porque TripRepository no tiene findByIdAndFilters
-        // @Override
-        // @Transactional(readOnly = true)
-        // public TripDTOs.TripResponse getTripByIdAndFilters(Long id, String routeId,
-        // String status) {
-        // var trip = repo.findByIdAndFilters(id, routeId, status)
-        // .orElseThrow(() -> new NotFoundException("Trip %d with specified filters not
-        // found".formatted(id)));
-        // return mapper.toResponse(trip);
-        // }
-
         @Override
         @Transactional(readOnly = true)
         public List<TicketDTOs.TicketResponse> getTicketsByTripIdAndStatus(Long id, TicketStatus status) {

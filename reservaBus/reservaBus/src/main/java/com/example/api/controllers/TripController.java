@@ -47,13 +47,12 @@ public class TripController {
     @GetMapping("/{id}")
     public ResponseEntity<TripDTOs.TripResponse> getById(@PathVariable Long id,
             @RequestParam(required = false) String routeId, @RequestParam(required = false) String status) {
-        // NOTA: Filtrado por routeId y status deshabilitado temporalmente
-        // porque TripRepository no tiene findByIdAndFilters
-        // if (routeId != null || status != null) {
-        // TripDTOs.TripResponse trip = tripService.getTripByIdAndFilters(id, routeId,
-        // status);
-        // return ResponseEntity.ok(trip);
-        // }
+
+        if (routeId != null || status != null) {
+         TripDTOs.TripResponse trip = tripService.getTripByIdAndFilters(id, routeId,
+        status);
+         return ResponseEntity.ok(trip);
+         }
 
         TripDTOs.TripResponse trip = tripService.getTripById(id);
         return ResponseEntity.ok(trip);
