@@ -1,6 +1,7 @@
 package com.example.api.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ public class BusController {
         this.busService = busService;
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<BusDTOs.BusResponse> create(
             @Validated @RequestBody BusDTOs.CreateBusRequest req,
@@ -40,6 +42,7 @@ public class BusController {
         return ResponseEntity.ok(bus);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<BusDTOs.BusResponse> update(
             @PathVariable Long id,
@@ -48,6 +51,7 @@ public class BusController {
         return ResponseEntity.ok(updatedBus);
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         busService.deleteBus(id);

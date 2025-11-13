@@ -1,5 +1,6 @@
 package com.example.api.dto;
 
+import com.example.domain.enums.FareRulePassengerType;
 import com.example.domain.enums.PaymentMethod;
 
 public class TicketDTOs {
@@ -10,7 +11,8 @@ public class TicketDTOs {
             Long toStopId,
             PaymentMethod paymentMethod,
             // stripe payment intent id to be associated with the ticket
-            String paymentIntentId
+            String paymentIntentId,
+            FareRulePassengerType passengerType
     ) implements java.io.Serializable {}
 
     public record UpdateTicketRequest(
@@ -18,8 +20,7 @@ public class TicketDTOs {
             Long tripId,
             Long fromStopId,
             Long toStopId,
-            PaymentMethod paymentMethod,
-            String paymentIntentId
+            FareRulePassengerType passengerType
     ) implements java.io.Serializable {}
 
     public record TicketResponse(

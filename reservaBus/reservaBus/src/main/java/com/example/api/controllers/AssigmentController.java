@@ -1,6 +1,7 @@
 package com.example.api.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ public class AssigmentController {
         this.assignmentService = assignmentService;
     }
 
+    @PreAuthorize("hasAnyAuthority('DRIVER', 'DISPATCHER', 'ADMIN')")
     @PostMapping
     public ResponseEntity<AssignmentDTOs.AssignmentResponse> create(
             @Validated @RequestBody AssignmentDTOs.CreateAssignmentRequest req,
@@ -34,12 +36,14 @@ public class AssigmentController {
                 .body(createdAssignment);
     }
 
+    @PreAuthorize("hasAnyAuthority('DRIVER', 'DISPATCHER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<AssignmentDTOs.AssignmentResponse> getById(@PathVariable Long id) {
         AssignmentDTOs.AssignmentResponse assignment = assignmentService.getAssignmentById(id);
         return ResponseEntity.ok(assignment);
     }
 
+    @PreAuthorize("hasAnyAuthority('DRIVER', 'DISPATCHER', 'ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<AssignmentDTOs.AssignmentResponse> update(
             @PathVariable Long id,
@@ -48,6 +52,7 @@ public class AssigmentController {
         return ResponseEntity.ok(updatedAssignment);
     }
 
+    @PreAuthorize("hasAnyAuthority('DRIVER', 'DISPATCHER', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         assignmentService.deleteAssignment(id);

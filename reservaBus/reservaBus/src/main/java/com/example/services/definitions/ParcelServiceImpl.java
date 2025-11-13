@@ -24,7 +24,7 @@ public class ParcelServiceImpl implements ParcelService {
     private final ParcelMapper mapper;
     private final StopRepository stopRepo;
 
-    @Override 
+    @Override
     public ParcelDTOs.ParcelResponse createParcel(ParcelDTOs.CreateParcelRequest req) {
 
         Stop fromStop = stopRepo.findById(req.fromStopId())
@@ -40,12 +40,12 @@ public class ParcelServiceImpl implements ParcelService {
                 .fromStop(fromStop)
                 .toStop(toStop)
                 .build();
-        parcel.setDeliveryOtp(OtpUtil.generateBase32Otp(16));
+        parcel.setDeliveryOtp(OtpUtil.generateBase32Otp(6));
         return mapper.toResponse(repo.save(parcel));
     }
 
     @Override
-    @Transactional(readOnly = true) 
+    @Transactional(readOnly = true)
     public ParcelDTOs.ParcelResponse getParcelById(Long id) {
         return repo.findById(id).map(mapper::toResponse)
                 .orElseThrow(() -> new NotFoundException("Parcel %d not found".formatted(id)));
@@ -57,14 +57,14 @@ public class ParcelServiceImpl implements ParcelService {
                 .orElseThrow(() -> new NotFoundException("Parcel %d not found".formatted(id)));
         repo.delete(parcel);
     }
-    
+
     @Override
     public ParcelDTOs.ParcelResponse updateParcel(Long id, ParcelDTOs.UpdateParcelRequest req) {
-        if (req.fromStopId()!=null) {
+        if (req.fromStopId() != null) {
             stopRepo.findById(req.fromStopId())
                     .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId())));
         }
-        if (req.toStopId()!=null) {
+        if (req.toStopId() != null) {
             stopRepo.findById(req.toStopId())
                     .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId())));
         }
@@ -73,7 +73,7 @@ public class ParcelServiceImpl implements ParcelService {
         }
         var parcel = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Parcel %d not found".formatted(id)));
-        mapper.patch( parcel, req);
+        mapper.patch(parcel, req);
         return mapper.toResponse(repo.save(parcel));
     }
 }

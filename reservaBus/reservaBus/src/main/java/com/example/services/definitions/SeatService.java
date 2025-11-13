@@ -14,4 +14,6 @@ public interface SeatService {
     void deleteSeat(Long id);
 
     List<SeatDTOs.SeatResponse> getSeatsByBusId(Long busId);
+
+    List<SeatDTOs.SeatReponseFull> getFullSeatsByBusIdAndTripId(Long busId, Long tripId);
 }

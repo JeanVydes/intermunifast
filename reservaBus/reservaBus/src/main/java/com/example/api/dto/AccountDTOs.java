@@ -1,6 +1,7 @@
 package com.example.api.dto;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 import com.example.domain.enums.AccountRole;
 import com.example.domain.enums.AccountStatus;
@@ -14,10 +15,10 @@ public class AccountDTOs {
     ) implements Serializable {}
 
     public record UpdateAccountRequest(
-            String name,
-            String email,
-            String phone,
-            String password,
+            Optional<String> name,
+            Optional<String> email,
+            Optional<String> phone,
+            Optional<String> password,
 
             // Restricted to admins
             AccountRole role,

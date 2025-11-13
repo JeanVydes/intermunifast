@@ -14,8 +14,6 @@ public interface TripService {
 
     TripDTOs.TripResponse getTripById(Long id);
 
-    TripDTOs.TripResponse getTripByIdAndFilters(Long id, String routeId, String status);
-
     TripDTOs.TripResponse updateTrip(Long id, TripDTOs.UpdateTripRequest req);
 
     void deleteTrip(Long id);

@@ -11,18 +11,17 @@ import com.example.domain.entities.Assignment;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
-    @Query("SELECT a FROM Assignment a JOIN a.trip t WHERE a.driverId = :driverId AND t.date = :date")
+    @Query("SELECT a FROM Assignment a JOIN a.trip t WHERE a.driver.id = :driverId AND t.date = :date")
     List<Assignment> findAssignmentsByDriverAndDate(@Param("driverId") Long driverId, @Param("date") LocalDate date);
 
-    List<Assignment> findByTripId(Long tripId);
+    List<Assignment> findByTrip_Id(Long tripId);
 
-    List<Assignment> findByDriverId(Long driverId);
+    // Spring Data JPA automáticamente entiende la relación driver.id
+    List<Assignment> findByDriver_Id(Long driverId);
 
-    List<Assignment> findByDispatcherId(Long dispatcherId);
+    // Spring Data JPA automáticamente entiende la relación dispatcher.id
+    List<Assignment> findByDispatcher_Id(Long dispatcherId);
 
-    List<Assignment> findByTripIdAndChecklistOkTrue(Long tripId);
-
-    @Query("SELECT a FROM Assignment a JOIN a.trip t WHERE t.busId = :busId AND t.status = 'SCHEDULED'")
-    List<Assignment> findPendingAssignmentsByBus(@Param("busId") Long busId);
+    List<Assignment> findByTrip_IdAndChecklistOkTrue(Long tripId);
 
 }

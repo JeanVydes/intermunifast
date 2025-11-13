@@ -8,5 +8,5 @@ import com.example.domain.entities.Stop;
 
 public interface StopRepository extends JpaRepository<Stop, Long> {
 
-    List<Stop> findByRouteIdOrderByOrderAsc(Long routeId);
+    List<Stop> findByRoute_IdOrderBySequenceAsc(Long routeId);
 }

@@ -11,21 +11,29 @@ import com.example.domain.enums.TicketStatus;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
-    List<Ticket> findByTripIdAndStatus(Long tripId, TicketStatus status);
+    List<Ticket> findByTrip_IdAndStatus(Long tripId, TicketStatus status);
 
-    List<Ticket> findByAccountId(Long accountId);
+    List<Ticket> findByAccount_Id(Long accountId);
 
     List<Ticket> findBySeatNumber(String seatNumber);
 
-    List<Ticket> findByAccountIdAndSeatNumber(Long accountId, String seatNumber);
+    List<Ticket> findByAccount_IdAndSeatNumber(Long accountId, String seatNumber);
 
     Ticket findByQrCode(String qrCode);
 
     List<Ticket> findByStatusIn(List<TicketStatus> statuses);
 
-    List<Ticket> findByFromStopIdAndToStopIdAndStatus(Long fromStopId, Long toStopId, TicketStatus status);
+    List<Ticket> findByFromStop_IdAndToStop_IdAndStatus(Long fromStopId, Long toStopId, TicketStatus status);
 
-    @Query("SELECT DISTINCT t.paymentMethod FROM Ticket t WHERE t.tripId = :tripId")
+    @Query("SELECT DISTINCT t.paymentMethod FROM Ticket t WHERE t.trip.id = :tripId")
     List<String> findPaymentMethodsUsedInTrip(@Param("tripId") Long tripId);
 
+    @Query("SELECT t FROM Ticket t WHERE t.seatNumber IN :seatNumbers AND t.trip.id = :tripId")
+    List<Ticket> findTicketsByListOfSeatNumbersFilteredByTripId(List<String> seatNumbers, Long tripId);
+
+    Ticket findByTrip_IdAndSeatNumber(Long tripId, String seatNumber);
+
+    @Query("SELECT t FROM Ticket t WHERE t.trip.id = :tripId AND t.seatNumber = :seatNumber AND t.fromStop.id = :fromStopId AND t.toStop.id = :toStopId")
+    Ticket findByTripIdAndSeatNumberAndFromStopIdAndToStopId(Long tripId, String seatNumber, Long fromStopId,
+            Long toStopId);
 }
