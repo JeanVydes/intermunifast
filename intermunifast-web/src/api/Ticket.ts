@@ -29,6 +29,12 @@ export const TicketAPI = {
         requireAuth: true,
     }),
 
+    getByAccountId: createEndpoint<TicketResponse[], number>({
+        url: '/api/tickets?accountId={accountId}',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
     /**
      * Update ticket
      */

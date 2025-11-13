@@ -5,6 +5,7 @@ import Home from './pages/Home/index.jsx';
 import { NotFound } from './pages/_404.jsx';
 import './style.css';
 import { AuthContextProvider } from './providers/AuthContextProvider.js';
+import Account from './pages/Account/index.js';
 
 export function App() {
 	return (
@@ -12,6 +13,7 @@ export function App() {
 			<AuthContextProvider>
 				<Router>
 					<Route path="/" component={Home} />
+					<Route path="/account" component={Account} />
 					<Route default component={NotFound} />
 				</Router>
 			</AuthContextProvider>

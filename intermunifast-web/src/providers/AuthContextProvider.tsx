@@ -2,6 +2,7 @@ import { useEffect } from "preact/hooks";
 import useAuthStore from "../stores/AuthStore";
 import useAccountStore from "../stores/AccountStore";
 import { AccountAPI } from "../api";
+import { AccountResponse, AccountRole, AccountStatus } from "../api/types/Account";
 
 export const ACCOUNT_FETCHING_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
@@ -18,6 +19,20 @@ export function AuthContextProvider({ children }: { children: preact.ComponentCh
                     setAccount(response.data);
                     setLastUpdated(Date.now());
                 }
+            } else {
+
+                let acc: AccountResponse = {
+                    id: 1,
+                    name: "John Doe",
+                    email: "john.doe@example.com",
+                    phone: "123-456-7890",
+                    role: "USER",
+                    status: "ACTIVE"
+                };
+
+                setAccountId(1);
+                setAccount(acc);
+                setLastUpdated(Date.now());
             }
         }
 
