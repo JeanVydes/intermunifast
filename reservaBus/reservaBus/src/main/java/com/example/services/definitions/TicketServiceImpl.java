@@ -186,13 +186,13 @@ public class TicketServiceImpl implements TicketService {
         }
 
         Trip trip = ticket.getTrip();
-        if (trip.getDate().isBefore(LocalDateTime.now())) {
+        if (trip.getDepartureAt().isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("Cannot cancel ticket for past trips");
         }
 
         // cannot cancel ticket 5 minutes before trip
-        if (trip.getDate().isBefore(LocalDateTime.now().minusMinutes(5))) {
-            throw new IllegalStateException("Cannot cancel ticket 5 minutes before trip");
+        if (trip.getDepartureAt().isBefore(LocalDateTime.now().plusMinutes(5))) {
+            throw new IllegalStateException("Cannot cancel ticket within 5 minutes of departure");
         }
 
         ticket.setStatus(TicketStatus.CANCELLED);
