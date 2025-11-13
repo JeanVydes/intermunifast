@@ -12,7 +12,7 @@ import com.example.domain.enums.SeatHoldStatus;
 public interface SeatHoldRepository extends JpaRepository<SeatHold, Long> {
     List<SeatHold> findByTripIdAndStatus(Long tripId, SeatHoldStatus status);
 
-    Optional<SeatHold> findByTripIdAndSeatNumber(Long tripId, int seatNumber);
+    Optional<SeatHold> findByTripIdAndSeatNumber(Long tripId, String seatNumber);
 
     List<SeatHold> findByUserId(Long userId);
 

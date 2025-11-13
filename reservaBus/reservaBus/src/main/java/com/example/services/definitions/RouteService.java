@@ -15,4 +15,8 @@ public interface RouteService {
     void deleteRoute(Long id);
 
     List<StopDTOs.StopResponse> getStopsByRouteId(Long id);
+
+    List<RouteDTOs.RouteResponse> findByOrigin(String origin);
+    List<RouteDTOs.RouteResponse> findByDestination(String destination);
+    List<RouteDTOs.RouteResponse> findByOriginAndDestination(String origin, String destination);
 }
