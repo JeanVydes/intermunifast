@@ -59,7 +59,7 @@ public class RouteServiceImpl implements RouteService {
     public List<StopDTOs.StopResponse> getStopsByRouteId(Long id) {
         Route route = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(id)));
-        return stopRepo.findByRouteIdOrderByOrderAsc(route.getId()).stream()
+        return stopRepo.findByRoute_IdOrderBySequenceAsc(route.getId()).stream()
                 .map(stopMapper::toResponse)
                 .toList();
     }

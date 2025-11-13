@@ -14,7 +14,11 @@ public interface TripService {
 
     TripDTOs.TripResponse getTripById(Long id);
 
-    TripDTOs.TripResponse getTripByIdAndFilters(Long id, String routeId, String status);
+    // NOTA: Método comentado porque TripRepository no tiene findByIdAndFilters
+    // Para implementar esto, necesitas crear un query personalizado en
+    // TripRepository
+    // TripDTOs.TripResponse getTripByIdAndFilters(Long id, String routeId, String
+    // status);
 
     TripDTOs.TripResponse updateTrip(Long id, TripDTOs.UpdateTripRequest req);
 

@@ -62,6 +62,6 @@ public class Route extends TimestampedEntity {
     @Builder.Default
     private List<Trip> trips = new ArrayList<>();
 
-    @OneToOne
+    @OneToOne(mappedBy = "route")
     private FareRule fareRule;
 }

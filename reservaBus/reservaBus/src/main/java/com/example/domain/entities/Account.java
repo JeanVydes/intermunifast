@@ -60,7 +60,7 @@ public class Account extends TimestampedEntity implements UserDetails {
     @Builder.Default
     private List<SeatHold> seatHolds = new ArrayList<>();
 
-    @OneToMany(mappedBy = "passenger")
+    @OneToMany(mappedBy = "account")
     @Builder.Default
     private List<Ticket> tickets = new ArrayList<>();
 

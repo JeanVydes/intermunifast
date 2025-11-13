@@ -11,14 +11,17 @@ import com.example.domain.enums.BusStatus;
 public interface BusRepository extends JpaRepository<Bus, Long> {
     Optional<Bus> findByPlate(String plate);
 
-    List<Bus> findByType(String type);
+    // NOTE: Bus doesn't have 'type' field, commented out
+    // List<Bus> findByType(String type);
 
     List<Bus> findByCapacityGreaterThanEqual(int capacity);
 
     List<Bus> findByStatus(BusStatus status);
 
-    List<Bus> findByAssignedFalse();
+    // NOTE: Bus doesn't have 'assigned' field either, commented out
+    // List<Bus> findByAssignedFalse();
 
-    List<Bus> findByCurrentTripId(Long tripId);
+    // NOTE: Bus doesn't have 'currentTripId' field, commented out
+    // List<Bus> findByCurrentTripId(Long tripId);
 
 }

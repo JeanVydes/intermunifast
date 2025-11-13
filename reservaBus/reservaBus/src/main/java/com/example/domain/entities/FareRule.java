@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -45,5 +46,6 @@ public class FareRule extends TimestampedEntity {
     private Boolean dynamicPricing;
 
     @OneToOne
+    @JoinColumn(name = "route_id")
     private Route route;
 }

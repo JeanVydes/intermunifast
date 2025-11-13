@@ -1,10 +1,12 @@
 package com.example.domain.entities;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.example.domain.common.TimestampedEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,6 +35,9 @@ public class Trip extends TimestampedEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(nullable = false)
+    private LocalDate date;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "bus_id", nullable = false)
     private Bus bus;
@@ -53,7 +58,7 @@ public class Trip extends TimestampedEntity {
     @Builder.Default
     private List<Assignment> assignments = new ArrayList<>();
 
-    @Transient 
+    @Transient
     private List<Incident> incidents;
 
 }

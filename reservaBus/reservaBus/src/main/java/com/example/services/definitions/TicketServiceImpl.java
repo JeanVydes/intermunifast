@@ -193,11 +193,11 @@ public class TicketServiceImpl implements TicketService {
             return tickets.stream().map(mapper::toResponse).toList();
         }
         if (accountId != null && seatNumber == null) {
-            var tickets = repo.findByAccountId(accountId);
+            var tickets = repo.findByAccount_Id(accountId);
             return tickets.stream().map(mapper::toResponse).toList();
         }
         if (accountId != null && seatNumber != null) {
-            var tickets = repo.findByAccountIdAndSeatNumber(accountId, seatNumber);
+            var tickets = repo.findByAccount_IdAndSeatNumber(accountId, seatNumber);
             return tickets.stream().map(mapper::toResponse).toList();
         }
         return List.of();
@@ -208,7 +208,7 @@ public class TicketServiceImpl implements TicketService {
     public List<BaggageDTOs.BaggageResponse> getBaggagesByTicketId(Long id) {
         var ticket = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
-        return baggageRepo.findByTicketId(ticket.getId()).stream()
+        return baggageRepo.findByTicket_Id(ticket.getId()).stream()
                 .map(baggageMapper::toResponse)
                 .toList();
     }
