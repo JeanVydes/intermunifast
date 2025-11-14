@@ -31,6 +31,15 @@ export const SeatAPI = {
     }),
 
     /**
+     * Get all seats for a bus
+     */
+    getByBusId: createEndpoint<SeatResponse[]>({
+        url: '/api/seats/bus/{busId}',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
      * Update seat
      */
     update: createEndpoint<SeatResponse, UpdateSeatRequest>({

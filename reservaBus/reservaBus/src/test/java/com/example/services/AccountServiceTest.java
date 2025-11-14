@@ -72,7 +72,7 @@ class AccountServiceTest {
                 "New User",
                 "newuser@example.com",
                 "1234567890",
-                "password123");
+                "password123", false);
     }
 
     @Test

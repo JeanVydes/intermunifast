@@ -23,6 +23,12 @@ export const BusAPI = {
         requireAuth: true,
     }),
 
+    getAll: createEndpoint<BusResponse[]>({
+        url: '/api/buses/all',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
     /**
      * Update bus
      */

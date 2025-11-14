@@ -6,7 +6,11 @@ import java.util.Optional;
 import com.example.domain.enums.BusStatus;
 
 public class BusDTOs {
-    public record CreateBusRequest(String plate, Integer capacity, List<AmenityDTOs.AmenityResponse> amenities)
+    public record CreateBusRequest(
+        String plate,
+        Integer capacity,
+        List<AmenityDTOs.CreateAmenityRequest> amenities
+)
             implements java.io.Serializable {
     }
 

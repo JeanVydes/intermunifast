@@ -1,5 +1,7 @@
 package com.example.services.definitions;
 
+import java.util.List;
+
 import com.example.api.dto.BusDTOs;
 
 public interface BusService {
@@ -10,4 +12,6 @@ public interface BusService {
     BusDTOs.BusResponse updateBus(Long id, BusDTOs.UpdateBusRequest req);
 
     void deleteBus(Long id);
+
+    List<BusDTOs.BusResponse> getAll();
 }

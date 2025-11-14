@@ -4,7 +4,7 @@
 export type PaymentMethod = 'CASH' | 'CARD' | 'DIGITAL_WALLET' | 'BANK_TRANSFER';
 
 // Seat Type Enum
-export type SeatType = 'STANDARD' | 'VIP' | 'SEMI_BED' | 'BED';
+export type SeatType = 'STANDARD' | 'PREFERENTIAL';
 
 // Trip Types - Based on TripDTOs.java
 export interface TripResponse {

@@ -6,6 +6,11 @@ import { NotFound } from './pages/_404.jsx';
 import './style.css';
 import { AuthContextProvider } from './providers/AuthContextProvider.js';
 import Account from './pages/Account/index.js';
+import DashboardHome from './pages/Dashboard/index.js';
+import BusesPage from './pages/Dashboard/Buses.js';
+import TripsPage from './pages/Dashboard/Trips.js';
+import RoutesPage from './pages/Dashboard/Routes.js';
+import { SignIn, SignUp } from './pages/Auth/index.js';
 
 export function App() {
 	return (
@@ -13,7 +18,13 @@ export function App() {
 			<AuthContextProvider>
 				<Router>
 					<Route path="/" component={Home} />
+					<Route path="/auth/signin" component={SignIn} />
+					<Route path="/auth/signup" component={SignUp} />
 					<Route path="/account" component={Account} />
+					<Route path="/dashboard" component={DashboardHome} />
+					<Route path="/dashboard/buses" component={BusesPage} />
+					<Route path="/dashboard/trips" component={TripsPage} />
+					<Route path="/dashboard/routes" component={RoutesPage} />
 					<Route default component={NotFound} />
 				</Router>
 			</AuthContextProvider>

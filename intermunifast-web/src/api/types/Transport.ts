@@ -7,6 +7,11 @@ export interface AmenityResponse {
     description: string;
 }
 
+export interface CreateAmenityRequest {
+    name: string;
+    description?: string;
+}
+
 // Bus Types - Based on BusDTOs.java
 export interface BusResponse {
     id: number;
@@ -19,7 +24,7 @@ export interface BusResponse {
 export interface CreateBusRequest {
     plate: string;
     capacity: number;
-    amenities?: AmenityResponse[];
+    amenities?: CreateAmenityRequest[];
 }
 
 export interface UpdateBusRequest {

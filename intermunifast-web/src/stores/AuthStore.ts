@@ -5,6 +5,7 @@ export interface AuthStore {
     lastUpdated: number | null;
     setToken: (token: string | null) => void;
     setLastUpdated: (timestamp: number | null) => void;
+    logout: () => void;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -12,6 +13,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     lastUpdated: null,
     setToken: (token) => set({ token, lastUpdated: Date.now() }),
     setLastUpdated: (timestamp) => set({ lastUpdated: timestamp }),
+    logout: () => set({ token: null, lastUpdated: null }),
 }));
 
 export default useAuthStore;

@@ -17,6 +17,7 @@ export interface CreateAccountRequest {
     email: string;
     phone: string;
     password: string;
+    isAdmin?: boolean;
 }
 
 export interface UpdateAccountRequest {

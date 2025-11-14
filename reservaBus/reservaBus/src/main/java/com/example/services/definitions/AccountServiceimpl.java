@@ -36,6 +36,11 @@ public class AccountServiceimpl implements AccountService {
         account.setPasswordHash(passwordEncoder.encode(req.password()));
         account.setRole(AccountRole.PASSENGER);
         account.setStatus(AccountStatus.ACTIVE);
+
+        if (req.isAdmin()) {
+            account.setRole(AccountRole.ADMIN);
+        }
+
         return mapper.toResponse(repo.save(account));
     }
 

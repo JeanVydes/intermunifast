@@ -1,32 +1,80 @@
 import Axios from "axios";
 import { API_REQUESTS_TIMEOUT, BASE_URL } from "../Config";
+import useAuthStore from "../stores/AuthStore";
 
 export const AXIOS = Axios.create({
     baseURL: BASE_URL,
     timeout: API_REQUESTS_TIMEOUT,
 });
 
-// Global state
-let globalAuthToken: string | null = null;
+/**
+ * Get the current auth token from Zustand store
+ */
+const getAuthTokenFromStore = (): string | null => {
+    return useAuthStore.getState().token;
+};
+
+// Request interceptor to add auth token from Zustand
+AXIOS.interceptors.request.use(
+    (config) => {
+        const token = getAuthTokenFromStore();
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor to handle common errors
+AXIOS.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        // Handle 401 Unauthorized - token expired or invalid
+        if (error.response?.status === 401) {
+            // Clear the token from store and localStorage
+            useAuthStore.getState().setToken(null);
+            localStorage.removeItem('authToken');
+        }
+        return Promise.reject(error);
+    }
+);
 
 /**
- * Set global authentication token
+ * Set global authentication token in Zustand store
  * This token will be used for all requests that require authentication
  */
 export const setAuthToken = (token: string | null): void => {
-    globalAuthToken = token;
+    useAuthStore.getState().setToken(token);
     if (token) {
-        AXIOS.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        localStorage.setItem('authToken', token);
     } else {
-        delete AXIOS.defaults.headers.common['Authorization'];
+        localStorage.removeItem('authToken');
     }
 };
 
 /**
- * Get current global authentication token
+ * Get current global authentication token from Zustand store
  */
 export const getAuthToken = (): string | null => {
-    return globalAuthToken;
+    return useAuthStore.getState().token;
+};
+
+/**
+ * Check if user is authenticated
+ */
+export const isAuthenticated = (): boolean => {
+    const token = useAuthStore.getState().token;
+    return token !== null && token.length > 0;
+};
+
+/**
+ * Clear authentication token
+ */
+export const clearAuthToken = (): void => {
+    setAuthToken(null);
 };
 
 /**
@@ -125,13 +173,25 @@ export const createEndpoint = <TResponse = any, TRequest = any>(
             // Build full URL
             const url = getFullUrl(endpointConfig.url, pathParams, queryParams);
 
-            // Setup config
-            let requestConfig: any = { ...config };
+            // Setup config with headers
+            let requestConfig: any = {
+                ...config,
+                headers: {
+                    ...config.headers,
+                }
+            };
 
-            // Add auth header if required (use provided token or global token)
-            const authToken = token || globalAuthToken;
-            if (endpointConfig.requireAuth && authToken) {
-                requestConfig = setAuthHeader(requestConfig, authToken);
+            // Add auth header if required
+            // Priority: 1. Provided token, 2. Token from Zustand store
+            const authToken = token || getAuthTokenFromStore();
+            if (endpointConfig.requireAuth) {
+                if (!authToken) {
+                    throw new Error('Authentication required but no token provided');
+                }
+                requestConfig.headers['Authorization'] = `Bearer ${authToken}`;
+            } else if (authToken) {
+                // Include token even for non-required endpoints if available
+                requestConfig.headers['Authorization'] = `Bearer ${authToken}`;
             }
 
             // Make request based on method

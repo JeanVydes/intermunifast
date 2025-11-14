@@ -6,7 +6,15 @@
  */
 
 // Core API
-export { createEndpoint, setAuthToken, setBaseURL, getAuthToken } from './API';
+export {
+    createEndpoint,
+    setAuthToken,
+    setBaseURL,
+    getAuthToken,
+    isAuthenticated,
+    clearAuthToken,
+    AXIOS
+} from './API';
 export type {
     HttpMethod,
     PathParams,

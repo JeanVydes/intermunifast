@@ -1,5 +1,6 @@
 package com.example.services.watchers;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,9 @@ public class TripWatcher {
     @Scheduled(fixedRate = 60000) // every minute
     @Transactional
     public void tripMainWorker() {
-        List<Trip> startingTrips = tripRepository.findStartingTripsInNextMinutes(60);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime futureTime = now.plusMinutes(60);
+        List<Trip> startingTrips = tripRepository.findStartingTripsInNextMinutes(now, futureTime);
 
         for (Trip trip : startingTrips) {
             if (trip.getDepartureAt().isBefore(java.time.LocalDateTime.now().plusMinutes(5))) {

@@ -1,9 +1,12 @@
 package com.example.services.definitions;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.api.dto.BusDTOs;
+import com.example.domain.enums.BusStatus;
 import com.example.domain.repositories.BusRepository;
 import com.example.exceptions.NotFoundException;
 import com.example.services.mappers.BusMapper;
@@ -22,6 +25,7 @@ public class BusServiceImpl implements BusService {
     @Override
     public BusDTOs.BusResponse createBus(BusDTOs.CreateBusRequest req) {
         var bus = mapper.toEntity(req);
+        bus.setStatus(BusStatus.INACTIVE);
         return mapper.toResponse(repo.save(bus));
     }
 
@@ -51,4 +55,13 @@ public class BusServiceImpl implements BusService {
         return mapper.toResponse(repo.save(bus));
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BusDTOs.BusResponse> getAll() {
+        var buses = repo.findAll();
+        return buses.stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
 }
