@@ -19,4 +19,6 @@ public interface RouteService {
     List<RouteDTOs.RouteResponse> findByOrigin(String origin);
     List<RouteDTOs.RouteResponse> findByDestination(String destination);
     List<RouteDTOs.RouteResponse> findByOriginAndDestination(String origin, String destination);
+
+    List<RouteDTOs.RouteResponse> getAllRoutes();
 }

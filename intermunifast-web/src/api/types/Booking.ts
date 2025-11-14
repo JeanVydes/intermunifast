@@ -11,16 +11,22 @@ export interface TripResponse {
     id: number;
     routeId: number;
     busId: number;
+    departureAt?: string; // ISO 8601 datetime string
+    arrivalAt?: string;   // ISO 8601 datetime string
 }
 
 export interface CreateTripRequest {
     routeId: number;
     busId: number;
+    departureAt: string; // ISO 8601 datetime string (LocalDateTime)
+    arrivalAt: string;   // ISO 8601 datetime string (LocalDateTime)
 }
 
 export interface UpdateTripRequest {
     routeId?: number;
     busId?: number;
+    departureAt?: string; // ISO 8601 datetime string
+    arrivalAt?: string;   // ISO 8601 datetime string
 }
 
 // Query params for Trip

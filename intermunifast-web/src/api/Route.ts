@@ -29,6 +29,15 @@ export const RouteAPI = {
     }),
 
     /**
+     * Get all routes
+     */
+    getAll: createEndpoint<RouteResponse[]>({
+        url: '/api/routes/all',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
      * Update route
      */
     update: createEndpoint<RouteResponse, UpdateRouteRequest>({

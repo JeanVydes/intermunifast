@@ -53,6 +53,19 @@ public class TripController {
         return ResponseEntity.ok(trip);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<TripDTOs.TripResponse>> getAll() {
+        List<TripDTOs.TripResponse> trips = tripService.getAllTrips();
+        return ResponseEntity.ok(trips);
+    }
+
+    @GetMapping("/byRoute/{routeId}")
+    public ResponseEntity<List<TripDTOs.TripResponse>> getByRouteId(@PathVariable Long routeId,
+            @RequestParam(required = false) String status) {
+        List<TripDTOs.TripResponse> trips = tripService.getTripsByRouteId(routeId);
+        return ResponseEntity.ok(trips);
+    }
+
     @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<TripDTOs.TripResponse> update(

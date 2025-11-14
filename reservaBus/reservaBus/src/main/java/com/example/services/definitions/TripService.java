@@ -25,4 +25,8 @@ public interface TripService {
     List<AssignmentDTOs.AssignmentResponse> getAssignmentsByTripId(Long id);
 
     List<IncidentDTOs.IncidentResponse> getIncidentsByTripId(Long id);
+
+    List<TripDTOs.TripResponse> getTripsByRouteId(Long routeId);
+
+    List<TripDTOs.TripResponse> getAllTrips();
 }

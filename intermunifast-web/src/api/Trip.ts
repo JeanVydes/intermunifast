@@ -32,6 +32,24 @@ export const TripAPI = {
     }),
 
     /**
+     * Get all trips
+     */
+    getAll: createEndpoint<TripResponse[]>({
+        url: '/api/trips/all',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
+     * Get trips by route ID
+     */
+    getByRouteId: createEndpoint<TripResponse[]>({
+        url: '/api/trips/byRoute/{routeId}',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
      * Update trip
      */
     update: createEndpoint<TripResponse, UpdateTripRequest>({

@@ -1,6 +1,6 @@
 package com.example.domain.repositories;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,8 +11,9 @@ import com.example.domain.entities.Assignment;
 
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
-    @Query("SELECT a FROM Assignment a JOIN a.trip t WHERE a.driver.id = :driverId AND t.date = :date")
-    List<Assignment> findAssignmentsByDriverAndDate(@Param("driverId") Long driverId, @Param("date") LocalDate date);
+    @Query("SELECT a FROM Assignment a JOIN a.trip t WHERE a.driver.id = :driverId AND DATE(t.departureAt) = DATE(:departureDate)")
+    List<Assignment> findAssignmentsByDriverAndDate(@Param("driverId") Long driverId,
+            @Param("departureDate") LocalDateTime departureDate);
 
     List<Assignment> findByTrip_Id(Long tripId);
 

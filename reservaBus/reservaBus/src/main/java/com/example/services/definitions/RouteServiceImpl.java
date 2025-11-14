@@ -99,4 +99,13 @@ public class RouteServiceImpl implements RouteService {
                 .map(mapper::toResponse)
                 .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RouteDTOs.RouteResponse> getAllRoutes() {
+        var routes = repo.findAll();
+        return routes.stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
 }

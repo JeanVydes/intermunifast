@@ -152,8 +152,8 @@ class AccountServiceTest {
                 Optional.of("test@example.com"),
                 Optional.of("9876543210"),
                 Optional.empty(),
-                AccountRole.PASSENGER,
-                AccountStatus.ACTIVE);
+                Optional.of(AccountRole.PASSENGER),
+                Optional.of(AccountStatus.ACTIVE));
 
         when(authenticationService.getCurrentAccount()).thenReturn(testAccount);
         when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));

@@ -45,6 +45,12 @@ public class RouteController {
         return ResponseEntity.ok(route);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<Iterable<RouteDTOs.RouteResponse>> getAll() {
+        Iterable<RouteDTOs.RouteResponse> routes = routeService.getAllRoutes();
+        return ResponseEntity.ok(routes);
+    }
+
     @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<RouteDTOs.RouteResponse> update(

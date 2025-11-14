@@ -43,6 +43,7 @@ export interface RouteResponse {
     destination: string;
     durationMinutes: number;
     distanceKm: number;
+    pricePerKm: number;
 }
 
 export interface CreateRouteRequest {
@@ -52,6 +53,7 @@ export interface CreateRouteRequest {
     destination: string;
     durationMinutes: number;
     distanceKm: number;
+    pricePerKm: number;
 }
 
 export interface UpdateRouteRequest {
@@ -61,6 +63,7 @@ export interface UpdateRouteRequest {
     destination?: string;
     durationMinutes?: number;
     distanceKm?: number;
+    pricePerKm?: number;
 }
 
 // Stop Types - Based on StopDTOs.java

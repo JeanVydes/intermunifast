@@ -38,9 +38,6 @@ public class Trip extends TimestampedEntity {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDate date;
-
-    @Column(nullable = false)
     private LocalDateTime departureAt;
 
     @Column(nullable = false)

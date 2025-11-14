@@ -1,86 +1,111 @@
 import { FunctionComponent } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
-import { Plus, Search, Edit, Trash2, MapPin, Clock, DollarSign } from 'lucide-preact';
-
-interface Stop {
-    id: number;
-    name: string;
-    city: string;
-    arrivalTime?: string;
-    departureTime?: string;
-    order: number;
-}
-
-interface Route {
-    id: number;
-    name: string;
-    origin: string;
-    destination: string;
-    distance: number;
-    duration: string;
-    basePrice: number;
-    stops: Stop[];
-    status: 'active' | 'inactive';
-}
+import { Plus, Search, Edit, Trash2, MapPin, Clock, DollarSign, Navigation } from 'lucide-preact';
+import { RouteAPI, RouteResponse, StopAPI, StopResponse } from '../../api';
+import useAccountStore from '../../stores/AccountStore';
+import useRouteStore from '../../stores/RouteStore';
 
 export const RoutesPage: FunctionComponent = () => {
+    const { accountId, account } = useAccountStore();
+    const { routes, setRoutes, addRoute, updateRoute, removeRoute, lastUpdated, isLoading, setLoading } = useRouteStore();
+
+    if (!accountId || !account) {
+        return (
+            <DashboardLayout>
+                <div className="p-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
+                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    if (account.role !== 'ADMIN') {
+        return (
+            <DashboardLayout>
+                <div className="p-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
+                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     const [showModal, setShowModal] = useState(false);
-    const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
-    const [showStopsEditor, setShowStopsEditor] = useState(false);
+    const [selectedRoute, setSelectedRoute] = useState<RouteResponse | null>(null);
+    const [showStopEditor, setShowStopEditor] = useState(false);
 
-    // Mock data
-    const routes: Route[] = [
-        {
-            id: 1,
-            name: 'Guatemala City - Quetzaltenango',
-            origin: 'Guatemala City',
-            destination: 'Quetzaltenango',
-            distance: 206,
-            duration: '4h 30m',
-            basePrice: 75,
-            status: 'active',
-            stops: [
-                { id: 1, name: 'Terminal Central', city: 'Guatemala City', departureTime: '08:00', order: 1 },
-                { id: 2, name: 'Los Encuentros', city: 'Sololá', arrivalTime: '10:30', departureTime: '10:45', order: 2 },
-                { id: 3, name: 'Terminal Minerva', city: 'Quetzaltenango', arrivalTime: '12:30', order: 3 },
-            ]
-        },
-        {
-            id: 2,
-            name: 'Antigua - Panajachel',
-            origin: 'Antigua Guatemala',
-            destination: 'Panajachel',
-            distance: 95,
-            duration: '2h 15m',
-            basePrice: 45,
-            status: 'active',
-            stops: [
-                { id: 4, name: 'Parque Central', city: 'Antigua', departureTime: '09:00', order: 1 },
-                { id: 5, name: 'Chimaltenango Terminal', city: 'Chimaltenango', arrivalTime: '09:45', departureTime: '10:00', order: 2 },
-                { id: 6, name: 'Panajachel Centro', city: 'Panajachel', arrivalTime: '11:15', order: 3 },
-            ]
-        },
-    ];
+    async function createRoute(routeData: any) {
+        try {
+            const response = await RouteAPI.create({
+                code: routeData.code,
+                name: routeData.name,
+                origin: routeData.origin,
+                destination: routeData.destination,
+                durationMinutes: routeData.durationMinutes,
+                distanceKm: routeData.distanceKm,
+                pricePerKm: routeData.pricePerKm
+            });
 
-    const handleEditRoute = (route: Route) => {
+            addRoute(response.data);
+        } catch (error) {
+            console.error('Failed to create route:', error);
+            throw error;
+        }
+    }
+
+    const handleEditRoute = (route: RouteResponse) => {
         setSelectedRoute(route);
         setShowModal(true);
     };
 
-    const handleManageStops = (route: Route) => {
+    const handleManageStops = (route: RouteResponse) => {
         setSelectedRoute(route);
-        setShowStopsEditor(true);
+        setShowStopEditor(true);
     };
 
-    return (
+    const handleDeleteRoute = async (routeId: number) => {
+        if (!confirm('Are you sure you want to delete this route?')) return;
+
+        try {
+            await RouteAPI.delete(undefined, {
+                pathParams: { id: routeId }
+            });
+            removeRoute(routeId);
+        } catch (error) {
+            console.error('Failed to delete route:', error);
+        }
+    };
+
+    useEffect(() => {
+        const fetchRoutes = async () => {
+            // Only fetch if routes are empty or data is stale (older than 5 minutes)
+            const fiveMinutes = 5 * 60 * 1000;
+            const isStale = !lastUpdated || (Date.now() - lastUpdated) > fiveMinutes;
+
+            if (routes.length === 0 || isStale) {
+                try {
+                    setLoading(true);
+                    const response = await RouteAPI.getAll();
+                    setRoutes(response.data);
+                } catch (error) {
+                    console.error('Failed to fetch routes:', error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchRoutes();
+    }, []); return (
         <DashboardLayout>
             <div className="p-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Route Management</h1>
-                        <p className="text-gray-600 mt-1">Manage bus routes and stops</p>
+                        <p className="text-gray-600 mt-1">Manage your bus routes and stops</p>
                     </div>
                     <button
                         onClick={() => {
@@ -94,79 +119,48 @@ export const RoutesPage: FunctionComponent = () => {
                     </button>
                 </div>
 
-                {/* Search */}
+                {/* Search and Filters */}
                 <div className="flex gap-4 mb-6">
                     <div className="flex-1 relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search routes..."
+                            placeholder="Search by route code, name, origin, or destination..."
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                         />
                     </div>
                 </div>
 
-                {/* Routes List */}
-                <div className="space-y-4">
+                {/* Routes Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {routes.map((route) => (
                         <div key={route.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                             <div className="p-6">
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="text-xl font-semibold text-gray-900">{route.name}</h3>
-                                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${route.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                                                }`}>
-                                                {route.status.charAt(0).toUpperCase() + route.status.slice(1)}
-                                            </span>
-                                        </div>
-                                        <p className="text-gray-600">{route.origin} → {route.destination}</p>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">{route.name}</h3>
+                                        <p className="text-sm text-gray-500 mt-1">Code: {route.code}</p>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-6 mb-4">
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <MapPin className="w-4 h-4" />
-                                        <div>
-                                            <p className="text-xs text-gray-500">Distance</p>
-                                            <p className="font-semibold text-gray-900">{route.distance} km</p>
+                                <div className="space-y-3 mb-4">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <Navigation className="w-4 h-4" />
+                                        <span>{route.origin} → {route.destination}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                        <div className="flex items-center gap-1">
+                                            <Clock className="w-4 h-4" />
+                                            <span>{route.durationMinutes} min</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <MapPin className="w-4 h-4" />
+                                            <span>{route.distanceKm} km</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
-                                        <Clock className="w-4 h-4" />
-                                        <div>
-                                            <p className="text-xs text-gray-500">Duration</p>
-                                            <p className="font-semibold text-gray-900">{route.duration}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-600">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-purple-700 bg-purple-50 px-3 py-1.5 rounded-lg">
                                         <DollarSign className="w-4 h-4" />
-                                        <div>
-                                            <p className="text-xs text-gray-500">Base Price</p>
-                                            <p className="font-semibold text-gray-900">${route.basePrice}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Stops Preview */}
-                                <div className="mb-4">
-                                    <p className="text-sm font-medium text-gray-700 mb-2">Stops ({route.stops.length})</p>
-                                    <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                                        {route.stops.map((stop, index) => (
-                                            <div key={stop.id} className="flex items-center gap-2">
-                                                <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg whitespace-nowrap">
-                                                    <span className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                                                        {index + 1}
-                                                    </span>
-                                                    <span className="text-sm font-medium text-gray-900">{stop.name}</span>
-                                                </div>
-                                                {index < route.stops.length - 1 && (
-                                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                        ))}
+                                        <span>${route.pricePerKm}/km = ${(route.pricePerKm * route.distanceKm).toFixed(2)} total</span>
                                     </div>
                                 </div>
 
@@ -184,7 +178,10 @@ export const RoutesPage: FunctionComponent = () => {
                                     >
                                         <Edit className="w-4 h-4" />
                                     </button>
-                                    <button className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                                    <button
+                                        onClick={() => handleDeleteRoute(route.id)}
+                                        className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                    >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -192,35 +189,85 @@ export const RoutesPage: FunctionComponent = () => {
                         </div>
                     ))}
                 </div>
+
+                {/* Modals */}
+                {showModal && (
+                    <RouteFormModal
+                        route={selectedRoute}
+                        onClose={() => {
+                            setShowModal(false);
+                            setSelectedRoute(null);
+                        }}
+                        onSave={async (routeData) => {
+                            if (selectedRoute) {
+                                // Update existing route
+                                const response = await RouteAPI.update({
+                                    code: routeData.code,
+                                    name: routeData.name,
+                                    origin: routeData.origin,
+                                    destination: routeData.destination,
+                                    durationMinutes: routeData.durationMinutes,
+                                    distanceKm: routeData.distanceKm,
+                                    pricePerKm: routeData.pricePerKm
+                                }, {
+                                    pathParams: { id: selectedRoute.id }
+                                });
+                                updateRoute(selectedRoute.id, response.data);
+                            } else {
+                                // Create new route
+                                await createRoute(routeData);
+                            }
+                            setShowModal(false);
+                            setSelectedRoute(null);
+                        }}
+                    />
+                )}
+
+                {showStopEditor && selectedRoute && (
+                    <StopEditorModal
+                        route={selectedRoute}
+                        onClose={() => {
+                            setShowStopEditor(false);
+                            setSelectedRoute(null);
+                        }}
+                    />
+                )}
             </div>
-
-            {/* Route Form Modal */}
-            {showModal && (
-                <RouteFormModal
-                    route={selectedRoute}
-                    onClose={() => {
-                        setShowModal(false);
-                        setSelectedRoute(null);
-                    }}
-                />
-            )}
-
-            {/* Stops Editor Modal */}
-            {showStopsEditor && selectedRoute && (
-                <StopsEditorModal
-                    route={selectedRoute}
-                    onClose={() => {
-                        setShowStopsEditor(false);
-                        setSelectedRoute(null);
-                    }}
-                />
-            )}
         </DashboardLayout>
     );
 };
 
-// Route Form Modal
-const RouteFormModal: FunctionComponent<{ route: Route | null; onClose: () => void }> = ({ route, onClose }) => {
+// Route Form Modal Component
+const RouteFormModal: FunctionComponent<{
+    route: RouteResponse | null;
+    onClose: () => void;
+    onSave: (routeData: any) => Promise<void>;
+}> = ({ route, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+        code: route?.code || '',
+        name: route?.name || '',
+        origin: route?.origin || '',
+        destination: route?.destination || '',
+        durationMinutes: route?.durationMinutes || 60,
+        distanceKm: route?.distanceKm || 0,
+        pricePerKm: route?.pricePerKm || 0
+    });
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: Event) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            await onSave(formData);
+            onClose();
+        } catch (error) {
+            console.error('Failed to save route:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -231,40 +278,61 @@ const RouteFormModal: FunctionComponent<{ route: Route | null; onClose: () => vo
                 </div>
 
                 <div className="p-6">
-                    <form className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Route Name
-                            </label>
-                            <input
-                                type="text"
-                                defaultValue={route?.name}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                placeholder="Guatemala City - Quetzaltenango"
-                            />
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Route Code *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.code}
+                                    onChange={(e) => setFormData({ ...formData, code: (e.target as HTMLInputElement).value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="R-001"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Route Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="Express Route"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Origin
+                                    Origin *
                                 </label>
                                 <input
                                     type="text"
-                                    defaultValue={route?.origin}
+                                    value={formData.origin}
+                                    onChange={(e) => setFormData({ ...formData, origin: (e.target as HTMLInputElement).value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="Guatemala City"
+                                    placeholder="City A"
+                                    required
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Destination
+                                    Destination *
                                 </label>
                                 <input
                                     type="text"
-                                    defaultValue={route?.destination}
+                                    value={formData.destination}
+                                    onChange={(e) => setFormData({ ...formData, destination: (e.target as HTMLInputElement).value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="Quetzaltenango"
+                                    placeholder="City B"
+                                    required
                                 />
                             </div>
                         </div>
@@ -272,85 +340,137 @@ const RouteFormModal: FunctionComponent<{ route: Route | null; onClose: () => vo
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Distance (km)
+                                    Duration (minutes) *
                                 </label>
                                 <input
                                     type="number"
-                                    defaultValue={route?.distance}
+                                    value={formData.durationMinutes}
+                                    onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt((e.target as HTMLInputElement).value) || 0 })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="206"
+                                    placeholder="60"
+                                    min="1"
+                                    required
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Duration
+                                    Distance (km) *
                                 </label>
                                 <input
-                                    type="text"
-                                    defaultValue={route?.duration}
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.distanceKm}
+                                    onChange={(e) => setFormData({ ...formData, distanceKm: parseFloat((e.target as HTMLInputElement).value) || 0 })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="4h 30m"
+                                    placeholder="50.5"
+                                    min="0.1"
+                                    required
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Base Price ($)
+                                    Price per km *
                                 </label>
                                 <input
                                     type="number"
-                                    defaultValue={route?.basePrice}
+                                    step="0.01"
+                                    value={formData.pricePerKm}
+                                    onChange={(e) => setFormData({ ...formData, pricePerKm: parseFloat((e.target as HTMLInputElement).value) || 0 })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="75"
+                                    placeholder="1.50"
+                                    min="0.01"
+                                    required
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Status
-                            </label>
-                            <select
-                                defaultValue={route?.status}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                            <p className="text-sm text-gray-700">
+                                <span className="font-medium">Total Price:</span> ${(formData.distanceKm * formData.pricePerKm).toFixed(2)}
+                            </p>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-200 flex gap-3 justify-end">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+                            >
+                                {loading ? 'Saving...' : (route ? 'Save Changes' : 'Create Route')}
+                            </button>
                         </div>
                     </form>
-                </div>
-
-                <div className="p-6 border-t border-gray-200 flex gap-3 justify-end">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                        {route ? 'Save Changes' : 'Create Route'}
-                    </button>
                 </div>
             </div>
         </div>
     );
 };
 
-// Stops Editor Modal
-const StopsEditorModal: FunctionComponent<{ route: Route; onClose: () => void }> = ({ route, onClose }) => {
-    const [stops, setStops] = useState<Stop[]>(route.stops);
+// Stop Editor Modal Component
+const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => void }> = ({ route, onClose }) => {
+    const [stops, setStops] = useState<StopResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        latitude: 0,
+        longitude: 0
+    });
 
-    const addStop = () => {
-        setStops([...stops, {
-            id: Date.now(),
-            name: '',
-            city: '',
-            order: stops.length + 1
-        }]);
+    useEffect(() => {
+        fetchStops();
+    }, [route.id]);
+
+    const fetchStops = async () => {
+        try {
+            setLoading(true);
+            const response = await RouteAPI.getStops(undefined, {
+                pathParams: { id: route.id }
+            });
+            setStops(response.data);
+        } catch (error) {
+            console.error('Failed to fetch stops:', error);
+            setStops([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const removeStop = (id: number) => {
-        setStops(stops.filter(stop => stop.id !== id));
+    const createStop = async () => {
+        try {
+            const response = await StopAPI.create({
+                name: formData.name,
+                sequence: stops.length + 1,
+                latitude: formData.latitude,
+                longitude: formData.longitude,
+                routeId: route.id
+            });
+            setStops([...stops, response.data]);
+            setFormData({ name: '', latitude: 0, longitude: 0 });
+            setShowAddForm(false);
+        } catch (error) {
+            console.error('Failed to create stop:', error);
+        }
+    };
+
+    const deleteStop = async (stopId: number) => {
+        if (!confirm('Are you sure you want to delete this stop?')) return;
+
+        try {
+            await StopAPI.delete(undefined, {
+                pathParams: { id: stopId }
+            });
+            setStops(stops.filter(s => s.id !== stopId));
+        } catch (error) {
+            console.error('Failed to delete stop:', error);
+        }
     };
 
     return (
@@ -360,102 +480,132 @@ const StopsEditorModal: FunctionComponent<{ route: Route; onClose: () => void }>
                     <h2 className="text-2xl font-bold text-gray-900">
                         Manage Stops - {route.name}
                     </h2>
-                    <p className="text-gray-600 mt-1">Add and configure stops for this route</p>
+                    <p className="text-gray-600 mt-1">
+                        {route.origin} → {route.destination}
+                    </p>
                 </div>
 
                 <div className="p-6">
-                    <div className="space-y-4">
-                        {stops.map((stop, index) => (
-                            <div key={stop.id} className="border border-gray-200 rounded-lg p-4">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                                        {index + 1}
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                            <p className="text-gray-600 mt-4">Loading stops...</p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Stops List */}
+                            <div className="space-y-3 mb-6">
+                                {stops.length === 0 ? (
+                                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                                        <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                        <p className="text-gray-600">No stops added yet</p>
+                                        <p className="text-sm text-gray-500 mt-1">Click "Add Stop" to create your first stop</p>
                                     </div>
-                                    <div className="flex-1 grid grid-cols-2 gap-4">
-                                        <input
-                                            type="text"
-                                            value={stop.name}
-                                            onChange={(e) => {
-                                                const newStops = [...stops];
-                                                newStops[index].name = (e.target as HTMLInputElement).value;
-                                                setStops(newStops);
-                                            }}
-                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            placeholder="Stop name"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={stop.city}
-                                            onChange={(e) => {
-                                                const newStops = [...stops];
-                                                newStops[index].city = (e.target as HTMLInputElement).value;
-                                                setStops(newStops);
-                                            }}
-                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            placeholder="City"
-                                        />
-                                    </div>
-                                    {stops.length > 2 && (
-                                        <button
-                                            onClick={() => removeStop(stop.id)}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 ml-12">
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">Arrival Time</label>
-                                        <input
-                                            type="time"
-                                            value={stop.arrivalTime}
-                                            onChange={(e) => {
-                                                const newStops = [...stops];
-                                                newStops[index].arrivalTime = (e.target as HTMLInputElement).value;
-                                                setStops(newStops);
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                            disabled={index === 0}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">Departure Time</label>
-                                        <input
-                                            type="time"
-                                            value={stop.departureTime}
-                                            onChange={(e) => {
-                                                const newStops = [...stops];
-                                                newStops[index].departureTime = (e.target as HTMLInputElement).value;
-                                                setStops(newStops);
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                                            disabled={index === stops.length - 1}
-                                        />
-                                    </div>
-                                </div>
+                                ) : (
+                                    stops.map((stop, index) => (
+                                        <div key={stop.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                            <div className="flex items-center justify-center w-8 h-8 bg-purple-600 text-white rounded-full font-semibold text-sm">
+                                                {stop.sequence}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-medium text-gray-900">{stop.name}</h4>
+                                                <p className="text-sm text-gray-500">
+                                                    Lat: {stop.latitude.toFixed(6)}, Lng: {stop.longitude.toFixed(6)}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => deleteStop(stop.id)}
+                                                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
                             </div>
-                        ))}
-                    </div>
 
-                    <button
-                        onClick={addStop}
-                        className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 transition-all"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Stop
-                    </button>
+                            {/* Add Stop Form */}
+                            {showAddForm ? (
+                                <div className="bg-purple-50 p-4 rounded-lg space-y-3">
+                                    <h3 className="font-medium text-gray-900">Add New Stop</h3>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Stop Name *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            placeholder="Main Street Station"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Latitude *
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                value={formData.latitude}
+                                                onChange={(e) => setFormData({ ...formData, latitude: parseFloat((e.target as HTMLInputElement).value) || 0 })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                placeholder="40.712776"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Longitude *
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                value={formData.longitude}
+                                                onChange={(e) => setFormData({ ...formData, longitude: parseFloat((e.target as HTMLInputElement).value) || 0 })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                placeholder="-74.005974"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={createStop}
+                                            disabled={!formData.name}
+                                            className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-400"
+                                        >
+                                            Save Stop
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowAddForm(false);
+                                                setFormData({ name: '', latitude: 0, longitude: 0 });
+                                            }}
+                                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setShowAddForm(true)}
+                                    className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Add Stop
+                                </button>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 <div className="p-6 border-t border-gray-200 flex gap-3 justify-end">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                     >
-                        Cancel
-                    </button>
-                    <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                        Save Stops
+                        Done
                     </button>
                 </div>
             </div>

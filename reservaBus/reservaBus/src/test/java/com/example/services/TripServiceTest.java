@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,9 +63,9 @@ class TripServiceTest {
                 .bus(bus)
                 .build();
 
-        tripResponse = new TripDTOs.TripResponse(1L, 1L, 1L);
-        createRequest = new TripDTOs.CreateTripRequest(1L, 1L);
-        updateRequest = new TripDTOs.UpdateTripRequest(1L, 1L);
+        tripResponse = new TripDTOs.TripResponse(1L, 1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(2));
+        createRequest = new TripDTOs.CreateTripRequest(1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(2));
+        updateRequest = new TripDTOs.UpdateTripRequest(1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(2));
     }
 
     @Test
