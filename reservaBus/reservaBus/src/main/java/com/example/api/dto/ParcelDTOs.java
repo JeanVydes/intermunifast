@@ -26,6 +26,10 @@ public class ParcelDTOs {
         Double price
     ) implements Serializable {}
 
+    public record ParcelDeliveryRequest(
+        String deliveryOtp
+    ) implements Serializable {}
+
     public record ParcelResponse(
         Long id,
         String code,
@@ -37,6 +41,7 @@ public class ParcelDTOs {
         Long toStopId,
         String status,
         String proofPhotoUrl,
+        String deliveryOtp,
         Double price
     ) implements Serializable {}
 }

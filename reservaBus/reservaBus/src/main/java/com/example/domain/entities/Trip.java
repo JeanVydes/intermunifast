@@ -1,10 +1,14 @@
 package com.example.domain.entities;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.example.domain.common.TimestampedEntity;
+import com.example.domain.enums.TripStatus;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,6 +37,15 @@ public class Trip extends TimestampedEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(nullable = false)
+    private LocalDate date;
+
+    @Column(nullable = false)
+    private LocalDateTime departureAt;
+
+    @Column(nullable = false)
+    private LocalDateTime arrivalAt;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "bus_id", nullable = false)
     private Bus bus;
@@ -40,6 +53,9 @@ public class Trip extends TimestampedEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
+
+    @Column(nullable = false)
+    private TripStatus status;
 
     @OneToMany(mappedBy = "trip")
     @Builder.Default
@@ -53,7 +69,7 @@ public class Trip extends TimestampedEntity {
     @Builder.Default
     private List<Assignment> assignments = new ArrayList<>();
 
-    @Transient 
+    @Transient
     private List<Incident> incidents;
 
 }

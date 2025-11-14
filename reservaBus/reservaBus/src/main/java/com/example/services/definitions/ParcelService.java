@@ -10,4 +10,6 @@ public interface ParcelService {
     ParcelDTOs.ParcelResponse updateParcel(Long id, ParcelDTOs.UpdateParcelRequest req);
 
     void deleteParcel(Long id);
+
+    boolean deliverParcel(Long id, ParcelDTOs.ParcelDeliveryRequest req);   
 }

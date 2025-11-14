@@ -3,6 +3,7 @@ package com.example.api.controllers;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,6 +56,13 @@ public class TicketController {
         return ResponseEntity.ok(updatedTicket);
     }
 
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<TicketDTOs.TicketResponse> cancel(@PathVariable Long id) {
+        TicketDTOs.TicketResponse canceledTicket = ticketService.cancelTicket(id);
+        return ResponseEntity.ok(canceledTicket);
+    }
+
+    @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         ticketService.deleteTicket(id);
@@ -75,6 +83,7 @@ public class TicketController {
         return ResponseEntity.ok(baggages);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @GetMapping("/{id}/incidents")
     public ResponseEntity<List<IncidentDTOs.IncidentResponse>> getIncidentsByTicketId(@PathVariable Long id) {
         List<IncidentDTOs.IncidentResponse> incidents = ticketService.getIncidentsByTicketId(id);

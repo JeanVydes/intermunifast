@@ -9,7 +9,7 @@ import com.example.domain.enums.ParcelStatus;
 
 public interface ParcelRepository extends JpaRepository<Parcel, Long> {
 
-    List<Parcel> findByFromStopIdAndToStopId(Long fromStopId, Long toStopId);
+    List<Parcel> findByFromStop_IdAndToStop_Id(Long fromStopId, Long toStopId);
 
     Parcel findByCode(String code);
 

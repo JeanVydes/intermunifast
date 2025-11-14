@@ -1,6 +1,7 @@
 package com.example.api.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ public class StopController {
         this.stopService = stopService;
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PostMapping
     public ResponseEntity<StopDTOs.StopResponse> create(
             @Validated @RequestBody StopDTOs.CreateStopRequest req,
@@ -40,6 +42,7 @@ public class StopController {
         return ResponseEntity.ok(stop);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<StopDTOs.StopResponse> update(
             @PathVariable Long id,
@@ -48,6 +51,7 @@ public class StopController {
         return ResponseEntity.ok(updatedStop);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         stopService.deleteStop(id);

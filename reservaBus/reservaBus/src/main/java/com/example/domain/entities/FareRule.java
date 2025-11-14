@@ -1,10 +1,5 @@
 package com.example.domain.entities;
 
-import java.util.List;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import com.example.domain.common.TimestampedEntity;
 
 import jakarta.persistence.Column;
@@ -13,7 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,23 +33,19 @@ public class FareRule extends TimestampedEntity {
     @Column(nullable = false)
     private Double basePrice;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Builder.Default
-    private List<Double> discounts = List.of();
+    @Column(nullable = false)
+    private Double childrenDiscount;
+
+    @Column(nullable = false)
+    private Double seniorDiscount;
+
+    @Column(nullable = false)
+    private Double studentDiscount;
 
     @Column(nullable = false)
     private Boolean dynamicPricing;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "from_stop_id", nullable = false)
-    private Stop fromStop;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "to_stop_id", nullable = false)
-    private Stop toStop;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "route_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "route_id")
     private Route route;
-
 }

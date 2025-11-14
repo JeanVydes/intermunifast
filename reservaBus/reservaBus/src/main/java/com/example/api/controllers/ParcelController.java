@@ -50,6 +50,18 @@ public class ParcelController {
         return ResponseEntity.ok(updatedParcel);
     }
 
+    @PostMapping("/{id}/deliver")
+    public ResponseEntity<Void> deliverParcel(
+            @PathVariable Long id,
+            @Validated @RequestBody ParcelDTOs.ParcelDeliveryRequest req) {
+        boolean delivered = parcelService.deliverParcel(id, req);
+        if (delivered) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(400).build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         parcelService.deleteParcel(id);

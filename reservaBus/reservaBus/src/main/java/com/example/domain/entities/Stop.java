@@ -53,14 +53,6 @@ public class Stop extends TimestampedEntity {
 
     @OneToMany(mappedBy = "fromStop")
     @Builder.Default
-    private List<FareRule> fareRulesFrom = new ArrayList<>();
-
-    @OneToMany(mappedBy = "toStop")
-    @Builder.Default
-    private List<FareRule> fareRulesTo = new ArrayList<>();
-
-    @OneToMany(mappedBy = "fromStop")
-    @Builder.Default
     private List<Ticket> ticketsFrom = new ArrayList<>();
 
     @OneToMany(mappedBy = "toStop")
@@ -74,6 +66,5 @@ public class Stop extends TimestampedEntity {
     @OneToMany(mappedBy = "toStop")
     @Builder.Default
     private List<Parcel> parcelsTo = new ArrayList<>();
-
 
 }

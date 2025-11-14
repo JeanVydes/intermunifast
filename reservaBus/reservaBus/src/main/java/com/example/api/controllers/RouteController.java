@@ -3,6 +3,7 @@ package com.example.api.controllers;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +28,7 @@ public class RouteController {
         this.routeService = routeService;
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PostMapping
     public ResponseEntity<RouteDTOs.RouteResponse> create(
             @Validated @RequestBody RouteDTOs.CreateRouteRequest req,
@@ -43,6 +45,7 @@ public class RouteController {
         return ResponseEntity.ok(route);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<RouteDTOs.RouteResponse> update(
             @PathVariable Long id,
@@ -51,6 +54,7 @@ public class RouteController {
         return ResponseEntity.ok(updatedRoute);
     }
 
+    @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         routeService.deleteRoute(id);
