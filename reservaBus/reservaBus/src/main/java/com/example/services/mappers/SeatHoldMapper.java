@@ -1,5 +1,7 @@
 package com.example.services.mappers;
 
+import java.util.Optional;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -17,7 +19,11 @@ public interface SeatHoldMapper {
     SeatHold toEntity(SeatHoldDTOs.CreateSeatHoldRequest dto);
 
     @Mapping(source = "trip.id", target = "tripId")
-    @Mapping(source = "fromStop.id", target = "fromStopId")
-    @Mapping(source = "toStop.id", target = "toStopId")
+    @Mapping(source = "fromStop", target = "fromStopId")
+    @Mapping(source = "toStop", target = "toStopId")
     SeatHoldDTOs.SeatHoldResponse toResponse(SeatHold entity);
+
+    default Optional<Long> mapStopToId(com.example.domain.entities.Stop stop) {
+        return stop != null ? Optional.of(stop.getId()) : Optional.empty();
+    }
 }

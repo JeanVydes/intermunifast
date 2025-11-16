@@ -22,6 +22,7 @@ export const BusesPage: FunctionComponent = () => {
     const { accountId, account } = useAccountStore();
 
     if (!accountId || !account) {
+        location.assign('/auth/signup');
         return (
             <DashboardLayout>
                 <div className="p-8">

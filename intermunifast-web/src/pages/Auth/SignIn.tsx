@@ -62,8 +62,15 @@ export default function SignIn() {
             setAccountId(userProfileResponse.data.id);
             setLastUpdated(Date.now());
 
-            // Redirect to dashboard
-            route('/dashboard');
+            // Check for redirect URL
+            const redirectUrl = localStorage.getItem('redirectAfterLogin');
+            if (redirectUrl) {
+                localStorage.removeItem('redirectAfterLogin');
+                route(redirectUrl);
+            } else {
+                // Default redirect to dashboard
+                route('/dashboard');
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
         } finally {

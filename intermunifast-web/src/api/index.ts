@@ -32,8 +32,10 @@ export { RouteAPI } from './Route';
 export { TripAPI } from './Trip';
 export { TicketAPI } from './Ticket';
 export { StopAPI } from './Stop';
-export { SeatAPI, SeatHoldAPI } from './Seat';
-export { AssignmentAPI, BaggageAPI, IncidentAPI, ParcelAPI, FareRuleAPI } from './Operations';
+export { SeatAPI } from './Seat';
+export { SeatHoldAPI } from './SeatHold';
+export { BaggageAPI } from './Baggage';
+export { AssignmentAPI, IncidentAPI, ParcelAPI, FareRuleAPI } from './Operations';
 export { ConfigAPI } from './Config';
 
 // Type exports

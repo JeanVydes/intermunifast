@@ -12,6 +12,7 @@ export const TripsPage: FunctionComponent = () => {
     const { routes, setRoutes, lastUpdated: routesLastUpdated, setLoading: setRoutesLoading } = useRouteStore();
 
     if (!accountId || !account) {
+        location.assign('/auth/signup');
         return (
             <DashboardLayout>
                 <div className="p-8">

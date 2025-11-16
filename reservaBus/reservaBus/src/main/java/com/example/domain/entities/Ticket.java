@@ -56,7 +56,7 @@ public class Ticket extends TimestampedEntity {
     @Column(nullable = true)
     private String paymentIntentId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String qrCode;
 
     @ManyToOne(optional = false)
@@ -67,12 +67,14 @@ public class Ticket extends TimestampedEntity {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "from_stop_id", nullable = false)
+    // if there is not fromStop, mean the passenger boards at the route origin
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "from_stop_id", nullable = true)
     private Stop fromStop;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "to_stop_id", nullable = false)
+    // if there is not toStop, mean the passenger alights at the route destination
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "to_stop_id", nullable = true)
     private Stop toStop;
 
     @OneToMany(mappedBy = "ticket")

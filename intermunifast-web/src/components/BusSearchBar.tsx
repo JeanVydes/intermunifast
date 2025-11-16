@@ -1,25 +1,38 @@
 import { FunctionComponent } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { Search } from 'lucide-preact';
 
 export interface SearchParams {
-    origin: string;
-    destination: string;
-    date: string;
+    origin: string | null;
+    destination: string | null;
+    date: string | null;
 }
 
 interface BusSearchBarProps {
     onSubmit: (params: SearchParams) => void;
     onMobileClick?: () => void;
+    initialOrigin?: string;
+    initialDestination?: string;
+    initialDate?: string;
 }
 
 export const BusSearchBar: FunctionComponent<BusSearchBarProps> = ({
     onSubmit,
-    onMobileClick
+    onMobileClick,
+    initialOrigin = '',
+    initialDestination = '',
+    initialDate = ''
 }) => {
-    const [origin, setOrigin] = useState('');
-    const [destination, setDestination] = useState('');
-    const [date, setDate] = useState('');
+    const [origin, setOrigin] = useState(initialOrigin);
+    const [destination, setDestination] = useState(initialDestination);
+    const [date, setDate] = useState(initialDate);
+
+    // Update state when initial values change (from URL params)
+    useEffect(() => {
+        setOrigin(initialOrigin);
+        setDestination(initialDestination);
+        setDate(initialDate);
+    }, [initialOrigin, initialDestination, initialDate]);
 
     const handleOrigin = (e: Event) => {
         setOrigin((e.currentTarget as HTMLInputElement).value);

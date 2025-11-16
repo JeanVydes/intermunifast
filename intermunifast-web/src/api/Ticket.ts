@@ -4,8 +4,9 @@ import {
     CreateTicketRequest,
     UpdateTicketRequest,
     TicketSearchParams,
+    BaggageResponse,
 } from './types/Booking';
-import { BaggageResponse, IncidentResponse } from './types/Operations';
+import { IncidentResponse } from './types/Operations';
 
 /**
  * Ticket API Endpoints
@@ -77,6 +78,34 @@ export const TicketAPI = {
      */
     getIncidents: createEndpoint<IncidentResponse[]>({
         url: '/api/tickets/{id}/incidents',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
+     * Mark a ticket as paid
+     */
+    markAsPaid: createEndpoint<TicketResponse, { paymentIntentId?: string }>({
+        url: '/api/tickets/{id}/mark-paid',
+        method: 'POST',
+        requireAuth: true,
+    }),
+
+    /**
+     * Mark multiple tickets as paid (batch payment)
+     */
+    markMultipleAsPaid: createEndpoint<TicketResponse[], { ticketIds: number[]; paymentIntentId?: string }>({
+        url: '/api/tickets/mark-paid-batch',
+        method: 'POST',
+        requireAuth: true,
+    }),
+
+    /**
+     * Get all tickets for the current user
+     * Query param: status (optional) - filter by UNPAID, SOLD, CANCELLED, NO_SHOW
+     */
+    getMyTickets: createEndpoint<TicketResponse[], never>({
+        url: '/api/tickets/my-tickets',
         method: 'GET',
         requireAuth: true,
     }),

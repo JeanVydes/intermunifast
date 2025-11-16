@@ -1,12 +1,15 @@
 package com.example.services.definitions;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.api.dto.AssignmentDTOs;
 import com.example.api.dto.IncidentDTOs;
+import com.example.api.dto.RouteDTOs;
 import com.example.api.dto.SeatDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.api.dto.TripDTOs;
@@ -20,12 +23,15 @@ import com.example.domain.repositories.BusRepository;
 import com.example.domain.repositories.IncidentRepository;
 import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.SeatRepository;
+import com.example.domain.repositories.StopRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
 import com.example.services.mappers.AssignmentMapper;
 import com.example.services.mappers.IncidentMapper;
+import com.example.services.mappers.RouteMapper;
 import com.example.services.mappers.SeatMapper;
+import com.example.services.mappers.StopMapper;
 import com.example.services.mappers.TicketMapper;
 import com.example.services.mappers.TripMapper;
 
@@ -41,6 +47,8 @@ public class TripServiceImpl implements TripService {
     private final TripMapper mapper;
     private final TicketMapper ticketMapper;
     private final TicketRepository ticketRepo;
+    private final RouteMapper routeMapper;
+    private final StopMapper stopMapper;
     private final SeatMapper seatMapper;
     private final SeatRepository seatRepo;
     private final AssignmentMapper assignmentMapper;
@@ -49,6 +57,7 @@ public class TripServiceImpl implements TripService {
     private final IncidentRepository incidentRepo;
     private final RouteRepository routeRepo;
     private final BusRepository busRepo;
+    private final StopRepository stopRepo;
 
     @Override
     public TripDTOs.TripResponse createTrip(TripDTOs.CreateTripRequest req) {
@@ -165,5 +174,42 @@ public class TripServiceImpl implements TripService {
         return trips.stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TripDTOs.TripSearchResponse searchTrips(String origin, String destination,
+            Optional<LocalDateTime> departureDate) {
+        LocalDateTime startOfDay = null;
+        LocalDateTime endOfDay = null;
+
+        if (departureDate.isPresent()) {
+            startOfDay = departureDate.get().toLocalDate().atStartOfDay();
+            endOfDay = startOfDay.plusDays(3); // Search up to 3 days after the selected date
+        }
+
+        var trips = repo.searchAvailableTrips(origin, destination, startOfDay, endOfDay);
+
+        var tripResponses = trips.stream()
+                .map(mapper::toResponse)
+                .toList();
+
+        // Get unique routes from the trips found
+        var routes = trips.stream()
+                .map(Trip::getRoute)
+                .distinct()
+                .map(routeMapper::toResponse)
+                .toList();
+
+        // Get all stops for these routes, ordered by sequence
+        var stops = trips.stream()
+                .map(Trip::getRoute)
+                .distinct()
+                .flatMap(route -> stopRepo.findByRoute_IdOrderBySequenceAsc(route.getId()).stream())
+                .distinct()
+                .map(stopMapper::toResponse)
+                .toList();
+
+        return new TripDTOs.TripSearchResponse(tripResponses, routes, stops);
     }
 }

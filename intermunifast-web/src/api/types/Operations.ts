@@ -33,27 +33,6 @@ export interface UpdateAssignmentRequest {
     tripId?: number;
 }
 
-// Baggage Types - Based on BaggageDTOs.java
-export interface BaggageResponse {
-    id: number;
-    weightKg: number;
-    fee: number; // BigDecimal as number
-    tagCode: string;
-    ticketId: number;
-}
-
-export interface CreateBaggageRequest {
-    weightKg: number;
-    tagCode: string;
-    ticketId: number;
-}
-
-export interface UpdateBaggageRequest {
-    weightKg?: number;
-    tagCode?: string;
-    ticketId?: number;
-}
-
 // Incident Types - Based on IncidentDTOs.java
 export interface IncidentResponse {
     id: number;

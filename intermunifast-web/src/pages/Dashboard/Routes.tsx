@@ -11,6 +11,7 @@ export const RoutesPage: FunctionComponent = () => {
     const { routes, setRoutes, addRoute, updateRoute, removeRoute, lastUpdated, isLoading, setLoading } = useRouteStore();
 
     if (!accountId || !account) {
+        location.assign('/auth/signup');
         return (
             <DashboardLayout>
                 <div className="p-8">

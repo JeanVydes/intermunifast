@@ -4,8 +4,34 @@ import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import StatCard from '../../components/dashboard/StatCard';
 import CampaignCard from '../../components/dashboard/CampaignCard';
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-preact';
+import useAccountStore from '../../stores/AccountStore';
 
 export const DashboardHome: FunctionComponent = () => {
+    const { accountId, account } = useAccountStore();
+    
+    if (!accountId || !account) {
+        location.assign('/auth/signup');
+        return (
+            <DashboardLayout>
+                <div className="p-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
+                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    if (account.role !== 'ADMIN') {
+        return (
+            <DashboardLayout>
+                <div className="p-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
+                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout>
             <div className="p-8">

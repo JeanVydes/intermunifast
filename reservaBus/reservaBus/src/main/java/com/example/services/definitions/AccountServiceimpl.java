@@ -32,7 +32,6 @@ public class AccountServiceimpl implements AccountService {
         }
 
         Account account = mapper.toEntity(req);
-        // Encrypt password before saving
         account.setPasswordHash(passwordEncoder.encode(req.password()));
         account.setRole(AccountRole.PASSENGER);
         account.setStatus(AccountStatus.ACTIVE);
@@ -62,7 +61,6 @@ public class AccountServiceimpl implements AccountService {
         Account account = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Account %d not found".formatted(id)));
 
-        // Update only fields that are present in the request
         req.name().ifPresent(account::setName);
         req.email().ifPresent(account::setEmail);
         req.phone().ifPresent(account::setPhone);

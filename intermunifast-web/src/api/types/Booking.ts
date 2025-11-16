@@ -1,10 +1,16 @@
 // Booking Types - Based on TripDTOs.java, TicketDTOs.java, SeatDTOs.java, SeatHoldDTOs.java
 
 // Payment Method Enum
-export type PaymentMethod = 'CASH' | 'CARD' | 'DIGITAL_WALLET' | 'BANK_TRANSFER';
+export type PaymentMethod = 'CASH' | 'TRANSFER' | 'QR' | 'CARD' | 'DIGITAL_WALLET';
 
 // Seat Type Enum
 export type SeatType = 'STANDARD' | 'PREFERENTIAL';
+
+// Passenger Type Enum
+export type PassengerType = 'ADULT' | 'CHILD' | 'SENIOR' | 'STUDENT';
+
+// Ticket Status Enum
+export type TicketStatus = 'UNPAID' | 'SOLD' | 'CANCELLED' | 'NO_SHOW';
 
 // Trip Types - Based on TripDTOs.java
 export interface TripResponse {
@@ -40,19 +46,23 @@ export interface TicketResponse {
     id: number;
     seatNumber: string;
     tripId: number;
-    fromStopId: number;
-    toStopId: number;
+    fromStopId: number | null;
+    toStopId: number | null;
     paymentMethod: PaymentMethod;
     paymentIntentId?: string;
+    status: TicketStatus;  // Ticket payment status
+    price: number;         // Ticket price
+    qrCode?: string;       // QR code for validation
 }
 
 export interface CreateTicketRequest {
     seatNumber: string;
     tripId: number;
-    fromStopId: number;
-    toStopId: number;
+    fromStopId: number | null;
+    toStopId: number | null;
     paymentMethod: PaymentMethod;
     paymentIntentId?: string; // stripe payment intent id
+    passengerType: PassengerType;
 }
 
 export interface UpdateTicketRequest {
@@ -100,15 +110,52 @@ export interface SeatHoldResponse {
     id: number;
     seatNumber: string;
     tripId: number;
+    fromStopId: number | null;
+    toStopId: number | null;
+    expiresAt: string; // ISO 8601 datetime string
+    createdAt: number; // Unix timestamp
 }
 
 export interface CreateSeatHoldRequest {
     seatNumber: string;
     tripId: number;
+    fromStopId: number | null;
+    toStopId: number | null;
+    expiresAt: string; // ISO 8601 datetime string
 }
 
 export interface UpdateSeatHoldRequest {
     seatNumber?: string;
     tripId?: number;
+    fromStopId?: number;
+    toStopId?: number;
+    expiresAt?: string;
 }
 
+// Baggage Types - Based on BaggageDTOs.java
+export interface BaggageResponse {
+    id: number;
+    weightKg: number;
+    fee: number; // BigDecimal
+    tagCode: string;
+    ticketId: number;
+}
+
+export interface CreateBaggageRequest {
+    weightKg: number;
+    tagCode: string;
+    ticketId: number;
+}
+
+export interface UpdateBaggageRequest {
+    weightKg?: number;
+    tagCode?: string;
+    ticketId?: number;
+}
+
+// Trip Search Response - includes trips, routes, and stops
+export interface TripSearchResponse {
+    trips: TripResponse[];
+    routes: import('./Transport').RouteResponse[];
+    stops: import('./Transport').StopResponse[];
+}

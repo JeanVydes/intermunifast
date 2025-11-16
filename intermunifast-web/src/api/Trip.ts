@@ -5,6 +5,8 @@ import {
     UpdateTripRequest,
     TicketResponse,
     SeatResponse,
+    TripQueryParams,
+    TripSearchResponse,
 } from './types/Booking';
 import { AssignmentResponse, IncidentResponse } from './types/Operations';
 
@@ -65,6 +67,16 @@ export const TripAPI = {
         url: '/api/trips/{id}',
         method: 'DELETE',
         requireAuth: true,
+    }),
+
+    /**
+     * Search for trips by origin, destination, and optional departure date
+     * Returns trips along with their routes and stops
+     */
+    search: createEndpoint<TripSearchResponse>({
+        url: '/api/trips/search',
+        method: 'GET',
+        requireAuth: false,
     }),
 
     /**

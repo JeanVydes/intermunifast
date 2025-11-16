@@ -48,7 +48,6 @@ public class TripController {
     public ResponseEntity<TripDTOs.TripResponse> getById(@PathVariable Long id,
             @RequestParam(required = false) String routeId, @RequestParam(required = false) String status) {
 
-
         TripDTOs.TripResponse trip = tripService.getTripById(id);
         return ResponseEntity.ok(trip);
     }
@@ -64,6 +63,36 @@ public class TripController {
             @RequestParam(required = false) String status) {
         List<TripDTOs.TripResponse> trips = tripService.getTripsByRouteId(routeId);
         return ResponseEntity.ok(trips);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<TripDTOs.TripSearchResponse> search(
+            @RequestParam String origin,
+            @RequestParam String destination,
+            // optional
+            @RequestParam(required = false) String departureDate) {
+
+        // Validate required parameters
+        if (origin == null || origin.isBlank()) {
+            throw new IllegalArgumentException("Origin parameter is required");
+        }
+        if (destination == null || destination.isBlank()) {
+            throw new IllegalArgumentException("Destination parameter is required");
+        }
+
+        // Parse departureDate only if provided and not empty
+        java.util.Optional<java.time.LocalDateTime> departureTime = java.util.Optional.empty();
+        if (departureDate != null && !departureDate.isBlank()) {
+            try {
+                departureTime = java.util.Optional.of(java.time.LocalDateTime.parse(departureDate));
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        "Invalid departureDate format. Expected ISO-8601 datetime (e.g., 2025-11-14T10:00:00)");
+            }
+        }
+
+        TripDTOs.TripSearchResponse searchResponse = tripService.searchTrips(origin, destination, departureTime);
+        return ResponseEntity.ok(searchResponse);
     }
 
     @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")

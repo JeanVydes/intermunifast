@@ -62,6 +62,30 @@ public class TicketController {
         return ResponseEntity.ok(canceledTicket);
     }
 
+    @PostMapping("/{id}/mark-paid")
+    public ResponseEntity<TicketDTOs.TicketResponse> markAsPaid(
+            @PathVariable Long id,
+            @RequestParam(required = false) String paymentIntentId) {
+        TicketDTOs.TicketResponse paidTicket = ticketService.markTicketAsPaid(id, paymentIntentId);
+        return ResponseEntity.ok(paidTicket);
+    }
+
+    @PostMapping("/mark-paid-batch")
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> markMultipleAsPaid(
+            @RequestBody List<Long> ticketIds,
+            @RequestParam(required = false) String paymentIntentId) {
+        List<TicketDTOs.TicketResponse> paidTickets = ticketService.markMultipleTicketsAsPaid(ticketIds,
+                paymentIntentId);
+        return ResponseEntity.ok(paidTickets);
+    }
+
+    @GetMapping("/my-tickets")
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> getMyTickets(
+            @RequestParam(required = false) String status) {
+        List<TicketDTOs.TicketResponse> tickets = ticketService.getTicketsForCurrentUser(status);
+        return ResponseEntity.ok(tickets);
+    }
+
     @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

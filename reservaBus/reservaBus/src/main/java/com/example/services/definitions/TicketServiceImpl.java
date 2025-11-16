@@ -37,6 +37,8 @@ import lombok.RequiredArgsConstructor;
 
 public class TicketServiceImpl implements TicketService {
 
+    private static final String TICKET_NOT_FOUND = "Ticket %d not found";
+
     private final TicketRepository repo;
     private final AccountRepository accountRepository;
     private final TicketMapper mapper;
@@ -57,19 +59,27 @@ public class TicketServiceImpl implements TicketService {
         Trip trip = tripRepo.findById(req.tripId())
                 .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(req.tripId())));
 
-        Stop fromStop = stopRepo.findById(req.fromStopId())
-                .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId())));
+        Stop fromStop = null;
+        if (req.fromStopId().isPresent()) {
+            fromStop = stopRepo.findById(req.fromStopId().get())
+                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId().get())));
+        }
 
-        Stop toStop = stopRepo.findById(req.toStopId())
-                .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId())));
+        Stop toStop = null;
+        if (req.toStopId().isPresent()) {
+            toStop = stopRepo.findById(req.toStopId().get())
+                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId().get())));
+        }
 
         // Validar disponibilidad del asiento para el tramo especificado
         if (!seatAvailabilityService.isSeatAvailable(req.tripId(), req.seatNumber(), fromStop, toStop)) {
             String reason = seatAvailabilityService.getAvailabilityConflictReason(
                     req.tripId(), req.seatNumber(), fromStop, toStop);
+            String fromStopName = fromStop != null ? fromStop.getName() : "origin";
+            String toStopName = toStop != null ? toStop.getName() : "destination";
             throw new IllegalStateException(
                     "Seat %s is not available for trip %d (segment %s -> %s): %s"
-                            .formatted(req.seatNumber(), req.tripId(), fromStop.getName(), toStop.getName(), reason));
+                            .formatted(req.seatNumber(), req.tripId(), fromStopName, toStopName, reason));
         }
 
         Route route = trip.getRoute();
@@ -103,7 +113,8 @@ public class TicketServiceImpl implements TicketService {
                 .paymentIntentId(req.paymentIntentId())
                 .account(accountRepository.getReferenceById(account.getId()))
                 .price(price)
-                .status(TicketStatus.SOLD)
+                .status(TicketStatus.UNPAID)
+                .qrCode(null)
                 .build();
 
         return mapper.toResponse(repo.save(ticket));
@@ -113,13 +124,13 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public TicketDTOs.TicketResponse getTicketById(Long id) {
         return repo.findById(id).map(mapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
     }
 
     @Override
     public void deleteTicket(Long id) {
         var ticket = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
         repo.delete(ticket);
     }
 
@@ -139,11 +150,11 @@ public class TicketServiceImpl implements TicketService {
         }
 
         var ticket = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
 
         Account account = authenticationService.getCurrentAccount();
-        if (ticket.getAccount().getId() != account.getId()) {
-            throw new NotFoundException("Ticket %d not found".formatted(id));
+        if (!ticket.getAccount().getId().equals(account.getId())) {
+            throw new NotFoundException(TICKET_NOT_FOUND.formatted(id));
         }
 
         if (req.passengerType() != null) {
@@ -178,11 +189,11 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketDTOs.TicketResponse cancelTicket(Long id) {
         var ticket = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
 
         Account account = authenticationService.getCurrentAccount();
-        if (ticket.getAccount().getId() != account.getId()) {
-            throw new NotFoundException("Ticket %d not found".formatted(id));
+        if (!ticket.getAccount().getId().equals(account.getId())) {
+            throw new NotFoundException(TICKET_NOT_FOUND.formatted(id));
         }
 
         Trip trip = ticket.getTrip();
@@ -221,7 +232,7 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public List<BaggageDTOs.BaggageResponse> getBaggagesByTicketId(Long id) {
         var ticket = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
         return baggageRepo.findByTicket_Id(ticket.getId()).stream()
                 .map(baggageMapper::toResponse)
                 .toList();
@@ -230,10 +241,123 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<IncidentDTOs.IncidentResponse> getIncidentsByTicketId(Long id) {
         var ticket = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(id)));
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
         return incidentRepo.findByTicketId(ticket.getId()).stream()
                 .map(incidentMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public TicketDTOs.TicketResponse markTicketAsPaid(Long id, String paymentIntentId) {
+        var ticket = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
+
+        Account account = authenticationService.getCurrentAccount();
+        if (!ticket.getAccount().getId().equals(account.getId())) {
+            throw new NotFoundException(TICKET_NOT_FOUND.formatted(id));
+        }
+
+        if (ticket.getStatus() == TicketStatus.SOLD) {
+            throw new IllegalStateException("Ticket is already paid");
+        }
+
+        if (ticket.getStatus() == TicketStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot pay for a cancelled ticket");
+        }
+
+        // Update ticket status to SOLD
+        ticket.setStatus(TicketStatus.SOLD);
+
+        // Set payment intent ID if provided
+        if (paymentIntentId != null && !paymentIntentId.isBlank()) {
+            ticket.setPaymentIntentId(paymentIntentId);
+        }
+
+        // Generate QR code if not exists
+        if (ticket.getQrCode() == null || ticket.getQrCode().isBlank()) {
+            ticket.setQrCode(generateQrCode(ticket));
+        }
+
+        return mapper.toResponse(repo.save(ticket));
+    }
+
+    @Override
+    public List<TicketDTOs.TicketResponse> markMultipleTicketsAsPaid(List<Long> ticketIds, String paymentIntentId) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            throw new IllegalArgumentException("Ticket IDs list cannot be empty");
+        }
+
+        Account account = authenticationService.getCurrentAccount();
+        List<Ticket> tickets = repo.findAllById(ticketIds);
+
+        if (tickets.size() != ticketIds.size()) {
+            throw new NotFoundException("Some tickets were not found");
+        }
+
+        // Verify all tickets belong to current user and are unpaid
+        validateTicketsForPayment(tickets, account);
+
+        // Update all tickets
+        for (Ticket ticket : tickets) {
+            ticket.setStatus(TicketStatus.SOLD);
+
+            if (paymentIntentId != null && !paymentIntentId.isBlank()) {
+                ticket.setPaymentIntentId(paymentIntentId);
+            }
+
+            if (ticket.getQrCode() == null || ticket.getQrCode().isBlank()) {
+                ticket.setQrCode(generateQrCode(ticket));
+            }
+        }
+
+        List<Ticket> savedTickets = repo.saveAll(tickets);
+        return savedTickets.stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    private void validateTicketsForPayment(List<Ticket> tickets, Account account) {
+        for (Ticket ticket : tickets) {
+            if (!ticket.getAccount().getId().equals(account.getId())) {
+                throw new NotFoundException(TICKET_NOT_FOUND.formatted(ticket.getId()));
+            }
+
+            if (ticket.getStatus() == TicketStatus.CANCELLED) {
+                throw new IllegalStateException("Cannot pay for cancelled ticket %d".formatted(ticket.getId()));
+            }
+
+            if (ticket.getStatus() == TicketStatus.SOLD) {
+                throw new IllegalStateException("Ticket %d is already paid".formatted(ticket.getId()));
+            }
+        }
+    }
+
+    @Override
+    public List<TicketDTOs.TicketResponse> getTicketsForCurrentUser(String status) {
+        Account account = authenticationService.getCurrentAccount();
+
+        if (status != null && !status.isBlank()) {
+            try {
+                TicketStatus ticketStatus = TicketStatus.valueOf(status.toUpperCase());
+                return repo.findByAccount_IdAndStatus(account.getId(), ticketStatus).stream()
+                        .map(mapper::toResponse)
+                        .toList();
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid ticket status: " + status);
+            }
+        }
+
+        return repo.findByAccount_Id(account.getId()).stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    /**
+     * Generates a unique QR code for a ticket
+     * Format: TICKET-{ticketId}-{timestamp}
+     */
+    private String generateQrCode(Ticket ticket) {
+        return "TICKET-%d-%d".formatted(ticket.getId(), System.currentTimeMillis());
     }
 
 }
