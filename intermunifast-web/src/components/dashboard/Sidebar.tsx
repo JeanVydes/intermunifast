@@ -29,8 +29,7 @@ const menuItems: MenuItem[] = [
     { label: 'Buses', icon: Bus, path: '/dashboard/buses' },
     { label: 'Routes', icon: Route, path: '/dashboard/routes' },
     { label: 'Trips', icon: MapPin, path: '/dashboard/trips' },
-    { label: 'Tickets', icon: Ticket, path: '/dashboard/tickets' },
-    { label: 'Users', icon: Users, path: '/dashboard/users' },
+    { label: 'Mi Cuenta', icon: Users, path: '/account' },
 ];
 
 export const Sidebar: FunctionComponent<SidebarProps> = ({ collapsed = false }) => {
@@ -46,18 +45,18 @@ export const Sidebar: FunctionComponent<SidebarProps> = ({ collapsed = false }) 
     };
 
     return (
-        <aside className={`bg-white border-r border-gray-200 h-screen sticky top-0 transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'}`}>
+        <aside className={`bg-white/5 backdrop-blur-xl border-r border-white/10 h-screen sticky top-0 transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'}`}>
             <div className="flex flex-col h-full">
                 {/* Logo */}
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-6 border-b border-white/10">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-400 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg">
                             <Bus className="w-6 h-6 text-white" />
                         </div>
                         {!collapsed && (
                             <div>
-                                <h1 className="text-lg font-bold text-gray-900">InterMuniFast</h1>
-                                <p className="text-xs text-gray-500">Admin Panel</p>
+                                <h1 className="text-lg font-bold text-white">IntermuniFast</h1>
+                                <p className="text-xs text-neutral-400">Admin Panel</p>
                             </div>
                         )}
                     </div>
@@ -74,10 +73,10 @@ export const Sidebar: FunctionComponent<SidebarProps> = ({ collapsed = false }) 
                                 key={item.path}
                                 href={item.path}
                                 className={`
-                                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                                    flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                                     ${active
-                                        ? 'bg-purple-50 text-purple-700 font-medium'
-                                        : 'text-gray-700 hover:bg-gray-50'
+                                        ? 'bg-accent text-white font-medium shadow-lg'
+                                        : 'text-neutral-400 hover:bg-white/5 hover:text-white'
                                     }
                                     ${collapsed ? 'justify-center' : ''}
                                 `}
@@ -87,7 +86,7 @@ export const Sidebar: FunctionComponent<SidebarProps> = ({ collapsed = false }) 
                                     <>
                                         <span className="flex-1">{item.label}</span>
                                         {item.badge && (
-                                            <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
+                                            <span className="px-2 py-0.5 text-xs font-medium bg-white/10 text-white rounded-full">
                                                 {item.badge}
                                             </span>
                                         )}
@@ -100,12 +99,12 @@ export const Sidebar: FunctionComponent<SidebarProps> = ({ collapsed = false }) 
                 </nav>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-gray-200 space-y-1">
+                <div className="p-4 border-t border-white/10 space-y-1">
                     <button
                         onClick={handleLogout}
                         className={`
-                            w-full flex items-center gap-3 px-4 py-3 rounded-lg
-                            text-red-600 hover:bg-red-50 transition-all
+                            w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                            text-neutral-400 hover:bg-white/5 hover:text-accent transition-all duration-200
                             ${collapsed ? 'justify-center' : ''}
                         `}
                     >

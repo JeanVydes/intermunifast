@@ -45,24 +45,12 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
     const [isProcessing, setIsProcessing] = useState(false);
     const [seatHoldId, setSeatHoldId] = useState<number | null>(null);
     const [expiresAt, setExpiresAt] = useState<Date | null>(null);
-    const [timeRemaining, setTimeRemaining] = useState<number>(600); // 10 minutes in seconds
+    const [timeRemaining, setTimeRemaining] = useState<number>(600);
 
-    // Load seats when component mounts
     useEffect(() => {
         loadSeats();
     }, []);
 
-    // Debug stops data
-    useEffect(() => {
-        console.log('BookingModal - Stops data:', {
-            stops,
-            count: stops?.length || 0,
-            routeId: route.id,
-            tripId: trip.id
-        });
-    }, [stops, route.id, trip.id]);
-
-    // Timer for seat hold expiration
     useEffect(() => {
         if (expiresAt) {
             const interval = setInterval(() => {
@@ -106,20 +94,18 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
     const calculatePrice = (): number => {
         let basePrice = route.pricePerKm * route.distanceKm;
 
-        // Apply passenger type discount
         switch (passengerType) {
             case 'CHILD':
-                basePrice *= 0.5; // 50% discount
+                basePrice *= 0.5;
                 break;
             case 'SENIOR':
-                basePrice *= 0.7; // 30% discount
+                basePrice *= 0.7;
                 break;
             case 'STUDENT':
-                basePrice *= 0.8; // 20% discount
+                basePrice *= 0.8;
                 break;
         }
 
-        // Add baggage fee
         if (baggage) {
             basePrice += baggage.estimatedFee;
         }
@@ -137,7 +123,7 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
         setIsProcessing(true);
         try {
             const expirationTime = new Date();
-            expirationTime.setMinutes(expirationTime.getMinutes() + 10); // 10 minutes
+            expirationTime.setMinutes(expirationTime.getMinutes() + 10);
 
             const seatHoldRequest: CreateSeatHoldRequest = {
                 seatNumber: selectedSeat,
@@ -175,20 +161,18 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
 
         setIsProcessing(true);
         try {
-            // Create ticket with PENDING payment status
             const ticketRequest: CreateTicketRequest = {
                 seatNumber: selectedSeat,
                 tripId: trip.id,
                 fromStopId: fromStop,
                 toStopId: toStop,
                 paymentMethod: paymentMethod,
-                paymentIntentId: null, // No payment yet
+                paymentIntentId: null,
                 passengerType: passengerType
             };
 
             const ticketResponse = await TicketAPI.create(ticketRequest);
 
-            // Create baggage if selected
             let baggageId = null;
             if (baggage && baggage.weightKg > 0) {
                 const baggageRequest: CreateBaggageRequest = {
@@ -201,14 +185,12 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                 baggageId = baggageResponse.data.id;
             }
 
-            // Delete seat hold after successful ticket creation
             if (seatHoldId) {
                 await SeatHoldAPI.delete(undefined, {
                     pathParams: { id: seatHoldId.toString() }
                 });
             }
 
-            // Pass ticket data to cart (including ticketId for later payment)
             onComplete(trip.id, selectedSeat, passengerType, ticketResponse.data.id, baggageId);
             onClose();
         } catch (error) {
@@ -234,17 +216,17 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     <button
                         key={type}
                         onClick={() => setPassengerType(type)}
-                        className={`w-full p-4 rounded-xl border-2 transition-all ${passengerType === type
-                            ? 'border-amber-500 bg-amber-500/20'
-                            : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                        className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${passengerType === type
+                            ? 'border-accent bg-accent/10'
+                            : 'border-white/10 bg-white/5 hover:border-white/20'
                             }`}
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${passengerType === type ? 'border-amber-500' : 'border-gray-600'
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${passengerType === type ? 'border-accent' : 'border-white/20'
                                     }`}>
                                     {passengerType === type && (
-                                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                                        <div className="w-3 h-3 rounded-full bg-accent"></div>
                                     )}
                                 </div>
                                 <div className="text-left">
@@ -254,7 +236,7 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                                         {type === 'SENIOR' && 'Anciano'}
                                         {type === 'STUDENT' && 'Estudiante'}
                                     </p>
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-sm text-neutral-400">
                                         {type === 'ADULT' && 'Mayor de 18 años'}
                                         {type === 'CHILD' && 'Menor de 12 años - 50% descuento'}
                                         {type === 'SENIOR' && 'Mayor de 65 años - 30% descuento'}
@@ -267,10 +249,9 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                 ))}
             </div>
 
-            {/* From/To Stops Selection */}
             <div className="mt-6 space-y-4">
-                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                    <h4 className="text-sm font-semibold text-amber-500 mb-3 flex items-center">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+                    <h4 className="text-sm font-semibold text-accent mb-4 flex items-center">
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -279,16 +260,15 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     </h4>
 
                     {stops && stops.length > 0 ? (
-                        <div className="space-y-3">
-                            {/* From Stop */}
+                        <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">
                                     ¿Dónde subes?
                                 </label>
                                 <select
                                     value={fromStop || ''}
                                     onChange={(e) => setFromStop(e.currentTarget.value ? Number(e.currentTarget.value) : null)}
-                                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all"
+                                    className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-white focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none transition-all"
                                 >
                                     <option value="">{route.origin} (Origen)</option>
                                     {stops
@@ -300,18 +280,17 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                                             </option>
                                         ))}
                                 </select>
-                                <p className="mt-1 text-xs text-gray-500">Por defecto: {route.origin}</p>
+                                <p className="mt-1 text-xs text-neutral-500">Por defecto: {route.origin}</p>
                             </div>
 
-                            {/* To Stop */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">
                                     ¿Dónde bajas?
                                 </label>
                                 <select
                                     value={toStop || ''}
                                     onChange={(e) => setToStop(e.currentTarget.value ? Number(e.currentTarget.value) : null)}
-                                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all"
+                                    className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-white focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none transition-all"
                                 >
                                     <option value="">{route.destination} (Destino)</option>
                                     {stops
@@ -323,18 +302,17 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                                             </option>
                                         ))}
                                 </select>
-                                <p className="mt-1 text-xs text-gray-500">Por defecto: {route.destination}</p>
+                                <p className="mt-1 text-xs text-neutral-500">Por defecto: {route.destination}</p>
                             </div>
 
-                            {/* Visual Route Preview */}
                             {(fromStop || toStop) && (
-                                <div className="mt-4 p-3 bg-gray-900/50 rounded-lg border border-gray-700">
-                                    <p className="text-xs font-medium text-gray-400 mb-2">Tu trayecto:</p>
+                                <div className="mt-4 p-3 bg-white/5 rounded-xl border border-white/10">
+                                    <p className="text-xs font-medium text-neutral-400 mb-2">Tu trayecto:</p>
                                     <div className="flex items-center space-x-2 text-sm">
                                         <span className="text-white font-medium">
                                             {fromStop ? stops.find(s => s.id === fromStop)?.name : route.origin}
                                         </span>
-                                        <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                         </svg>
                                         <span className="text-white font-medium">
@@ -346,10 +324,10 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                         </div>
                     ) : (
                         <div className="text-center py-4">
-                            <p className="text-gray-400 text-sm">
+                            <p className="text-neutral-400 text-sm">
                                 No hay paradas intermedias disponibles para esta ruta.
                             </p>
-                            <p className="text-gray-500 text-xs mt-1">
+                            <p className="text-neutral-500 text-xs mt-1">
                                 Viajarás de {route.origin} a {route.destination}
                             </p>
                         </div>
@@ -359,7 +337,7 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
 
             <button
                 onClick={() => setStep('seat')}
-                className="w-full mt-6 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all"
+                className="w-full mt-6 bg-accent hover:bg-accent-dark text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-200"
             >
                 Continuar
             </button>
@@ -370,24 +348,22 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
         <div className="p-6">
             <h3 className="text-xl font-bold text-white mb-6">Selecciona tu asiento</h3>
 
-            {/* Legend */}
             <div className="flex items-center justify-center space-x-6 mb-6 text-sm">
                 <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-green-500 rounded"></div>
-                    <span className="text-gray-300">Disponible</span>
+                    <span className="text-neutral-300">Disponible</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-amber-500 rounded"></div>
-                    <span className="text-gray-300">Preferencial</span>
+                    <div className="w-8 h-8 bg-accent rounded"></div>
+                    <span className="text-neutral-300">Preferencial</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gray-600 rounded"></div>
-                    <span className="text-gray-300">Ocupado</span>
+                    <div className="w-8 h-8 bg-neutral-600 rounded"></div>
+                    <span className="text-neutral-300">Ocupado</span>
                 </div>
             </div>
 
-            {/* Seat Grid */}
-            <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/10">
                 <div className="grid grid-cols-4 gap-3">
                     {seats.map((seat) => {
                         const isSelected = selectedSeat === seat.number;
@@ -397,10 +373,10 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                             <button
                                 key={seat.id}
                                 onClick={() => handleSelectSeat(seat.number)}
-                                className={`h-12 rounded-lg font-semibold text-sm transition-all ${isSelected
+                                className={`h-12 rounded-lg font-semibold text-sm transition-all duration-200 ${isSelected
                                     ? 'bg-blue-500 text-white scale-105 shadow-lg'
                                     : isPreferential
-                                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                                        ? 'bg-accent text-white hover:bg-accent-dark'
                                         : 'bg-green-500 text-white hover:bg-green-600'
                                     }`}
                             >
@@ -412,9 +388,9 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
             </div>
 
             {selectedSeat && (
-                <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-amber-500">
+                <div className="bg-accent/10 rounded-xl p-4 mb-6 border border-accent">
                     <p className="text-white text-center">
-                        Asiento seleccionado: <span className="font-bold text-amber-500">{selectedSeat}</span>
+                        Asiento seleccionado: <span className="font-bold text-accent">{selectedSeat}</span>
                     </p>
                 </div>
             )}
@@ -422,14 +398,14 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
             <div className="flex space-x-3">
                 <button
                     onClick={() => setStep('passenger')}
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-xl transition-all"
+                    className="flex-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-4 rounded-xl transition-all duration-200 border border-white/10"
                 >
                     Atrás
                 </button>
                 <button
                     onClick={handleCreateSeatHold}
                     disabled={!selectedSeat || isProcessing}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-accent hover:bg-accent-dark text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isProcessing ? 'Reservando...' : 'Continuar'}
                 </button>
@@ -444,14 +420,14 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
             <div className="p-6">
                 <h3 className="text-xl font-bold text-white mb-6">¿Llevas equipaje?</h3>
 
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
-                    <p className="text-amber-300 text-sm">
+                <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 mb-6">
+                    <p className="text-accent text-sm">
                         <strong>Importante:</strong> Los primeros 25kg son gratis. Cada kilo adicional tiene un cargo del 3% del precio del boleto.
                     </p>
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-neutral-300 mb-2">
                         Peso del equipaje (kg)
                     </label>
                     <input
@@ -460,15 +436,15 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                         step="0.1"
                         value={weight}
                         onChange={(e) => setWeight(e.currentTarget.value)}
-                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-amber-500 focus:outline-none"
+                        className="w-full px-4 py-3 bg-neutral-950 border border-white/10 rounded-xl text-white focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
                         placeholder="0.0"
                     />
                 </div>
 
                 {Number(weight) > 0 && (
-                    <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                    <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/10">
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-300">Cargo por equipaje:</span>
+                            <span className="text-neutral-300">Cargo por equipaje:</span>
                             <span className="text-white font-bold">
                                 ${calculateBaggageFee(Number(weight)).toFixed(2)}
                             </span>
@@ -479,14 +455,14 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                 <div className="flex space-x-3">
                     <button
                         onClick={handleSkipBaggage}
-                        className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-xl transition-all"
+                        className="flex-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-4 rounded-xl transition-all duration-200 border border-white/10"
                     >
                         Sin equipaje
                     </button>
                     <button
                         onClick={() => handleAddBaggage(Number(weight))}
                         disabled={!weight || Number(weight) <= 0}
-                        className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 bg-accent hover:bg-accent-dark text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Continuar
                     </button>
@@ -499,30 +475,27 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
         <div className="p-6">
             <h3 className="text-xl font-bold text-white mb-6">Resumen del ticket</h3>
 
-            {/* Timer */}
             {expiresAt && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
+                <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 mb-6">
                     <div className="flex items-center justify-between">
-                        <p className="text-amber-300 text-sm">
+                        <p className="text-accent text-sm">
                             Tu reserva expira en:
                         </p>
-                        <p className="text-amber-400 font-bold text-lg">
+                        <p className="text-accent font-bold text-lg">
                             {formatTime(timeRemaining)}
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* Info Message */}
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
                 <p className="text-blue-300 text-sm">
                     <strong>ℹ️ Nota:</strong> El ticket se agregará al carrito con pago pendiente. Podrás pagar todos tus tickets de una vez al finalizar.
                 </p>
             </div>
 
-            {/* Payment Method Selection */}
             <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-3">
+                <label className="block text-sm font-medium text-neutral-300 mb-3">
                     Selecciona tu método de pago preferido
                 </label>
                 <div className="space-y-3">
@@ -530,16 +503,16 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                         <button
                             key={method}
                             onClick={() => setPaymentMethod(method)}
-                            className={`w-full p-4 rounded-xl border-2 transition-all ${paymentMethod === method
-                                ? 'border-amber-500 bg-amber-500/20'
-                                : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                            className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${paymentMethod === method
+                                ? 'border-accent bg-accent/10'
+                                : 'border-white/10 bg-white/5 hover:border-white/20'
                                 }`}
                         >
                             <div className="flex items-center space-x-3">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === method ? 'border-amber-500' : 'border-gray-600'
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === method ? 'border-accent' : 'border-white/20'
                                     }`}>
                                     {paymentMethod === method && (
-                                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                                        <div className="w-3 h-3 rounded-full bg-accent"></div>
                                     )}
                                 </div>
                                 <p className="font-semibold text-white">
@@ -555,20 +528,19 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                 </div>
             </div>
 
-            {/* Summary */}
-            <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
-                <h4 className="text-white font-semibold mb-3">Resumen</h4>
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 mb-6 border border-white/10">
+                <h4 className="text-white font-semibold mb-4">Resumen</h4>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-gray-400">Ruta:</span>
+                        <span className="text-neutral-400">Ruta:</span>
                         <span className="text-white">{route.origin} → {route.destination}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-400">Asiento:</span>
+                        <span className="text-neutral-400">Asiento:</span>
                         <span className="text-white">{selectedSeat}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-gray-400">Tipo de pasajero:</span>
+                        <span className="text-neutral-400">Tipo de pasajero:</span>
                         <span className="text-white">
                             {passengerType === 'ADULT' && 'Adulto'}
                             {passengerType === 'CHILD' && 'Niño'}
@@ -578,14 +550,14 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     </div>
                     {baggage && (
                         <div className="flex justify-between">
-                            <span className="text-gray-400">Equipaje:</span>
+                            <span className="text-neutral-400">Equipaje:</span>
                             <span className="text-white">{baggage.weightKg} kg (${baggage.estimatedFee.toFixed(2)})</span>
                         </div>
                     )}
-                    <div className="border-t border-gray-700 pt-2 mt-2">
+                    <div className="border-t border-white/10 pt-3 mt-3">
                         <div className="flex justify-between items-center">
                             <span className="text-white font-semibold">Total estimado:</span>
-                            <span className="text-2xl font-bold text-amber-500">
+                            <span className="text-2xl font-bold text-accent">
                                 ${calculatePrice().toFixed(2)}
                             </span>
                         </div>
@@ -597,14 +569,14 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                 <button
                     onClick={() => setStep('baggage')}
                     disabled={isProcessing}
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-xl transition-all disabled:opacity-50"
+                    className="flex-1 bg-white/5 hover:bg-white/10 text-white font-semibold py-4 rounded-xl transition-all duration-200 disabled:opacity-50 border border-white/10"
                 >
                     Atrás
                 </button>
                 <button
                     onClick={handleAddToCart}
                     disabled={isProcessing}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-accent hover:bg-accent-dark text-white font-semibold py-4 rounded-xl shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isProcessing ? 'Agregando...' : 'Agregar al Carrito'}
                 </button>
@@ -612,22 +584,22 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
         </div>
     );
 
-
-
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto border border-gray-700 shadow-2xl">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-amber-600 to-orange-700 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-lg z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-gradient-to-br from-neutral-900/98 to-neutral-900/95 backdrop-blur-2xl rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-auto border border-white/20 shadow-2xl shadow-black/80 animate-in slide-in-from-bottom-4 duration-300">
+                <div className="bg-gradient-to-r from-accent via-accent-dark to-accent px-7 py-5 flex justify-between items-center sticky top-0 z-10 border-b border-white/10 shadow-xl">
                     <div>
-                        <h2 className="text-xl font-bold text-white">Reservar Viaje</h2>
-                        <p className="text-amber-100 text-sm">
+                        <h2 className="text-2xl font-bold text-white">Reservar Viaje</h2>
+                        <p className="text-white/90 text-sm font-medium flex items-center gap-2 mt-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            </svg>
                             {route.origin} → {route.destination}
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-white hover:text-gray-200 transition-colors"
+                        className="text-white hover:bg-white/20 transition-all rounded-xl p-2"
                         disabled={isProcessing}
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -636,30 +608,35 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     </button>
                 </div>
 
-                {/* Progress Bar */}
                 {step !== 'confirmation' && (
-                    <div className="px-6 pt-4">
-                        <div className="flex items-center justify-between mb-2">
+                    <div className="px-7 pt-6">
+                        <div className="flex items-center justify-between mb-3">
                             {['passenger', 'seat', 'baggage', 'payment'].map((s, index) => (
                                 <div key={s} className="flex items-center flex-1">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${step === s
-                                        ? 'bg-amber-500 text-white'
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${step === s
+                                        ? 'bg-gradient-to-br from-accent to-accent-light text-white shadow-lg shadow-accent/50 scale-110'
                                         : ['passenger', 'seat', 'baggage', 'payment'].indexOf(step) > index
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-gray-700 text-gray-400'
+                                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                                            : 'bg-white/10 text-neutral-400 border border-white/20'
                                         }`}>
-                                        {index + 1}
+                                        {['passenger', 'seat', 'baggage', 'payment'].indexOf(step) > index ? (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            index + 1
+                                        )}
                                     </div>
                                     {index < 3 && (
-                                        <div className={`flex-1 h-1 mx-2 ${['passenger', 'seat', 'baggage', 'payment'].indexOf(step) > index
-                                            ? 'bg-green-500'
-                                            : 'bg-gray-700'
+                                        <div className={`flex-1 h-1.5 mx-2 rounded-full transition-all duration-300 ${['passenger', 'seat', 'baggage', 'payment'].indexOf(step) > index
+                                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+                                            : 'bg-white/10'
                                             }`}></div>
                                     )}
                                 </div>
                             ))}
                         </div>
-                        <div className="flex justify-between text-xs text-gray-400 mb-4">
+                        <div className="flex justify-between text-xs text-neutral-400 mb-6 font-semibold">
                             <span>Pasajero</span>
                             <span>Asiento</span>
                             <span>Equipaje</span>
@@ -668,7 +645,6 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     </div>
                 )}
 
-                {/* Content */}
                 {step === 'passenger' && renderPassengerStep()}
                 {step === 'seat' && renderSeatStep()}
                 {step === 'baggage' && renderBaggageStep()}

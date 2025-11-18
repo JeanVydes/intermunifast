@@ -59,88 +59,84 @@ export const BusSearchBar: FunctionComponent<BusSearchBarProps> = ({
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto px-4">
+        <div className="w-full max-w-5xl mx-auto px-4">
+            {/* --- Vista Móvil --- */}
             <div className="md:hidden">
                 <button
-                    onClick={handleMobileTrigger} // Lógica de ac
-                    className="w-full flex items-center gap-3 p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow"
+                    onClick={handleMobileTrigger}
+                    className="w-full flex items-center gap-3 p-4 bg-neutral-800/50 backdrop-blur-sm border border-neutral-700 rounded-2xl hover:bg-neutral-800 transition-all"
                 >
-                    <Search className="h-6 w-6 text-green-600 ml-1" />
+                    <Search className="h-5 w-5 text-neutral-300" />
                     <div className="text-left">
-                        <p className="font-bold text-gray-900">Encuentra tu viaje</p>
-                        <p className="text-sm text-gray-500">
-                            Busca por origen o destino
-                        </p>
+                        <p className="font-semibold text-neutral-100 text-sm">¿A dónde quieres ir?</p>
+                        <p className="text-xs text-neutral-400">Toca para buscar tu viaje</p>
                     </div>
                 </button>
             </div>
 
-            <div className="hidden md:flex items-center bg-white rounded-full shadow-lg overflow-hidden border border-gray-200 divide-x divide-gray-200">
-
-                {/* Sección Origen (Controlada) */}
-                <div className="flex-1 relative">
-                    <label
-                        htmlFor="origin"
-                        className="absolute top-2 left-6 text-xs font-bold text-gray-700"
-                    >
-                        Origen
+            {/* --- Vista de Escritorio --- */}
+            <div className="hidden md:flex items-stretch bg-neutral-900/50 backdrop-blur-sm border border-neutral-700 rounded-2xl shadow-2xl overflow-hidden">
+                {/* Sección Origen */}
+                <div className="flex-1 px-5 py-3 group">
+                    <label htmlFor="origin" className="block text-xs font-semibold text-neutral-400 group-hover:text-white transition-colors">
+                        Desde
                     </label>
                     <input
                         id="origin"
                         type="text"
-                        placeholder="¿Desde dónde viajas?"
-                        className="w-full pl-6 pr-4 pt-5 pb-3 rounded-l-full text-sm text-gray-600 placeholder-gray-400 focus:outline-none"
+                        placeholder="Ciudad de origen"
+                        className="w-full pt-1 text-base font-medium text-neutral-100 placeholder-neutral-500 focus:outline-none bg-transparent"
                         value={origin}
                         onInput={handleOrigin}
                     />
                 </div>
 
-                {/* Sección Destino (Controlada) */}
-                <div className="flex-1 relative">
-                    <label
-                        htmlFor="destination"
-                        className="absolute top-2 left-6 text-xs font-bold text-gray-700"
-                    >
-                        Destino
+                {/* Botón de intercambio */}
+                <div className="flex items-center justify-center border-l border-r border-neutral-800 px-2">
+                    <button className="p-2 text-neutral-500 hover:text-white hover:bg-neutral-700 rounded-full transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Sección Destino */}
+                <div className="flex-1 px-5 py-3 group">
+                    <label htmlFor="destination" className="block text-xs font-semibold text-neutral-400 group-hover:text-white transition-colors">
+                        Hacia
                     </label>
                     <input
                         id="destination"
                         type="text"
-                        placeholder="¿A dónde vas?"
-                        className="w-full pl-6 pr-4 pt-5 pb-3 text-sm text-gray-600 placeholder-gray-400 focus:outline-none"
+                        placeholder="Ciudad de destino"
+                        className="w-full pt-1 text-base font-medium text-neutral-100 placeholder-neutral-500 focus:outline-none bg-transparent"
                         value={destination}
                         onInput={handleDestination}
                     />
                 </div>
 
-                {/* Sección Fecha (Controlada) */}
-                <div className="flex-auto relative">
-                    <label
-                        htmlFor="date"
-                        className="absolute top-2 left-6 text-xs font-bold text-gray-700"
-                    >
+                {/* Sección Fecha */}
+                <div className="flex-1 px-5 py-3 border-l border-r border-neutral-800 group">
+                    <label htmlFor="date" className="block text-xs font-semibold text-neutral-400 group-hover:text-white transition-colors">
                         Fecha
                     </label>
                     <input
                         id="date"
-                        type="text"
-                        placeholder="Selecciona la fecha"
-                        onFocus={(e) => (e.currentTarget.type = 'date')}
-                        onBlur={(e) => (e.currentTarget.type = 'text')}
-                        className="w-full pl-6 pr-4 pt-5 pb-3 text-sm text-gray-600 placeholder-gray-400 focus:outline-none"
+                        type="date"
+                        className="w-full pt-1 text-base font-medium text-neutral-100 focus:outline-none bg-transparent [color-scheme:dark]"
                         value={date}
                         onInput={handleDate}
                     />
                 </div>
 
                 {/* Botón de Búsqueda */}
-                <div className="p-2">
+                <div className="flex items-center p-2">
                     <button
-                        onClick={handleSearchSubmit} // Lógica de envío
-                        className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold rounded-full h-12 w-12 transition-colors"
-                        aria-label="Buscar"
+                        onClick={handleSearchSubmit}
+                        className="w-full h-full px-6 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-sky-900/40"
                     >
                         <Search className="h-5 w-5" />
+                        <span className="hidden lg:inline">Buscar</span>
                     </button>
                 </div>
             </div>

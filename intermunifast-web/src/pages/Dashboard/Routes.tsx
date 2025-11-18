@@ -83,15 +83,15 @@ export const RoutesPage: FunctionComponent = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Route Management</h1>
-                            <p className="text-gray-600 mt-1">Manage your bus routes and stops</p>
+                            <h1 className="text-3xl font-bold text-white">Route Management</h1>
+                            <p className="text-white/80 mt-1">Manage your bus routes and stops</p>
                         </div>
                         <button
                             onClick={() => {
                                 setSelectedRoute(null);
                                 setShowModal(true);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-accent-dark transition-all duration-200 font-medium shadow-lg"
                         >
                             <Plus className="w-4 h-4" />
                             Add New Route
@@ -101,11 +101,11 @@ export const RoutesPage: FunctionComponent = () => {
                     {/* Search and Filters */}
                     <div className="flex gap-4 mb-6">
                         <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
                             <input
                                 type="text"
                                 placeholder="Search by route code, name, origin, or destination..."
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                className="w-full pl-10 pr-4 py-2 border border-white/10 bg-neutral-950 text-white placeholder-neutral-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
                     </div>
@@ -113,31 +113,31 @@ export const RoutesPage: FunctionComponent = () => {
                     {/* Routes Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {routes.map((route) => (
-                            <div key={route.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                            <div key={route.id} className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden hover:border-accent transition-all duration-200">
                                 <div className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900">{route.name}</h3>
-                                            <p className="text-sm text-gray-500 mt-1">Code: {route.code}</p>
+                                            <h3 className="text-lg font-semibold text-white">{route.name}</h3>
+                                            <p className="text-sm text-neutral-400 mt-1">Code: {route.code}</p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-3 mb-4">
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <Navigation className="w-4 h-4" />
+                                        <div className="flex items-center gap-2 text-sm text-neutral-300">
+                                            <Navigation className="w-4 h-4 text-accent" />
                                             <span>{route.origin} → {route.destination}</span>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                        <div className="grid grid-cols-2 gap-2 text-sm text-neutral-300">
                                             <div className="flex items-center gap-1">
-                                                <Clock className="w-4 h-4" />
+                                                <Clock className="w-4 h-4 text-accent" />
                                                 <span>{route.durationMinutes} min</span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <MapPin className="w-4 h-4" />
+                                                <MapPin className="w-4 h-4 text-accent" />
                                                 <span>{route.distanceKm} km</span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm font-medium text-purple-700 bg-purple-50 px-3 py-1.5 rounded-lg">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-accent bg-accent/10 px-3 py-1.5 rounded-lg">
                                             <DollarSign className="w-4 h-4" />
                                             <span>${route.pricePerKm}/km = ${(route.pricePerKm * route.distanceKm).toFixed(2)} total</span>
                                         </div>
@@ -146,20 +146,20 @@ export const RoutesPage: FunctionComponent = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleManageStops(route)}
-                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-accent/10 text-accent rounded-xl hover:bg-accent/20 transition-all duration-200 text-sm font-medium"
                                         >
                                             <MapPin className="w-4 h-4" />
                                             Manage Stops
                                         </button>
                                         <button
                                             onClick={() => handleEditRoute(route)}
-                                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                            className="px-3 py-2 bg-white/10 text-neutral-300 rounded-xl hover:bg-white/20 transition-all duration-200"
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDeleteRoute(route.id)}
-                                            className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                            className="px-3 py-2 bg-accent/20 text-accent rounded-xl hover:bg-accent/30 transition-all duration-200"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -249,10 +249,10 @@ const RouteFormModal: FunctionComponent<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-2xl m-4 border border-white/10 max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-neutral-800">
+                    <h2 className="text-2xl font-bold text-white">
                         {route ? 'Edit Route' : 'Add New Route'}
                     </h2>
                 </div>
@@ -261,27 +261,27 @@ const RouteFormModal: FunctionComponent<{
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-neutral-400 mb-1">
                                     Route Code *
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.code}
                                     onChange={(e) => setFormData({ ...formData, code: (e.target as HTMLInputElement).value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                     placeholder="R-001"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-neutral-400 mb-1">
                                     Route Name *
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                     placeholder="Express Route"
                                     required
                                 />
@@ -290,27 +290,27 @@ const RouteFormModal: FunctionComponent<{
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-neutral-400 mb-1">
                                     Origin *
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.origin}
                                     onChange={(e) => setFormData({ ...formData, origin: (e.target as HTMLInputElement).value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                     placeholder="City A"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-neutral-400 mb-1">
                                     Destination *
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.destination}
                                     onChange={(e) => setFormData({ ...formData, destination: (e.target as HTMLInputElement).value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                     placeholder="City B"
                                     required
                                 />
@@ -319,21 +319,21 @@ const RouteFormModal: FunctionComponent<{
 
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-neutral-400 mb-1">
                                     Duration (minutes) *
                                 </label>
                                 <input
                                     type="number"
                                     value={formData.durationMinutes}
                                     onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt((e.target as HTMLInputElement).value) || 0 })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                     placeholder="60"
                                     min="1"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-neutral-400 mb-1">
                                     Distance (km) *
                                 </label>
                                 <input
@@ -341,14 +341,14 @@ const RouteFormModal: FunctionComponent<{
                                     step="0.1"
                                     value={formData.distanceKm}
                                     onChange={(e) => setFormData({ ...formData, distanceKm: parseFloat((e.target as HTMLInputElement).value) || 0 })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                     placeholder="50.5"
                                     min="0.1"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-neutral-400 mb-1">
                                     Price per km *
                                 </label>
                                 <input
@@ -356,7 +356,7 @@ const RouteFormModal: FunctionComponent<{
                                     step="0.01"
                                     value={formData.pricePerKm}
                                     onChange={(e) => setFormData({ ...formData, pricePerKm: parseFloat((e.target as HTMLInputElement).value) || 0 })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                     placeholder="1.50"
                                     min="0.01"
                                     required
@@ -364,24 +364,24 @@ const RouteFormModal: FunctionComponent<{
                             </div>
                         </div>
 
-                        <div className="bg-purple-50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-700">
+                        <div className="bg-accent/10 p-4 rounded-lg">
+                            <p className="text-sm text-accent">
                                 <span className="font-medium">Total Price:</span> ${(formData.distanceKm * formData.pricePerKm).toFixed(2)}
                             </p>
                         </div>
 
-                        <div className="pt-4 border-t border-gray-200 flex gap-3 justify-end">
+                        <div className="pt-4 border-t border-white/10 flex gap-3 justify-end">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+                                className="px-4 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 disabled:bg-accent/50 shadow-lg"
                             >
                                 {loading ? 'Saving...' : (route ? 'Save Changes' : 'Create Route')}
                             </button>
@@ -454,13 +454,13 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-4xl m-4 border border-white/10 max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-white/10">
+                    <h2 className="text-2xl font-bold text-white">
                         Manage Stops - {route.name}
                     </h2>
-                    <p className="text-gray-600 mt-1">
+                    <p className="text-neutral-400 mt-1">
                         {route.origin} → {route.destination}
                     </p>
                 </div>
@@ -468,34 +468,34 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
                 <div className="p-6">
                     {loading ? (
                         <div className="text-center py-12">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                            <p className="text-gray-600 mt-4">Loading stops...</p>
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+                            <p className="text-neutral-400 mt-4">Loading stops...</p>
                         </div>
                     ) : (
                         <>
                             {/* Stops List */}
                             <div className="space-y-3 mb-6">
                                 {stops.length === 0 ? (
-                                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                                        <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                                        <p className="text-gray-600">No stops added yet</p>
-                                        <p className="text-sm text-gray-500 mt-1">Click "Add Stop" to create your first stop</p>
+                                    <div className="text-center py-8 bg-neutral-950 rounded-xl">
+                                        <MapPin className="w-12 h-12 text-neutral-500 mx-auto mb-3" />
+                                        <p className="text-neutral-400">No stops added yet</p>
+                                        <p className="text-sm text-neutral-500 mt-1">Click "Add Stop" to create your first stop</p>
                                     </div>
                                 ) : (
                                     stops.map((stop, index) => (
-                                        <div key={stop.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                            <div className="flex items-center justify-center w-8 h-8 bg-purple-600 text-white rounded-full font-semibold text-sm">
+                                        <div key={stop.id} className="flex items-center gap-4 p-4 bg-white/5 backdrop-blur-xl rounded-xl hover:bg-white/10 transition-all duration-200 border border-white/10">
+                                            <div className="flex items-center justify-center w-8 h-8 bg-accent text-white rounded-full font-semibold text-sm">
                                                 {stop.sequence}
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="font-medium text-gray-900">{stop.name}</h4>
-                                                <p className="text-sm text-gray-500">
+                                                <h4 className="font-medium text-white">{stop.name}</h4>
+                                                <p className="text-sm text-neutral-400">
                                                     Lat: {stop.latitude.toFixed(6)}, Lng: {stop.longitude.toFixed(6)}
                                                 </p>
                                             </div>
                                             <button
                                                 onClick={() => deleteStop(stop.id)}
-                                                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                                className="px-3 py-2 bg-accent/20 text-accent rounded-xl hover:bg-accent/30 transition-all duration-200"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -506,23 +506,23 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
 
                             {/* Add Stop Form */}
                             {showAddForm ? (
-                                <div className="bg-purple-50 p-4 rounded-lg space-y-3">
-                                    <h3 className="font-medium text-gray-900">Add New Stop</h3>
+                                <div className="bg-accent/10 p-4 rounded-xl space-y-3 border border-accent/20">
+                                    <h3 className="font-medium text-white">Add New Stop</h3>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className="block text-sm font-medium text-neutral-400 mb-1">
                                             Stop Name *
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                             placeholder="Main Street Station"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-medium text-neutral-400 mb-1">
                                                 Latitude *
                                             </label>
                                             <input
@@ -530,12 +530,12 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
                                                 step="0.000001"
                                                 value={formData.latitude}
                                                 onChange={(e) => setFormData({ ...formData, latitude: parseFloat((e.target as HTMLInputElement).value) || 0 })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                                 placeholder="40.712776"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-medium text-neutral-400 mb-1">
                                                 Longitude *
                                             </label>
                                             <input
@@ -543,7 +543,7 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
                                                 step="0.000001"
                                                 value={formData.longitude}
                                                 onChange={(e) => setFormData({ ...formData, longitude: parseFloat((e.target as HTMLInputElement).value) || 0 })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
                                                 placeholder="-74.005974"
                                             />
                                         </div>
@@ -552,7 +552,7 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
                                         <button
                                             onClick={createStop}
                                             disabled={!formData.name}
-                                            className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-400"
+                                            className="flex-1 px-4 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 disabled:bg-accent/50 shadow-lg"
                                         >
                                             Save Stop
                                         </button>
@@ -561,7 +561,7 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
                                                 setShowAddForm(false);
                                                 setFormData({ name: '', latitude: 0, longitude: 0 });
                                             }}
-                                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                            className="px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200"
                                         >
                                             Cancel
                                         </button>
@@ -570,7 +570,7 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
                             ) : (
                                 <button
                                     onClick={() => setShowAddForm(true)}
-                                    className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                                    className="w-full px-4 py-3 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
                                 >
                                     <Plus className="w-4 h-4" />
                                     Add Stop
@@ -580,10 +580,10 @@ const StopEditorModal: FunctionComponent<{ route: RouteResponse; onClose: () => 
                     )}
                 </div>
 
-                <div className="p-6 border-t border-gray-200 flex gap-3 justify-end">
+                <div className="p-6 border-t border-white/10 flex gap-3 justify-end">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        className="px-4 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 shadow-lg"
                     >
                         Done
                     </button>
