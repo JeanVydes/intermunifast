@@ -7,7 +7,7 @@ import com.example.domain.enums.ParcelStatus;
 import com.example.domain.repositories.ParcelRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.ParcelServiceImpl;
+import com.example.services.implementations.ParcelServiceImpl;
 import com.example.services.mappers.ParcelMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

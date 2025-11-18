@@ -6,7 +6,7 @@ import com.example.domain.entities.Ticket;
 import com.example.domain.repositories.BaggageRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.BaggageServiceImpl;
+import com.example.services.implementations.BaggageServiceImpl;
 import com.example.services.mappers.BaggageMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

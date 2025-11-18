@@ -1,6 +1,8 @@
 package com.example.api.controllers;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -81,10 +83,10 @@ public class TripController {
         }
 
         // Parse departureDate only if provided and not empty
-        java.util.Optional<java.time.LocalDateTime> departureTime = java.util.Optional.empty();
+        Optional<LocalDateTime> departureTime = Optional.empty();
         if (departureDate != null && !departureDate.isBlank()) {
             try {
-                departureTime = java.util.Optional.of(java.time.LocalDateTime.parse(departureDate));
+                departureTime = Optional.of(LocalDateTime.parse(departureDate));
             } catch (Exception e) {
                 throw new IllegalArgumentException(
                         "Invalid departureDate format. Expected ISO-8601 datetime (e.g., 2025-11-14T10:00:00)");

@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.security.services;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -8,20 +8,8 @@ import org.springframework.stereotype.Service;
 import com.example.domain.entities.Account;
 import com.example.domain.enums.AccountRole;
 
-/**
- * Service to handle authentication-related operations.
- * Provides easy access to the currently authenticated user's information and
- * role-based checks.
- */
 @Service
 public class AuthenticationService {
-
-    /**
-     * Gets the currently authenticated account.
-     * 
-     * @return the authenticated Account entity
-     * @throws IllegalStateException if no user is authenticated
-     */
     public Account getCurrentAccount() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -38,51 +26,22 @@ public class AuthenticationService {
         return (Account) principal;
     }
 
-    /**
-     * Gets the ID of the currently authenticated account.
-     * 
-     * @return the ID of the authenticated account
-     * @throws IllegalStateException if no user is authenticated
-     */
     public Long getCurrentAccountId() {
         return getCurrentAccount().getId();
     }
 
-    /**
-     * Gets the email of the currently authenticated account.
-     * 
-     * @return the email of the authenticated account
-     * @throws IllegalStateException if no user is authenticated
-     */
     public String getCurrentAccountEmail() {
         return getCurrentAccount().getEmail();
     }
 
-    /**
-     * Gets the name of the currently authenticated account.
-     * 
-     * @return the name of the authenticated account
-     * @throws IllegalStateException if no user is authenticated
-     */
     public String getCurrentAccountName() {
         return getCurrentAccount().getName();
     }
 
-    /**
-     * Gets the role of the currently authenticated account.
-     * 
-     * @return the role of the authenticated account
-     * @throws IllegalStateException if no user is authenticated
-     */
     public AccountRole getCurrentAccountRole() {
         return getCurrentAccount().getRole();
     }
 
-    /**
-     * Checks if there is a currently authenticated user.
-     * 
-     * @return true if a user is authenticated, false otherwise
-     */
     public boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && authentication.isAuthenticated();

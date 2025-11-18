@@ -25,7 +25,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Baggage extends TimestampedEntity {
 
     @Id
@@ -45,5 +44,4 @@ public class Baggage extends TimestampedEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "ticket_id", nullable = false)
     private Ticket ticket;
-
 }

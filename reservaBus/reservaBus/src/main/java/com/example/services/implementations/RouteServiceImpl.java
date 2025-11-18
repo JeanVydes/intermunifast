@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import java.util.List;
 
@@ -11,6 +11,7 @@ import com.example.domain.entities.Route;
 import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.RouteService;
 import com.example.services.mappers.RouteMapper;
 import com.example.services.mappers.StopMapper;
 
@@ -70,33 +71,6 @@ public class RouteServiceImpl implements RouteService {
                 .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(id)));
         return stopRepo.findByRoute_IdOrderBySequenceAsc(route.getId()).stream()
                 .map(stopMapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RouteDTOs.RouteResponse> findByOrigin(String origin) {
-        var routes = repo.findByOrigin(origin);
-        return routes.stream()
-                .map(mapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RouteDTOs.RouteResponse> findByDestination(String destination) {
-        var routes = repo.findByDestination(destination);
-        return routes.stream()
-                .map(mapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<RouteDTOs.RouteResponse> findByOriginAndDestination(String origin, String destination) {
-        var routes = repo.findByOriginAndDestination(origin, destination);
-        return routes.stream()
-                .map(mapper::toResponse)
                 .toList();
     }
 

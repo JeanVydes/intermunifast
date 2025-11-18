@@ -2,39 +2,32 @@ import Axios from "axios";
 import { API_REQUESTS_TIMEOUT, BASE_URL } from "../Config";
 import useAuthStore from "../stores/AuthStore";
 
+// Axios instance with default config
 export const AXIOS = Axios.create({
     baseURL: BASE_URL,
     timeout: API_REQUESTS_TIMEOUT,
 });
 
-/**
- * Get the current auth token from Zustand store
- */
-const getAuthTokenFromStore = (): string | null => {
-    return useAuthStore.getState().token;
-};
+// Get auth token
+const getAuthToken = (): string | null => useAuthStore.getState().token;
 
-// Request interceptor to add auth token from Zustand
+// Request interceptor
 AXIOS.interceptors.request.use(
     (config) => {
-        const token = getAuthTokenFromStore();
+        const token = getAuthToken();
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle common errors
+// Response interceptor
 AXIOS.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Handle 401 Unauthorized - token expired or invalid
         if (error.response?.status === 401) {
-            // Clear the token from store and localStorage
             useAuthStore.getState().setToken(null);
             localStorage.removeItem('authToken');
         }
@@ -42,10 +35,7 @@ AXIOS.interceptors.response.use(
     }
 );
 
-/**
- * Set global authentication token in Zustand store
- * This token will be used for all requests that require authentication
- */
+// Auth helpers
 export const setAuthToken = (token: string | null): void => {
     useAuthStore.getState().setToken(token);
     if (token) {
@@ -55,111 +45,54 @@ export const setAuthToken = (token: string | null): void => {
     }
 };
 
-/**
- * Get current global authentication token from Zustand store
- */
-export const getAuthToken = (): string | null => {
-    return useAuthStore.getState().token;
-};
-
-/**
- * Check if user is authenticated
- */
-export const isAuthenticated = (): boolean => {
-    const token = useAuthStore.getState().token;
-    return token !== null && token.length > 0;
-};
-
-/**
- * Clear authentication token
- */
-export const clearAuthToken = (): void => {
-    setAuthToken(null);
-};
-
-/**
- * Set base URL for all API requests
- */
-export const setBaseURL = (url: string): void => {
-    AXIOS.defaults.baseURL = url;
-};
+export const isAuthenticated = (): boolean => !!getAuthToken();
+export const clearAuthToken = (): void => setAuthToken(null);
 
 // Types
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-
-export interface PathParams {
-    [key: string]: string | number;
-}
-
-export interface QueryParams {
-    [key: string]: string | number | boolean | undefined | null;
-}
-
-export interface EndpointConfig {
-    url: string;
-    method: HttpMethod;
-    requireAuth?: boolean;
-}
-
-export interface RequestOptions {
-    pathParams?: PathParams;
-    queryParams?: QueryParams;
-    token?: string;
-    config?: any;
-}
-
 export interface ApiResponse<T> {
     data: T;
     status: number;
-    statusText: string;
-    headers: any;
 }
 
-export interface ApiError {
-    message: string;
-    status?: number;
-    data?: any;
+interface EndpointConfig {
+    url: string;
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    requireAuth?: boolean;
 }
 
-// Utility Functions
-export const setAuthHeader = (config: any, token: string): any => {
-    if (!config.headers) {
-        config.headers = {};
-    }
-    config.headers['Authorization'] = `Bearer ${token}`;
-    return config;
-};
+interface RequestOptions {
+    pathParams?: Record<string, string | number>;
+    queryParams?: Record<string, any>;
+    token?: string;
+}
 
-export const buildQueryParams = (queryParams?: QueryParams): string => {
-    if (!queryParams) return '';
-
-    const params = new URLSearchParams();
-    for (const key in queryParams) {
-        const value = queryParams[key];
-        if (value !== undefined && value !== null) {
-            params.append(key, String(value));
-        }
-    }
-    return params.toString() ? `?${params.toString()}` : '';
-};
-
-export const buildUrlWithPathParams = (url: string, pathParams?: PathParams): string => {
-    if (!pathParams) return url;
-
+// Build URL helpers
+const buildUrl = (url: string, pathParams?: Record<string, string | number>, queryParams?: Record<string, any>): string => {
     let builtUrl = url;
-    for (const key in pathParams) {
-        builtUrl = builtUrl.replace(`{${key}}`, encodeURIComponent(String(pathParams[key])));
+
+    // Replace path params
+    if (pathParams) {
+        Object.entries(pathParams).forEach(([key, value]) => {
+            builtUrl = builtUrl.replace(`{${key}}`, String(value));
+        });
     }
+
+    // Add query params
+    if (queryParams) {
+        const params = new URLSearchParams();
+        Object.entries(queryParams).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                params.append(key, String(value));
+            }
+        });
+        const queryString = params.toString();
+        if (queryString) builtUrl += `?${queryString}`;
+    }
+
     return builtUrl;
 };
 
-export const getFullUrl = (url: string, pathParams?: PathParams, queryParams?: QueryParams): string => {
-    const urlWithPath = buildUrlWithPathParams(url, pathParams);
-    const queryString = buildQueryParams(queryParams);
-    return `${urlWithPath}${queryString}`;
-};
-
-// Generic endpoint executor
+// Generic endpoint creator
 export const createEndpoint = <TResponse = any, TRequest = any>(
     endpointConfig: EndpointConfig
 ) => {
@@ -168,68 +101,50 @@ export const createEndpoint = <TResponse = any, TRequest = any>(
         options?: RequestOptions
     ): Promise<ApiResponse<TResponse>> => {
         try {
-            const { pathParams, queryParams, token, config = {} } = options || {};
+            const { pathParams, queryParams, token } = options || {};
+            const url = buildUrl(endpointConfig.url, pathParams, queryParams);
 
-            // Build full URL
-            const url = getFullUrl(endpointConfig.url, pathParams, queryParams);
+            const config: any = { headers: {} };
 
-            // Setup config with headers
-            let requestConfig: any = {
-                ...config,
-                headers: {
-                    ...config.headers,
-                }
-            };
-
-            // Add auth header if required
-            // Priority: 1. Provided token, 2. Token from Zustand store
-            const authToken = token || getAuthTokenFromStore();
-            if (endpointConfig.requireAuth) {
-                if (!authToken) {
-                    throw new Error('Authentication required but no token provided');
-                }
-                requestConfig.headers['Authorization'] = `Bearer ${authToken}`;
-            } else if (authToken) {
-                // Include token even for non-required endpoints if available
-                requestConfig.headers['Authorization'] = `Bearer ${authToken}`;
+            // Add auth header
+            const authToken = token || getAuthToken();
+            if (endpointConfig.requireAuth && !authToken) {
+                throw new Error('Authentication required');
+            }
+            if (authToken) {
+                config.headers['Authorization'] = `Bearer ${authToken}`;
             }
 
-            // Make request based on method
+            // Make request
             let response: any;
-
             switch (endpointConfig.method) {
                 case 'GET':
-                    response = await AXIOS.get<TResponse>(url, requestConfig);
+                    response = await AXIOS.get<TResponse>(url, config);
                     break;
                 case 'POST':
-                    response = await AXIOS.post<TResponse>(url, data, requestConfig);
+                    response = await AXIOS.post<TResponse>(url, data, config);
                     break;
                 case 'PUT':
-                    response = await AXIOS.put<TResponse>(url, data, requestConfig);
+                    response = await AXIOS.put<TResponse>(url, data, config);
                     break;
                 case 'PATCH':
-                    response = await AXIOS.patch<TResponse>(url, data, requestConfig);
+                    response = await AXIOS.patch<TResponse>(url, data, config);
                     break;
                 case 'DELETE':
-                    response = await AXIOS.delete<TResponse>(url, requestConfig);
+                    response = await AXIOS.delete<TResponse>(url, config);
                     break;
-                default:
-                    throw new Error(`Unsupported HTTP method: ${endpointConfig.method}`);
             }
 
             return {
                 data: response.data,
                 status: response.status,
-                statusText: response.statusText,
-                headers: response.headers,
             };
         } catch (error: any) {
-            const apiError: ApiError = {
-                message: error.response?.data?.message || error.message || 'An error occurred',
+            throw {
+                message: error.response?.data?.message || error.message || 'Request failed',
                 status: error.response?.status,
                 data: error.response?.data,
             };
-            throw apiError;
         }
     };
 };

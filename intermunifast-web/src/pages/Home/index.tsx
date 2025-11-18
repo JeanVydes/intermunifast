@@ -3,7 +3,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { BusSearchBar, SearchParams } from '../../components/BusSearchBar';
 import { BookingModal } from '../../components/BookingModal';
-import { TripAPI, TripResponse, PassengerType } from '../../api';
+import { TripAPI, TicketAPI, RouteAPI, TripResponse, PassengerType } from '../../api';
 import { RouteResponse, StopResponse } from '../../api/types/Transport';
 
 interface CartItem {
@@ -12,6 +12,8 @@ interface CartItem {
 	stops: StopResponse[];
 	passengerType?: PassengerType;
 	selectedSeat?: string;
+	ticketId: number; // ID of the created ticket
+	baggageId?: number | null; // ID of baggage if any
 	baggage?: {
 		weightKg: number;
 		tagCode: string;
@@ -27,6 +29,8 @@ export const Home: FunctionComponent = () => {
 	const [showBookingModal, setShowBookingModal] = useState(false);
 	const [selectedTrip, setSelectedTrip] = useState<{ trip: TripResponse; route: RouteResponse; stops: StopResponse[] } | null>(null);
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+	const [isLoadingCart, setIsLoadingCart] = useState(true);
 
 	// State for initial search params from URL
 	const [initialOrigin, setInitialOrigin] = useState('');
@@ -38,6 +42,113 @@ export const Home: FunctionComponent = () => {
 		const token = localStorage.getItem('authToken');
 		setIsAuthenticated(!!token);
 	}, []);
+
+	// Load cart from localStorage and fetch pending tickets on mount
+	useEffect(() => {
+		const loadCart = async () => {
+			if (!isAuthenticated) {
+				setIsLoadingCart(false);
+				return;
+			}
+
+			try {
+				// Get saved ticket IDs from localStorage
+				const savedTicketIds = localStorage.getItem('cartTicketIds');
+				if (!savedTicketIds) {
+					setIsLoadingCart(false);
+					return;
+				}
+
+				const ticketIds: number[] = JSON.parse(savedTicketIds);
+				if (ticketIds.length === 0) {
+					setIsLoadingCart(false);
+					return;
+				}
+
+				console.log('📦 Restaurando carrito con tickets:', ticketIds);
+
+				// Fetch tickets from backend to verify they still exist and are pending
+				const cartItems: CartItem[] = [];
+
+				for (const ticketId of ticketIds) {
+					try {
+						const ticketResponse = await TicketAPI.getById(undefined, {
+							pathParams: { id: ticketId.toString() }
+						});
+
+						const ticket = ticketResponse.data;
+
+						// Only add to cart if ticket is still CONFIRMED or PENDING_APPROVAL
+						if (ticket.status === 'CONFIRMED' || ticket.status === 'PENDING_APPROVAL') {
+							// Fetch trip details
+							const tripResponse = await TripAPI.getById(undefined, {
+								pathParams: { id: ticket.tripId.toString() }
+							});
+
+							const trip = tripResponse.data;
+
+							// Fetch route details
+							const routeResponse = await RouteAPI.getById(undefined, {
+								pathParams: { id: trip.routeId.toString() }
+							});
+
+							const route = routeResponse.data;
+
+							// Fetch stops for the route
+							const stopsResponse = await RouteAPI.getStops(undefined, {
+								pathParams: { id: trip.routeId.toString() }
+							});
+
+							const routeStops = stopsResponse.data;
+
+							cartItems.push({
+								trip,
+								route,
+								stops: routeStops,
+								selectedSeat: ticket.seatNumber,
+								ticketId: ticket.id,
+								baggageId: null
+							});
+
+							console.log(`✅ Ticket ${ticketId} restaurado al carrito`);
+						} else {
+							console.log(`⚠️  Ticket ${ticketId} no está en estado válido (${ticket.status})`);
+						}
+					} catch (error) {
+						console.error(`❌ Error al cargar ticket ${ticketId}:`, error);
+					}
+				}
+
+				setCart(cartItems);
+
+				// Update localStorage with valid ticket IDs
+				const validTicketIds = cartItems.map(item => item.ticketId);
+				localStorage.setItem('cartTicketIds', JSON.stringify(validTicketIds));
+
+				if (cartItems.length > 0) {
+					console.log(`✅ Carrito restaurado con ${cartItems.length} ticket(s)`);
+				} else {
+					console.log('ℹ️  No hay tickets válidos para restaurar');
+					localStorage.removeItem('cartTicketIds');
+				}
+
+			} catch (error) {
+				console.error('❌ Error al cargar el carrito:', error);
+			} finally {
+				setIsLoadingCart(false);
+			}
+		};
+
+		loadCart();
+	}, [isAuthenticated]);
+
+	// Save cart ticket IDs to localStorage whenever cart changes
+	useEffect(() => {
+		if (!isLoadingCart) {
+			const ticketIds = cart.map(item => item.ticketId);
+			localStorage.setItem('cartTicketIds', JSON.stringify(ticketIds));
+		}
+	}, [cart, isLoadingCart]);
 
 	// Load search from URL params on mount
 	useEffect(() => {
@@ -106,7 +217,7 @@ export const Home: FunctionComponent = () => {
 		setShowBookingModal(true);
 	};
 
-	const handleBookingComplete = (tripId: number, seat: string, passengerType: PassengerType) => {
+	const handleBookingComplete = (tripId: number, seat: string, passengerType: PassengerType, ticketId: number, baggageId: number | null) => {
 		if (!selectedTrip) return;
 
 		const newCartItem: CartItem = {
@@ -114,7 +225,9 @@ export const Home: FunctionComponent = () => {
 			route: selectedTrip.route,
 			stops: selectedTrip.stops,
 			passengerType: passengerType,
-			selectedSeat: seat
+			selectedSeat: seat,
+			ticketId: ticketId,
+			baggageId: baggageId
 		};
 
 		setCart([...cart, newCartItem]);
@@ -122,8 +235,59 @@ export const Home: FunctionComponent = () => {
 		setSelectedTrip(null);
 	};
 
-	const removeFromCart = (tripId: number) => {
-		setCart(cart.filter(item => item.trip.id !== tripId));
+	const removeFromCart = async (ticketId: number) => {
+		try {
+			// Delete the ticket from the backend
+			await TicketAPI.delete(undefined, {
+				pathParams: { id: ticketId.toString() }
+			});
+
+			// Remove from cart state
+			setCart(cart.filter(item => item.ticketId !== ticketId));
+		} catch (error) {
+			console.error('Error removing ticket from cart:', error);
+			alert('Error al remover el ticket del carrito.');
+		}
+	};
+
+	const handlePayAllTickets = async () => {
+		if (cart.length === 0) {
+			alert('El carrito está vacío');
+			return;
+		}
+
+		setIsProcessingPayment(true);
+		try {
+			// Mock payment intent (en producción, integrar con Stripe real)
+			const paymentIntentId = `pi_mock_${Date.now()}`;
+
+			// Get all ticket IDs from cart
+			const ticketIds = cart.map(item => item.ticketId);
+
+			// Call the API to mark multiple tickets as paid
+			// Backend expects: ticketIds as body array, paymentIntentId as query param
+			const response = await TicketAPI.markMultipleAsPaid(
+				ticketIds,
+				{ queryParams: { paymentIntentId } }
+			);
+
+			// Clear the cart after successful payment
+			setCart([]);
+
+			// Clear cart from localStorage
+			localStorage.removeItem('cartTicketIds');
+
+			// Show success message
+			alert(`✅ Pago exitoso! ${ticketIds.length} ticket${ticketIds.length > 1 ? 's' : ''} pagado${ticketIds.length > 1 ? 's' : ''}.`);
+
+			// Optionally redirect to account/tickets page
+			// location.route('/account');
+		} catch (error) {
+			console.error('Error processing payment:', error);
+			alert('Error al procesar el pago. Por favor, intenta de nuevo.');
+		} finally {
+			setIsProcessingPayment(false);
+		}
 	};
 
 	const formatDateTime = (dateString: string | undefined) => {
@@ -404,10 +568,15 @@ export const Home: FunctionComponent = () => {
 
 								{/* Cart Content */}
 								<div className="p-6">
-									{cart.length > 0 ? (
+									{isLoadingCart ? (
+										<div className="text-center py-8">
+											<div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mb-3"></div>
+											<p className="text-gray-400 text-sm">Cargando carrito...</p>
+										</div>
+									) : cart.length > 0 ? (
 										<div className="space-y-4">
 											{cart.map((item) => (
-												<div key={item.trip.id} className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+												<div key={item.ticketId} className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
 													<div className="flex justify-between items-start mb-2">
 														<div className="flex-1">
 															<p className="text-white font-medium text-sm">
@@ -418,8 +587,9 @@ export const Home: FunctionComponent = () => {
 															</p>
 														</div>
 														<button
-															onClick={() => removeFromCart(item.trip.id)}
-															className="text-red-400 hover:text-red-300 transition-colors"
+															onClick={() => removeFromCart(item.ticketId)}
+															disabled={isProcessingPayment}
+															className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
 														>
 															<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 																<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -434,22 +604,41 @@ export const Home: FunctionComponent = () => {
 													{item.passengerType && (
 														<div className="mt-1 text-xs text-gray-400">
 															Tipo: <span className="text-amber-400 font-medium">
-																{item.passengerType === 'ADULT' ? 'Adulto' : item.passengerType === 'CHILD' ? 'Niño' : 'Anciano'}
+																{item.passengerType === 'ADULT' ? 'Adulto' : item.passengerType === 'CHILD' ? 'Niño' : item.passengerType === 'SENIOR' ? 'Anciano' : 'Estudiante'}
 															</span>
 														</div>
 													)}
+													<div className="mt-2 pt-2 border-t border-gray-700">
+														<p className="text-xs text-gray-500">
+															Estado: <span className="text-yellow-400 font-medium">Pago Pendiente</span>
+														</p>
+													</div>
 												</div>
 											))}
 
 											<div className="pt-4 border-t border-gray-700">
 												<div className="flex justify-between items-center mb-4">
-													<span className="text-white font-semibold">Total estimado</span>
+													<span className="text-white font-semibold">Total a pagar</span>
 													<span className="text-2xl font-bold text-amber-500">
 														${cart.reduce((sum, item) => sum + (item.route.pricePerKm * item.route.distanceKm), 0).toFixed(2)}
 													</span>
 												</div>
-												<button className="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white font-semibold py-3 rounded-xl shadow-lg shadow-green-500/30 transition-all duration-300">
-													Proceder al pago
+												<button
+													onClick={handlePayAllTickets}
+													disabled={isProcessingPayment}
+													className="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white font-semibold py-3 rounded-xl shadow-lg shadow-green-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+												>
+													{isProcessingPayment ? (
+														<span className="flex items-center justify-center space-x-2">
+															<svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+																<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+																<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+															</svg>
+															<span>Procesando...</span>
+														</span>
+													) : (
+														<span>Pagar todo ({cart.length} ticket{cart.length > 1 ? 's' : ''})</span>
+													)}
 												</button>
 											</div>
 										</div>

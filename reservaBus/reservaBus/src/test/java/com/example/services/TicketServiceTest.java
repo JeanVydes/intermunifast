@@ -7,9 +7,9 @@ import com.example.domain.enums.PaymentMethod;
 import com.example.domain.enums.TicketStatus;
 import com.example.domain.repositories.*;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.AuthenticationService;
-import com.example.services.definitions.SeatAvailabilityService;
-import com.example.services.definitions.TicketServiceImpl;
+import com.example.security.services.AuthenticationService;
+import com.example.services.extra.SeatAvailabilityService;
+import com.example.services.implementations.TicketServiceImpl;
 import com.example.services.mappers.TicketMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -88,9 +88,15 @@ class TicketServiceTest {
                                 .studentDiscount(0.2)
                                 .build();
 
+                Bus bus = Bus.builder()
+                                .id(1L)
+                                .capacity(40)
+                                .build();
+
                 trip = Trip.builder()
                                 .id(1L)
                                 .route(route)
+                                .bus(bus)
                                 .build();
 
                 fromStop = Stop.builder()
@@ -113,11 +119,11 @@ class TicketServiceTest {
                                 .fromStop(fromStop)
                                 .toStop(toStop)
                                 .paymentMethod(PaymentMethod.CASH)
-                                .status(TicketStatus.SOLD)
+                                .status(TicketStatus.CONFIRMED)
                                 .build();
 
                 ticketResponse = new TicketDTOs.TicketResponse(1L, "A1", 1L, Optional.of(1L), Optional.of(2L),
-                                PaymentMethod.CASH, "pi_123");
+                                PaymentMethod.CASH, "pi_123", "CONFIRMED", 50.0, "QR123");
                 createRequest = new TicketDTOs.CreateTicketRequest("A1", 1L, Optional.of(1L), Optional.of(2L),
                                 PaymentMethod.CASH, "pi_123",
                                 FareRulePassengerType.ADULT);
@@ -132,8 +138,8 @@ class TicketServiceTest {
                 when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
                 when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
                 when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
-                when(seatAvailabilityService.isSeatAvailable(any(), any(), any(Stop.class), any(Stop.class)))
-                                .thenReturn(true);
+                when(ticketRepository.findTicketsSameTripAndStops(any(), any(), any()))
+                                .thenReturn(java.util.Collections.emptyList());
                 when(fareRuleRepository.findByRouteId(1L)).thenReturn(fareRule);
                 when(accountRepository.getReferenceById(1L)).thenReturn(account);
                 when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);

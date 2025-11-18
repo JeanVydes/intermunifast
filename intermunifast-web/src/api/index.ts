@@ -9,20 +9,12 @@
 export {
     createEndpoint,
     setAuthToken,
-    setBaseURL,
-    getAuthToken,
     isAuthenticated,
     clearAuthToken,
     AXIOS
 } from './API';
 export type {
-    HttpMethod,
-    PathParams,
-    QueryParams,
-    EndpointConfig,
-    RequestOptions,
-    ApiResponse,
-    ApiError
+    ApiResponse
 } from './API';
 
 // API Endpoints
@@ -37,6 +29,8 @@ export { SeatHoldAPI } from './SeatHold';
 export { BaggageAPI } from './Baggage';
 export { AssignmentAPI, IncidentAPI, ParcelAPI, FareRuleAPI } from './Operations';
 export { ConfigAPI } from './Config';
+export { MetricsAPI } from './Metrics';
+export type { DashboardMetrics, CancellationMetrics, RevenueMetrics, OccupationMetrics, PunctualityMetrics } from './Metrics';
 
 // Type exports
 export * from './types/Common';

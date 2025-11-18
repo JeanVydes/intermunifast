@@ -1,4 +1,7 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,8 +13,10 @@ import com.example.domain.entities.Account;
 import com.example.domain.enums.AccountRole;
 import com.example.domain.enums.AccountStatus;
 import com.example.domain.repositories.AccountRepository;
+import com.example.services.definitions.AccountService;
 import com.example.services.mappers.AccountMapper;
 import com.example.exceptions.NotFoundException;
+import com.example.security.services.AuthenticationService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,11 +55,22 @@ public class AccountServiceimpl implements AccountService {
                 .orElseThrow(() -> new NotFoundException("Account %d not found".formatted(id)));
     }
 
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'DISPATCHER')")
+    @Override
+    @Transactional(readOnly = true)
+    public List<AccountDTOs.AccountResponse> getAllAccounts() {
+        return repo.findAll().stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public AccountDTOs.AccountResponse updateAccount(Long id, AccountDTOs.UpdateAccountRequest req) {
         Account currentAccount = authenticationService.getCurrentAccount();
+        boolean isAdmin = currentAccount.getRole() == AccountRole.ADMIN;
 
-        if (!currentAccount.getId().equals(id)) {
+        // Non-admin users can only update their own account
+        if (!isAdmin && !currentAccount.getId().equals(id)) {
             throw new IllegalStateException("You can only update your own account");
         }
 
@@ -65,6 +81,12 @@ public class AccountServiceimpl implements AccountService {
         req.email().ifPresent(account::setEmail);
         req.phone().ifPresent(account::setPhone);
         req.password().ifPresent(pwd -> account.setPasswordHash(passwordEncoder.encode(pwd)));
+
+        // Only admins can change role and status
+        if (isAdmin) {
+            req.role().ifPresent(account::setRole);
+            req.status().ifPresent(account::setStatus);
+        }
 
         return mapper.toResponse(repo.save(account));
     }

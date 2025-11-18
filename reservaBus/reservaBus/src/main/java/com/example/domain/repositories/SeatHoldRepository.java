@@ -14,13 +14,9 @@ public interface SeatHoldRepository extends JpaRepository<SeatHold, Long> {
 
     List<SeatHold> findBySeatNumber(String seatNumber);
 
-    List<SeatHold> findBySeatNumberIn(List<String> seatNumbers);
-
     Optional<SeatHold> findByTrip_IdAndSeatNumber(Long tripId, String seatNumber);
 
     List<SeatHold> findByAccount_Id(Long accountId);
-
-    List<SeatHold> findByExpiresAtBefore(LocalDateTime now);
 
     @Query("SELECT h FROM SeatHold h WHERE h.seatNumber IN :seatNumbers AND h.expiresAt > :now AND h.trip.id = :tripId")
     List<SeatHold> findActiveHoldsByListOfSeatNumbersAndCurrentTimeAndTripId(List<String> seatNumbers,

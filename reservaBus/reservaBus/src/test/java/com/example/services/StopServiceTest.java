@@ -6,7 +6,7 @@ import com.example.domain.entities.Stop;
 import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.StopServiceImpl;
+import com.example.services.implementations.StopServiceImpl;
 import com.example.services.mappers.StopMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

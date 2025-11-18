@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +10,7 @@ import com.example.domain.enums.ParcelStatus;
 import com.example.domain.repositories.ParcelRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.ParcelService;
 import com.example.services.mappers.ParcelMapper;
 import com.example.utils.OtpUtil;
 
@@ -32,12 +33,16 @@ public class ParcelServiceImpl implements ParcelService {
                 .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId())));
         Stop toStop = stopRepo.findById(req.toStopId())
                 .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId())));
+
         Parcel parcel = Parcel.builder()
                 .code(req.code())
                 .senderName(req.senderName())
                 .senderPhone(req.senderPhone())
                 .receiverName(req.receiverName())
                 .receiverPhone(req.receiverPhone())
+                .price(0.0) // Initialize with default price, can be updated later
+                .status(ParcelStatus.CREATED) // Default status
+                .proofPhotoUrl("") // Initialize empty, will be set when delivered
                 .fromStop(fromStop)
                 .toStop(toStop)
                 .build();

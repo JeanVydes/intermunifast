@@ -24,9 +24,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class SeatHold extends TimestampedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

@@ -13,6 +13,15 @@ export const AccountAPI = {
     }),
 
     /**
+     * Get all accounts (ADMIN/DISPATCHER only)
+     */
+    getAll: createEndpoint<AccountResponse[], never>({
+        url: '/api/accounts',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
      * Get account by ID
      */
     getById: createEndpoint<AccountResponse>({

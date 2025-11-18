@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.api.dto.ConfigDTOs;
 import com.example.domain.repositories.ConfigRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.ConfigService;
 import com.example.services.mappers.ConfigMapper;
 
 import lombok.RequiredArgsConstructor;

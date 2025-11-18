@@ -15,6 +15,12 @@ public interface TicketService {
 
     TicketDTOs.TicketResponse cancelTicket(Long id);
 
+    TicketDTOs.TicketResponse approveTicket(Long id);
+
+    TicketDTOs.TicketResponse cancelPendingTicket(Long id);
+
+    List<TicketDTOs.TicketResponse> getPendingApprovalTickets();
+
     TicketDTOs.TicketResponse markTicketAsPaid(Long id, String paymentIntentId);
 
     List<TicketDTOs.TicketResponse> markMultipleTicketsAsPaid(List<Long> ticketIds, String paymentIntentId);

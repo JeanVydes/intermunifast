@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.api.dto.IncidentDTOs;
 import com.example.domain.repositories.IncidentRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.IncidentService;
 import com.example.services.mappers.IncidentMapper;
 
 import lombok.RequiredArgsConstructor;

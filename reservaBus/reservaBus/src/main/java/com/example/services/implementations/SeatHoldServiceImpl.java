@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +14,10 @@ import com.example.domain.repositories.SeatHoldRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.security.services.AuthenticationService;
+import com.example.services.ConfigCacheService;
+import com.example.services.definitions.SeatHoldService;
+import com.example.services.extra.SeatAvailabilityService;
 import com.example.services.mappers.SeatHoldMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-
 public class SeatHoldServiceImpl implements SeatHoldService {
 
         private final SeatHoldRepository repo;
@@ -31,6 +34,7 @@ public class SeatHoldServiceImpl implements SeatHoldService {
         private final AccountRepository accountRepository;
         private final AuthenticationService authenticationService;
         private final SeatAvailabilityService seatAvailabilityService;
+        private final ConfigCacheService configCache;
 
         @Override
         public SeatHoldDTOs.SeatHoldResponse reserveSeat(SeatHoldDTOs.CreateSeatHoldRequest req) {
@@ -67,9 +71,12 @@ public class SeatHoldServiceImpl implements SeatHoldService {
 
                 var seatHold = mapper.toEntity(req);
 
+                // Get hold duration from config cache instead of hardcoded value
+                int holdMinutes = configCache.getMaxSeatHoldMinutes();
+
                 SeatHold savedSeatHold = repo.save(SeatHold.builder()
                                 .expiresAt(req.expiresAt() != null ? req.expiresAt()
-                                                : LocalDateTime.now().plusMinutes(10))
+                                                : LocalDateTime.now().plusMinutes(holdMinutes))
                                 .seatNumber(seatHold.getSeatNumber())
                                 .trip(trip)
                                 .fromStop(fromStop)

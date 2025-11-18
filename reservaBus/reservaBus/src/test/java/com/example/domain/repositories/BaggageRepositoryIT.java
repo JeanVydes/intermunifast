@@ -137,7 +137,7 @@ class BaggageRepositoryIT {
                                 .toStop(arrivalStop)
                                 .seatNumber("10")
                                 .price(50.0)
-                                .status(TicketStatus.SOLD)
+                                .status(TicketStatus.CONFIRMED)
                                 .paymentMethod(PaymentMethod.CASH)
                                 .build();
                 ticket = ticketRepository.save(ticket);

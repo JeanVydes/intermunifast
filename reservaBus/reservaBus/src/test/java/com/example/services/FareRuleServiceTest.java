@@ -6,7 +6,7 @@ import com.example.domain.entities.Route;
 import com.example.domain.repositories.FareRuleRepository;
 import com.example.domain.repositories.RouteRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.FareRuleServiceImpl;
+import com.example.services.implementations.FareRuleServiceImpl;
 import com.example.services.mappers.FareRuleMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,15 +52,16 @@ class FareRuleServiceTest {
         fareRule = FareRule.builder()
                 .id(1L)
                 .route(route)
+                .basePrice(50000.0)
                 .dynamicPricing(true)
                 .childrenDiscount(0.5)
                 .seniorDiscount(0.3)
                 .studentDiscount(0.2)
                 .build();
 
-        fareRuleResponse = new FareRuleDTOs.FareRuleResponse(1L, 1L, 0.5, 0.3, 0.2, true);
-        createRequest = new FareRuleDTOs.CreateFareRuleRequest(1L, true, 0.5, 0.3, 0.2);
-        updateRequest = new FareRuleDTOs.UpdateFareRuleRequest(1L, false, 0.6, 0.4, 0.25);
+        fareRuleResponse = new FareRuleDTOs.FareRuleResponse(1L, 1L, 50000.0, 0.5, 0.3, 0.2, true);
+        createRequest = new FareRuleDTOs.CreateFareRuleRequest(1L, 50000.0, true, 0.5, 0.3, 0.2);
+        updateRequest = new FareRuleDTOs.UpdateFareRuleRequest(1L, 55000.0, false, 0.6, 0.4, 0.25);
     }
 
     @Test

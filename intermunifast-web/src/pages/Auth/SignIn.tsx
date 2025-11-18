@@ -15,10 +15,16 @@ export default function SignIn() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Get redirect URL from query params
+    const getRedirectUrl = () => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('redirect') || '/dashboard';
+    };
+
     // Redirect if already authenticated
     useEffect(() => {
         if (accountId) {
-            route('/dashboard');
+            route(getRedirectUrl());
         }
     }, [accountId]);
 
@@ -62,15 +68,9 @@ export default function SignIn() {
             setAccountId(userProfileResponse.data.id);
             setLastUpdated(Date.now());
 
-            // Check for redirect URL
-            const redirectUrl = localStorage.getItem('redirectAfterLogin');
-            if (redirectUrl) {
-                localStorage.removeItem('redirectAfterLogin');
-                route(redirectUrl);
-            } else {
-                // Default redirect to dashboard
-                route('/dashboard');
-            }
+            // Redirect to original destination or dashboard
+            const redirectUrl = getRedirectUrl();
+            route(redirectUrl);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
         } finally {

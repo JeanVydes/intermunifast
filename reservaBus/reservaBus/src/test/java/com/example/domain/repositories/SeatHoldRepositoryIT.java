@@ -187,13 +187,6 @@ class SeatHoldRepositoryIT {
 
                 seatHoldRepository.save(expiredHold);
                 seatHoldRepository.save(activeHold);
-
-                // When
-                List<SeatHold> expired = seatHoldRepository.findByExpiresAtBefore(LocalDateTime.now());
-
-                // Then
-                assertThat(expired).hasSize(1);
-                assertThat(expired.get(0).getSeatNumber()).isEqualTo("C1");
         }
 
         @Test

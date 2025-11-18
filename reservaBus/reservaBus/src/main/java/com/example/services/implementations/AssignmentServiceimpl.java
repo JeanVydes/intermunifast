@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +11,7 @@ import com.example.domain.repositories.AccountRepository;
 import com.example.domain.repositories.AssignmentRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.AssignmentService;
 import com.example.services.mappers.AssignmentMapper;
 
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import java.util.List;
 
@@ -9,6 +9,7 @@ import com.example.api.dto.BusDTOs;
 import com.example.domain.enums.BusStatus;
 import com.example.domain.repositories.BusRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.BusService;
 import com.example.services.mappers.BusMapper;
 
 import lombok.RequiredArgsConstructor;

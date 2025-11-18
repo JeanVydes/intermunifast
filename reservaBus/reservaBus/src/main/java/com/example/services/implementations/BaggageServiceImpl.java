@@ -1,4 +1,6 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
+
+import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +11,8 @@ import com.example.domain.entities.Ticket;
 import com.example.domain.repositories.BaggageRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.ConfigCacheService;
+import com.example.services.definitions.BaggageService;
 import com.example.services.mappers.BaggageMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -16,26 +20,35 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-
 public class BaggageServiceImpl implements BaggageService {
-
-    private static final Integer MAX_WEIGHT_KG = 25;
 
     private final BaggageRepository repo;
     private final BaggageMapper mapper;
     private final TicketRepository ticketRepo;
+    private final ConfigCacheService configCache;
 
     @Override
     public BaggageDTOs.BaggageResponse createBaggage(BaggageDTOs.CreateBaggageRequest req) {
         Ticket ticket = ticketRepo.findById(req.ticketId())
                 .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(req.ticketId())));
-        if (req.weightKg() > MAX_WEIGHT_KG) {
+
+        // Get configuration from cache instead of hardcoded values
+        double maxWeightKg = configCache.getMaxBaggageWeightKg();
+        double feePercentage = configCache.getBaggageFeePercentage();
+
+        // Calculate fee based on weight
+        BigDecimal fee = BigDecimal.ZERO;
+        if (req.weightKg() > maxWeightKg) {
             var ticketPrice = ticket.getPrice();
-            ticket.setPrice(ticketPrice + ((req.weightKg() - 25) * (ticketPrice * 0.03)));
+            double extraFee = (req.weightKg() - maxWeightKg) * (ticketPrice * feePercentage);
+            fee = BigDecimal.valueOf(extraFee);
+            ticket.setPrice(ticketPrice + extraFee);
             ticketRepo.save(ticket);
         }
+
         Baggage baggage = Baggage.builder()
                 .weight(req.weightKg())
+                .fee(fee)
                 .tagCode(req.tagCode())
                 .ticket(ticket)
                 .build();

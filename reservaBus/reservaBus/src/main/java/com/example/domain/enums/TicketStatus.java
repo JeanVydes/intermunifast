@@ -1,8 +1,8 @@
 package com.example.domain.enums;
 
 public enum TicketStatus {
-    UNPAID,
-    SOLD,
+    CONFIRMED,
     CANCELLED,
+    PENDING_APPROVAL,
     NO_SHOW
 }

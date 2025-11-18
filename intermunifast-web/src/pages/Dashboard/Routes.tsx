@@ -3,36 +3,11 @@ import { useEffect, useState } from 'preact/hooks';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import { Plus, Search, Edit, Trash2, MapPin, Clock, DollarSign, Navigation } from 'lucide-preact';
 import { RouteAPI, RouteResponse, StopAPI, StopResponse } from '../../api';
-import useAccountStore from '../../stores/AccountStore';
 import useRouteStore from '../../stores/RouteStore';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 export const RoutesPage: FunctionComponent = () => {
-    const { accountId, account } = useAccountStore();
     const { routes, setRoutes, addRoute, updateRoute, removeRoute, lastUpdated, isLoading, setLoading } = useRouteStore();
-
-    if (!accountId || !account) {
-        location.assign('/auth/signup');
-        return (
-            <DashboardLayout>
-                <div className="p-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
-                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    if (account.role !== 'ADMIN') {
-        return (
-            <DashboardLayout>
-                <div className="p-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
-                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
     const [showModal, setShowModal] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState<RouteResponse | null>(null);
     const [showStopEditor, setShowStopEditor] = useState(false);
@@ -99,142 +74,146 @@ export const RoutesPage: FunctionComponent = () => {
         };
 
         fetchRoutes();
-    }, []); return (
-        <DashboardLayout>
-            <div className="p-8">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Route Management</h1>
-                        <p className="text-gray-600 mt-1">Manage your bus routes and stops</p>
+    }, []);
+
+    return (
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+            <DashboardLayout>
+                <div className="p-8">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Route Management</h1>
+                            <p className="text-gray-600 mt-1">Manage your bus routes and stops</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setSelectedRoute(null);
+                                setShowModal(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add New Route
+                        </button>
                     </div>
-                    <button
-                        onClick={() => {
-                            setSelectedRoute(null);
-                            setShowModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add New Route
-                    </button>
-                </div>
 
-                {/* Search and Filters */}
-                <div className="flex gap-4 mb-6">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by route code, name, origin, or destination..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                    {/* Search and Filters */}
+                    <div className="flex gap-4 mb-6">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by route code, name, origin, or destination..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
                     </div>
-                </div>
 
-                {/* Routes Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {routes.map((route) => (
-                        <div key={route.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{route.name}</h3>
-                                        <p className="text-sm text-gray-500 mt-1">Code: {route.code}</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 mb-4">
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <Navigation className="w-4 h-4" />
-                                        <span>{route.origin} → {route.destination}</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                                        <div className="flex items-center gap-1">
-                                            <Clock className="w-4 h-4" />
-                                            <span>{route.durationMinutes} min</span>
+                    {/* Routes Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {routes.map((route) => (
+                            <div key={route.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                <div className="p-6">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900">{route.name}</h3>
+                                            <p className="text-sm text-gray-500 mt-1">Code: {route.code}</p>
                                         </div>
-                                        <div className="flex items-center gap-1">
+                                    </div>
+
+                                    <div className="space-y-3 mb-4">
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <Navigation className="w-4 h-4" />
+                                            <span>{route.origin} → {route.destination}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                            <div className="flex items-center gap-1">
+                                                <Clock className="w-4 h-4" />
+                                                <span>{route.durationMinutes} min</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <MapPin className="w-4 h-4" />
+                                                <span>{route.distanceKm} km</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm font-medium text-purple-700 bg-purple-50 px-3 py-1.5 rounded-lg">
+                                            <DollarSign className="w-4 h-4" />
+                                            <span>${route.pricePerKm}/km = ${(route.pricePerKm * route.distanceKm).toFixed(2)} total</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleManageStops(route)}
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                                        >
                                             <MapPin className="w-4 h-4" />
-                                            <span>{route.distanceKm} km</span>
-                                        </div>
+                                            Manage Stops
+                                        </button>
+                                        <button
+                                            onClick={() => handleEditRoute(route)}
+                                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteRoute(route.id)}
+                                            className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
-                                    <div className="flex items-center gap-2 text-sm font-medium text-purple-700 bg-purple-50 px-3 py-1.5 rounded-lg">
-                                        <DollarSign className="w-4 h-4" />
-                                        <span>${route.pricePerKm}/km = ${(route.pricePerKm * route.distanceKm).toFixed(2)} total</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleManageStops(route)}
-                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
-                                    >
-                                        <MapPin className="w-4 h-4" />
-                                        Manage Stops
-                                    </button>
-                                    <button
-                                        onClick={() => handleEditRoute(route)}
-                                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteRoute(route.id)}
-                                        className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+
+                    {/* Modals */}
+                    {showModal && (
+                        <RouteFormModal
+                            route={selectedRoute}
+                            onClose={() => {
+                                setShowModal(false);
+                                setSelectedRoute(null);
+                            }}
+                            onSave={async (routeData) => {
+                                if (selectedRoute) {
+                                    // Update existing route
+                                    const response = await RouteAPI.update({
+                                        code: routeData.code,
+                                        name: routeData.name,
+                                        origin: routeData.origin,
+                                        destination: routeData.destination,
+                                        durationMinutes: routeData.durationMinutes,
+                                        distanceKm: routeData.distanceKm,
+                                        pricePerKm: routeData.pricePerKm
+                                    }, {
+                                        pathParams: { id: selectedRoute.id }
+                                    });
+                                    updateRoute(selectedRoute.id, response.data);
+                                } else {
+                                    // Create new route
+                                    await createRoute(routeData);
+                                }
+                                setShowModal(false);
+                                setSelectedRoute(null);
+                            }}
+                        />
+                    )}
+
+                    {showStopEditor && selectedRoute && (
+                        <StopEditorModal
+                            route={selectedRoute}
+                            onClose={() => {
+                                setShowStopEditor(false);
+                                setSelectedRoute(null);
+                            }}
+                        />
+                    )}
                 </div>
-
-                {/* Modals */}
-                {showModal && (
-                    <RouteFormModal
-                        route={selectedRoute}
-                        onClose={() => {
-                            setShowModal(false);
-                            setSelectedRoute(null);
-                        }}
-                        onSave={async (routeData) => {
-                            if (selectedRoute) {
-                                // Update existing route
-                                const response = await RouteAPI.update({
-                                    code: routeData.code,
-                                    name: routeData.name,
-                                    origin: routeData.origin,
-                                    destination: routeData.destination,
-                                    durationMinutes: routeData.durationMinutes,
-                                    distanceKm: routeData.distanceKm,
-                                    pricePerKm: routeData.pricePerKm
-                                }, {
-                                    pathParams: { id: selectedRoute.id }
-                                });
-                                updateRoute(selectedRoute.id, response.data);
-                            } else {
-                                // Create new route
-                                await createRoute(routeData);
-                            }
-                            setShowModal(false);
-                            setSelectedRoute(null);
-                        }}
-                    />
-                )}
-
-                {showStopEditor && selectedRoute && (
-                    <StopEditorModal
-                        route={selectedRoute}
-                        onClose={() => {
-                            setShowStopEditor(false);
-                            setSelectedRoute(null);
-                        }}
-                    />
-                )}
-            </div>
-        </DashboardLayout>
+            </DashboardLayout>
+        </ProtectedRoute>
     );
 };
 

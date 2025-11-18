@@ -26,7 +26,13 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findStartingTripsInNextMinutes(@Param("now") LocalDateTime now,
             @Param("futureTime") LocalDateTime futureTime);
 
+    @Query("SELECT t FROM Trip t JOIN t.parcels p WHERE p.fromStop.id = :fromStopId AND p.toStop.id = :toStopId")
+    Trip findByParcelsFromStop_IdAndParcelsToStop_Id(@Param("fromStopId") Long fromStopId,
+            @Param("toStopId") Long toStopId);
+
     /**
+     * NOTE: QUERY MADE WITH HELP OF AI
+     * 
      * Searches for available trips between origin and destination stops.
      * 
      * Search logic:
@@ -82,5 +88,12 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
             @Param("destination") String destination,
             @Param("departureDateStart") LocalDateTime departureDateStart,
             @Param("departureDateEnd") LocalDateTime departureDateEnd);
+
+    // Real-time metrics queries - show ALL trips
+    @Query("SELECT COUNT(t) FROM Trip t")
+    Long countTripsByPeriod(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT t FROM Trip t")
+    List<Trip> findTripsByPeriod(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
 }

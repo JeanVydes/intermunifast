@@ -10,7 +10,7 @@ export type SeatType = 'STANDARD' | 'PREFERENTIAL';
 export type PassengerType = 'ADULT' | 'CHILD' | 'SENIOR' | 'STUDENT';
 
 // Ticket Status Enum
-export type TicketStatus = 'UNPAID' | 'SOLD' | 'CANCELLED' | 'NO_SHOW';
+export type TicketStatus = 'CONFIRMED' | 'CANCELLED' | 'PENDING_APPROVAL' | 'NO_SHOW';
 
 // Trip Types - Based on TripDTOs.java
 export interface TripResponse {

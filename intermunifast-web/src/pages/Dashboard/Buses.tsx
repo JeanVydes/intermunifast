@@ -1,9 +1,9 @@
 import { FunctionComponent } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
+import ProtectedRoute from '../../components/ProtectedRoute';
 import { Plus, Search, Edit, Trash2, MapPin, Users, Settings } from 'lucide-preact';
 import { BusAPI, BusResponse, SeatType, SeatAPI, SeatResponse } from '../../api';
-import useAccountStore from '../../stores/AccountStore';
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -19,31 +19,6 @@ const getStatusColor = (status: string) => {
 };
 
 export const BusesPage: FunctionComponent = () => {
-    const { accountId, account } = useAccountStore();
-
-    if (!accountId || !account) {
-        location.assign('/auth/signup');
-        return (
-            <DashboardLayout>
-                <div className="p-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
-                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    if (account.role !== 'ADMIN') {
-        return (
-            <DashboardLayout>
-                <div className="p-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
-                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
     const [buses, setBuses] = useState<BusResponse[]>([]);
 
     // Flow control states
@@ -100,138 +75,139 @@ export const BusesPage: FunctionComponent = () => {
     }, []);
 
     return (
-        <DashboardLayout>
-            <div className="p-8">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Bus Management</h1>
-                        <p className="text-gray-600 mt-1">Manage your fleet of buses</p>
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+            <DashboardLayout>
+                <div className="p-8">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Bus Management</h1>
+                            <p className="text-gray-600 mt-1">Manage your fleet of buses</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setSelectedBus(null);
+                                setShowModal(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add New Bus
+                        </button>
                     </div>
-                    <button
-                        onClick={() => {
-                            setSelectedBus(null);
-                            setShowModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add New Bus
-                    </button>
-                </div>
 
-                {/* Search and Filters */}
-                <div className="flex gap-4 mb-6">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by license plate, brand, or model..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                    {/* Search and Filters */}
+                    <div className="flex gap-4 mb-6">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search by license plate, brand, or model..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
+                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
                     </div>
-                    <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
 
-                {/* Buses Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {buses.map((bus) => (
-                        <div key={bus.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{bus.plate}</h3>
-                                        <p className="text-sm text-gray-500 mt-1">{bus.id}</p>
+                    {/* Buses Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {buses.map((bus) => (
+                            <div key={bus.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                <div className="p-6">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900">{bus.plate}</h3>
+                                            <p className="text-sm text-gray-500 mt-1">{bus.id}</p>
+                                        </div>
+                                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(bus.status)}`}>
+                                            {bus.status.charAt(0).toUpperCase() + bus.status.slice(1)}
+                                        </span>
                                     </div>
-                                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(bus.status)}`}>
-                                        {bus.status.charAt(0).toUpperCase() + bus.status.slice(1)}
-                                    </span>
-                                </div>
 
-                                <div className="space-y-3 mb-4">
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <Users className="w-4 h-4" />
-                                        <span>{bus.capacity} seats</span>
+                                    <div className="space-y-3 mb-4">
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <Users className="w-4 h-4" />
+                                            <span>{bus.capacity} seats</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {bus.amenities.map((amenity, index) => (
+                                                <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
+                                                    {amenity.name}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {bus.amenities.map((amenity, index) => (
-                                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
-                                                {amenity.name}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
 
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleManageSeats(bus)}
-                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
-                                    >
-                                        <MapPin className="w-4 h-4" />
-                                        Manage Seats
-                                    </button>
-                                    <button
-                                        onClick={() => handleEditBus(bus)}
-                                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleManageSeats(bus)}
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
+                                        >
+                                            <MapPin className="w-4 h-4" />
+                                            Manage Seats
+                                        </button>
+                                        <button
+                                            onClick={() => handleEditBus(bus)}
+                                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+
+                    {/* Modals */}
+                    {showModal && (
+                        <BusFormModal
+                            bus={selectedBus}
+                            onClose={() => {
+                                setShowModal(false);
+                                setSelectedBus(null);
+                            }}
+                            onSave={async (busData) => {
+                                if (selectedBus) {
+                                    // Update existing bus
+                                    const response = await BusAPI.update({
+                                        plate: busData.plate,
+                                        capacity: busData.capacity,
+                                        amenities: busData.amenities,
+                                        status: busData.status
+                                    }, {
+                                        pathParams: { id: selectedBus.id }
+                                    });
+                                    setBuses(buses.map(b => b.id === selectedBus.id ? response.data : b));
+                                } else {
+                                    // Create new bus
+                                    await createBus(busData);
+                                }
+                                setShowModal(false);
+                                setSelectedBus(null);
+                            }}
+                        />
+                    )}
+
+                    {showSeatEditor && selectedBus && (
+                        <SeatEditorModal
+                            bus={selectedBus}
+                            onClose={() => {
+                                setShowSeatEditor(false);
+                                setSelectedBus(null);
+                            }}
+                        />
+                    )}
                 </div>
-
-                {/* Modals */}
-                {showModal && (
-                    <BusFormModal
-                        bus={selectedBus}
-                        onClose={() => {
-                            setShowModal(false);
-                            setSelectedBus(null);
-                        }}
-                        onSave={async (busData) => {
-                            if (selectedBus) {
-                                // Update existing bus
-                                const response = await BusAPI.update({
-                                    plate: busData.plate,
-                                    capacity: busData.capacity,
-                                    amenities: busData.amenities,
-                                    status: busData.status
-                                }, {
-                                    pathParams: { id: selectedBus.id }
-                                });
-                                setBuses(buses.map(b => b.id === selectedBus.id ? response.data : b));
-                            } else {
-                                // Create new bus
-                                await createBus(busData);
-                            }
-                            setShowModal(false);
-                            setSelectedBus(null);
-                        }}
-                    />
-                )}
-
-                {showSeatEditor && selectedBus && (
-                    <SeatEditorModal
-                        bus={selectedBus}
-                        onClose={() => {
-                            setShowSeatEditor(false);
-                            setSelectedBus(null);
-                        }}
-                    />
-                )}
-            </div>
-
-        </DashboardLayout>
+            </DashboardLayout>
+        </ProtectedRoute>
     );
 };
 

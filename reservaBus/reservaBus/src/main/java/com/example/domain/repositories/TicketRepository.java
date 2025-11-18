@@ -11,6 +11,8 @@ import com.example.domain.enums.TicketStatus;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
+    List<Ticket> findByStatus(TicketStatus status);
+
     List<Ticket> findByTrip_IdAndStatus(Long tripId, TicketStatus status);
 
     List<Ticket> findByAccount_Id(Long accountId);
@@ -23,21 +25,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     Ticket findByQrCode(String qrCode);
 
-    List<Ticket> findByStatusIn(List<TicketStatus> statuses);
-
-    List<Ticket> findByFromStop_IdAndToStop_IdAndStatus(Long fromStopId, Long toStopId, TicketStatus status);
-
-    @Query("SELECT DISTINCT t.paymentMethod FROM Ticket t WHERE t.trip.id = :tripId")
-    List<String> findPaymentMethodsUsedInTrip(@Param("tripId") Long tripId);
-
     @Query("SELECT t FROM Ticket t WHERE t.seatNumber IN :seatNumbers AND t.trip.id = :tripId")
     List<Ticket> findTicketsByListOfSeatNumbersFilteredByTripId(List<String> seatNumbers, Long tripId);
 
     Ticket findByTrip_IdAndSeatNumber(Long tripId, String seatNumber);
-
-    @Query("SELECT t FROM Ticket t WHERE t.trip.id = :tripId AND t.seatNumber = :seatNumber AND t.fromStop.id = :fromStopId AND t.toStop.id = :toStopId")
-    Ticket findByTripIdAndSeatNumberAndFromStopIdAndToStopId(Long tripId, String seatNumber, Long fromStopId,
-            Long toStopId);
 
     /**
      * Encuentra tickets vendidos (SOLD) que solapen con el tramo especificado.
@@ -62,4 +53,23 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
             @Param("seatNumber") String seatNumber,
             @Param("newFromSeq") Integer newFromSequence,
             @Param("newToSeq") Integer newToSequence);
+
+    @Query("SELECT t FROM Ticket t WHERE t.trip.id = :tripId AND t.fromStop.id = :fromStopId AND t.toStop.id = :toStopId")
+    List<Ticket> findTicketsSameTripAndStops(
+            @Param("tripId") Long tripId,
+            @Param("fromStopId") Long fromStopId,
+            @Param("toStopId") Long toStopId);
+
+    // Real-time metrics queries - show ALL data without date filtering
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = 'CONFIRMED'")
+    Long countConfirmedTickets(@Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate);
+
+    @Query("SELECT SUM(t.price) FROM Ticket t WHERE t.status = 'CONFIRMED'")
+    Double getTotalRevenue(@Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = 'CANCELLED'")
+    Long countCancelledTickets(@Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate);
 }

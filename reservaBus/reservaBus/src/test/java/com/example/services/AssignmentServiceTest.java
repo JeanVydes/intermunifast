@@ -9,7 +9,7 @@ import com.example.domain.repositories.AccountRepository;
 import com.example.domain.repositories.AssignmentRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.AssignmentServiceimpl;
+import com.example.services.implementations.AssignmentServiceimpl;
 import com.example.services.mappers.AssignmentMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

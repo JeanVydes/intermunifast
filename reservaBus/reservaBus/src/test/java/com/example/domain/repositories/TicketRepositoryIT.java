@@ -130,7 +130,7 @@ class TicketRepositoryIT {
                                 .seatNumber("A1")
                                 .price(50.0)
                                 .qrCode("QR12345")
-                                .status(TicketStatus.SOLD)
+                                .status(TicketStatus.CONFIRMED)
                                 .paymentMethod(PaymentMethod.CARD)
                                 .build();
 
@@ -141,7 +141,7 @@ class TicketRepositoryIT {
                 assertThat(saved.getId()).isNotNull();
                 assertThat(saved.getSeatNumber()).isEqualTo("A1");
                 assertThat(saved.getPrice()).isEqualTo(50.0);
-                assertThat(saved.getStatus()).isEqualTo(TicketStatus.SOLD);
+                assertThat(saved.getStatus()).isEqualTo(TicketStatus.CONFIRMED);
         }
 
         @Test
@@ -156,13 +156,13 @@ class TicketRepositoryIT {
                                 .seatNumber("B2")
                                 .price(60.0)
                                 .qrCode("QR54321")
-                                .status(TicketStatus.SOLD)
+                                .status(TicketStatus.CONFIRMED)
                                 .paymentMethod(PaymentMethod.CASH)
                                 .build();
                 ticketRepository.save(ticket);
 
                 // When
-                List<Ticket> found = ticketRepository.findByTrip_IdAndStatus(trip.getId(), TicketStatus.SOLD);
+                List<Ticket> found = ticketRepository.findByTrip_IdAndStatus(trip.getId(), TicketStatus.CONFIRMED);
 
                 // Then
                 assertThat(found).hasSize(1);
@@ -181,7 +181,7 @@ class TicketRepositoryIT {
                                 .seatNumber("C3")
                                 .price(55.0)
                                 .qrCode("QR11111")
-                                .status(TicketStatus.SOLD)
+                                .status(TicketStatus.CONFIRMED)
                                 .paymentMethod(PaymentMethod.QR)
                                 .build();
                 ticketRepository.save(ticket1);
@@ -207,7 +207,7 @@ class TicketRepositoryIT {
                                 .seatNumber("D4")
                                 .price(65.0)
                                 .qrCode(qrCode)
-                                .status(TicketStatus.SOLD)
+                                .status(TicketStatus.CONFIRMED)
                                 .paymentMethod(PaymentMethod.TRANSFER)
                                 .build();
                 ticketRepository.save(ticket);

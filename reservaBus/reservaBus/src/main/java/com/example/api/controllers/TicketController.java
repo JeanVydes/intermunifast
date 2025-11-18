@@ -62,7 +62,28 @@ public class TicketController {
         return ResponseEntity.ok(canceledTicket);
     }
 
-    @PostMapping("/{id}/mark-paid")
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'ADMIN')")
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<TicketDTOs.TicketResponse> approve(@PathVariable Long id) {
+        TicketDTOs.TicketResponse approvedTicket = ticketService.approveTicket(id);
+        return ResponseEntity.ok(approvedTicket);
+    }
+
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'ADMIN')")
+    @PostMapping("/{id}/cancel-pending")
+    public ResponseEntity<TicketDTOs.TicketResponse> cancelPending(@PathVariable Long id) {
+        TicketDTOs.TicketResponse canceledTicket = ticketService.cancelPendingTicket(id);
+        return ResponseEntity.ok(canceledTicket);
+    }
+
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'ADMIN')")
+    @GetMapping("/pending-approval")
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> getPendingApproval() {
+        List<TicketDTOs.TicketResponse> tickets = ticketService.getPendingApprovalTickets();
+        return ResponseEntity.ok(tickets);
+    }
+
+    @PostMapping("/payments/{id}")
     public ResponseEntity<TicketDTOs.TicketResponse> markAsPaid(
             @PathVariable Long id,
             @RequestParam(required = false) String paymentIntentId) {
@@ -70,7 +91,7 @@ public class TicketController {
         return ResponseEntity.ok(paidTicket);
     }
 
-    @PostMapping("/mark-paid-batch")
+    @PostMapping("/payments/confirm")
     public ResponseEntity<List<TicketDTOs.TicketResponse>> markMultipleAsPaid(
             @RequestBody List<Long> ticketIds,
             @RequestParam(required = false) String paymentIntentId) {

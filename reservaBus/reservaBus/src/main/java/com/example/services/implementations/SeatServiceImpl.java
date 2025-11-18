@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,6 +15,7 @@ import com.example.domain.repositories.SeatHoldRepository;
 import com.example.domain.repositories.SeatRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.SeatService;
 import com.example.services.mappers.SeatMapper;
 import com.example.services.mappers.StopMapper;
 

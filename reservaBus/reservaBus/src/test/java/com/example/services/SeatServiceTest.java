@@ -10,7 +10,7 @@ import com.example.domain.repositories.SeatHoldRepository;
 import com.example.domain.repositories.SeatRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.SeatServiceImpl;
+import com.example.services.implementations.SeatServiceImpl;
 import com.example.services.mappers.SeatMapper;
 import com.example.services.mappers.StopMapper;
 import org.junit.jupiter.api.BeforeEach;

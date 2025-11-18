@@ -4,7 +4,7 @@ import com.example.api.dto.ConfigDTOs;
 import com.example.domain.entities.Config;
 import com.example.domain.repositories.ConfigRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.ConfigServiceImpl;
+import com.example.services.implementations.ConfigServiceImpl;
 import com.example.services.mappers.ConfigMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

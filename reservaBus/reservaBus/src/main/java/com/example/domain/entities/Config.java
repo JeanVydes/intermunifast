@@ -21,9 +21,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
-public class Config extends TimestampedEntity {
-    
+public class Config extends TimestampedEntity {  
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -33,5 +31,4 @@ public class Config extends TimestampedEntity {
 
     @Column(nullable = false)
     private String value;
-
 }

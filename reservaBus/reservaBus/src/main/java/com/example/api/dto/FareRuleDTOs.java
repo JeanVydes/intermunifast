@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class FareRuleDTOs {
         public record CreateFareRuleRequest(
                         Long routeId,
+                        Double basePrice,
                         boolean dynamicPricing,
                         Double childrenDiscount,
                         Double seniorDiscount,
@@ -13,6 +14,7 @@ public class FareRuleDTOs {
 
         public record UpdateFareRuleRequest(
                         Long routeId,
+                        Double basePrice,
                         boolean dynamicPricing,
                         Double childrenDiscount,
                         Double seniorDiscount,
@@ -22,6 +24,7 @@ public class FareRuleDTOs {
         public record FareRuleResponse(
                         Long id,
                         Long routeId,
+                        Double basePrice,
                         Double childrenDiscount,
                         Double seniorDiscount,
                         Double studentDiscount,

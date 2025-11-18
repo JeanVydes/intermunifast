@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAmount;
@@ -11,11 +11,13 @@ import com.example.api.dto.BaggageDTOs;
 import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.domain.entities.Account;
+import com.example.domain.entities.Bus;
 import com.example.domain.entities.FareRule;
 import com.example.domain.entities.Route;
 import com.example.domain.entities.Stop;
 import com.example.domain.entities.Ticket;
 import com.example.domain.entities.Trip;
+import com.example.domain.enums.PaymentStatus;
 import com.example.domain.enums.TicketStatus;
 import com.example.domain.repositories.AccountRepository;
 import com.example.domain.repositories.BaggageRepository;
@@ -25,6 +27,9 @@ import com.example.domain.repositories.StopRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.security.services.AuthenticationService;
+import com.example.services.definitions.TicketService;
+import com.example.services.extra.SeatAvailabilityService;
 import com.example.services.mappers.BaggageMapper;
 import com.example.services.mappers.IncidentMapper;
 import com.example.services.mappers.TicketMapper;
@@ -59,6 +64,8 @@ public class TicketServiceImpl implements TicketService {
         Trip trip = tripRepo.findById(req.tripId())
                 .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(req.tripId())));
 
+        Bus bus = trip.getBus();
+
         Stop fromStop = null;
         if (req.fromStopId().isPresent()) {
             fromStop = stopRepo.findById(req.fromStopId().get())
@@ -71,8 +78,23 @@ public class TicketServiceImpl implements TicketService {
                     .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId().get())));
         }
 
+        List<Ticket> existingTickets = repo.findTicketsSameTripAndStops(
+                req.tripId(),
+                fromStop != null ? fromStop.getId() : null,
+                toStop != null ? toStop.getId() : null);
+
+        if (bus.getCapacity() <= existingTickets.size()) {
+            throw new IllegalStateException("No seats available for trip %d".formatted(req.tripId()));
+        }
+
+        TicketStatus status = TicketStatus.CONFIRMED;
+        double percentageFull = (double) existingTickets.size() / bus.getCapacity();
+        if (percentageFull > 0.95) {
+            status = TicketStatus.PENDING_APPROVAL;
+        }
+
         // Validar disponibilidad del asiento para el tramo especificado
-        if (!seatAvailabilityService.isSeatAvailable(req.tripId(), req.seatNumber(), fromStop, toStop)) {
+        if (existingTickets.stream().anyMatch(t -> t.getSeatNumber().equals(req.seatNumber()))) {
             String reason = seatAvailabilityService.getAvailabilityConflictReason(
                     req.tripId(), req.seatNumber(), fromStop, toStop);
             String fromStopName = fromStop != null ? fromStop.getName() : "origin";
@@ -84,6 +106,25 @@ public class TicketServiceImpl implements TicketService {
 
         Route route = trip.getRoute();
         FareRule fareRule = fareRuleRepo.findByRouteId(route.getId());
+
+        // Si no existe FareRule para esta ruta, crear una por defecto
+        if (fareRule == null) {
+            // Precio base: distancia * precio por km (sin descuentos)
+            Double basePrice = route.getDistanceKm() * route.getPricePerKm();
+
+            fareRule = FareRule.builder()
+                    .route(route)
+                    .basePrice(basePrice)
+                    .dynamicPricing(false)
+                    .childrenDiscount(0.25) // 25% descuento para niños
+                    .seniorDiscount(0.15) // 15% descuento para seniors
+                    .studentDiscount(0.10) // 10% descuento para estudiantes
+                    .build();
+            fareRule = fareRuleRepo.save(fareRule);
+
+            System.out.println("⚠️  FareRule creada automáticamente para ruta " + route.getId() + " (" + route.getName()
+                    + ") con precio base: $" + basePrice);
+        }
 
         Double discount = 0.0;
 
@@ -113,7 +154,8 @@ public class TicketServiceImpl implements TicketService {
                 .paymentIntentId(req.paymentIntentId())
                 .account(accountRepository.getReferenceById(account.getId()))
                 .price(price)
-                .status(TicketStatus.UNPAID)
+                .status(status)
+                .paymentStatus(PaymentStatus.PENDING)
                 .qrCode(null)
                 .build();
 
@@ -160,6 +202,25 @@ public class TicketServiceImpl implements TicketService {
         if (req.passengerType() != null) {
             Route route = ticket.getTrip().getRoute();
             FareRule fareRule = fareRuleRepo.findByRouteId(route.getId());
+
+            // Si no existe FareRule para esta ruta, crear una por defecto
+            if (fareRule == null) {
+                // Precio base: distancia * precio por km (sin descuentos)
+                Double basePrice = route.getDistanceKm() * route.getPricePerKm();
+
+                fareRule = FareRule.builder()
+                        .route(route)
+                        .basePrice(basePrice)
+                        .dynamicPricing(false)
+                        .childrenDiscount(0.25) // 25% descuento para niños
+                        .seniorDiscount(0.15) // 15% descuento para seniors
+                        .studentDiscount(0.10) // 10% descuento para estudiantes
+                        .build();
+                fareRule = fareRuleRepo.save(fareRule);
+
+                System.out.println("⚠️  FareRule creada automáticamente para ruta " + route.getId() + " ("
+                        + route.getName() + ") con precio base: $" + basePrice);
+            }
 
             Double discount = 0.0;
 
@@ -225,7 +286,9 @@ public class TicketServiceImpl implements TicketService {
             var tickets = repo.findByAccount_IdAndSeatNumber(accountId, seatNumber);
             return tickets.stream().map(mapper::toResponse).toList();
         }
-        return List.of();
+        // Return all tickets when no parameters are provided
+        var allTickets = repo.findAll();
+        return allTickets.stream().map(mapper::toResponse).toList();
     }
 
     @Override
@@ -257,7 +320,7 @@ public class TicketServiceImpl implements TicketService {
             throw new NotFoundException(TICKET_NOT_FOUND.formatted(id));
         }
 
-        if (ticket.getStatus() == TicketStatus.SOLD) {
+        if (ticket.getPaymentStatus() == PaymentStatus.COMPLETED) {
             throw new IllegalStateException("Ticket is already paid");
         }
 
@@ -266,7 +329,7 @@ public class TicketServiceImpl implements TicketService {
         }
 
         // Update ticket status to SOLD
-        ticket.setStatus(TicketStatus.SOLD);
+        ticket.setPaymentStatus(PaymentStatus.COMPLETED);
 
         // Set payment intent ID if provided
         if (paymentIntentId != null && !paymentIntentId.isBlank()) {
@@ -299,7 +362,7 @@ public class TicketServiceImpl implements TicketService {
 
         // Update all tickets
         for (Ticket ticket : tickets) {
-            ticket.setStatus(TicketStatus.SOLD);
+            ticket.setPaymentStatus(PaymentStatus.COMPLETED);
 
             if (paymentIntentId != null && !paymentIntentId.isBlank()) {
                 ticket.setPaymentIntentId(paymentIntentId);
@@ -326,7 +389,7 @@ public class TicketServiceImpl implements TicketService {
                 throw new IllegalStateException("Cannot pay for cancelled ticket %d".formatted(ticket.getId()));
             }
 
-            if (ticket.getStatus() == TicketStatus.SOLD) {
+            if (ticket.getPaymentStatus() == PaymentStatus.COMPLETED) {
                 throw new IllegalStateException("Ticket %d is already paid".formatted(ticket.getId()));
             }
         }
@@ -358,6 +421,40 @@ public class TicketServiceImpl implements TicketService {
      */
     private String generateQrCode(Ticket ticket) {
         return "TICKET-%d-%d".formatted(ticket.getId(), System.currentTimeMillis());
+    }
+
+    @Override
+    public TicketDTOs.TicketResponse approveTicket(Long id) {
+        var ticket = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
+
+        if (ticket.getStatus() != TicketStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only tickets with PENDING_APPROVAL status can be approved");
+        }
+
+        ticket.setStatus(TicketStatus.CONFIRMED);
+        return mapper.toResponse(repo.save(ticket));
+    }
+
+    @Override
+    public TicketDTOs.TicketResponse cancelPendingTicket(Long id) {
+        var ticket = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
+
+        if (ticket.getStatus() != TicketStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only tickets with PENDING_APPROVAL status can be cancelled");
+        }
+
+        ticket.setStatus(TicketStatus.CANCELLED);
+        return mapper.toResponse(repo.save(ticket));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketDTOs.TicketResponse> getPendingApprovalTickets() {
+        return repo.findByStatus(TicketStatus.PENDING_APPROVAL).stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 
 }

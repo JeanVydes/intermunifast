@@ -93,9 +93,11 @@ export const TicketAPI = {
 
     /**
      * Mark multiple tickets as paid (batch payment)
+     * Body: number[] (array of ticket IDs)
+     * Query param: paymentIntentId (optional)
      */
-    markMultipleAsPaid: createEndpoint<TicketResponse[], { ticketIds: number[]; paymentIntentId?: string }>({
-        url: '/api/tickets/mark-paid-batch',
+    markMultipleAsPaid: createEndpoint<TicketResponse[], number[]>({
+        url: '/api/tickets/payments/confirm',
         method: 'POST',
         requireAuth: true,
     }),
@@ -106,6 +108,33 @@ export const TicketAPI = {
      */
     getMyTickets: createEndpoint<TicketResponse[], never>({
         url: '/api/tickets/my-tickets',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
+     * Approve a pending ticket (DISPATCHER/ADMIN only)
+     */
+    approve: createEndpoint<TicketResponse>({
+        url: '/api/tickets/{id}/approve',
+        method: 'POST',
+        requireAuth: true,
+    }),
+
+    /**
+     * Cancel a pending approval ticket (DISPATCHER/ADMIN only)
+     */
+    cancelPending: createEndpoint<TicketResponse>({
+        url: '/api/tickets/{id}/cancel-pending',
+        method: 'POST',
+        requireAuth: true,
+    }),
+
+    /**
+     * Get all tickets with PENDING_APPROVAL status (DISPATCHER/ADMIN only)
+     */
+    getPendingApproval: createEndpoint<TicketResponse[], never>({
+        url: '/api/tickets/pending-approval',
         method: 'GET',
         requireAuth: true,
     }),

@@ -1,4 +1,4 @@
-package com.example.services.definitions;
+package com.example.services.implementations;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +9,7 @@ import com.example.domain.entities.Stop;
 import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
+import com.example.services.definitions.StopService;
 import com.example.services.mappers.StopMapper;
 
 import lombok.RequiredArgsConstructor;

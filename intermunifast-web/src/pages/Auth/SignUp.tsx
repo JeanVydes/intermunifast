@@ -17,10 +17,17 @@ export default function SignUp() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Get redirect URL from query params or default to dashboard
+    const getRedirectUrl = () => {
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        return redirect ? decodeURIComponent(redirect) : '/dashboard';
+    };
+
     // Redirect if already authenticated
     useEffect(() => {
         if (accountId) {
-            route('/dashboard');
+            route(getRedirectUrl());
         }
     }, [accountId]);
 
@@ -64,8 +71,10 @@ export default function SignUp() {
                 isAdmin: formData.isAdmin,
             });
 
-            // Redirect to sign in page after successful signup
-            route('/auth/signin');
+            // Redirect to sign in page with the redirect parameter
+            const redirectUrl = getRedirectUrl();
+            const encodedRedirect = encodeURIComponent(redirectUrl);
+            route(`/auth/signin?redirect=${encodedRedirect}`);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to create account. Please try again.');
         } finally {

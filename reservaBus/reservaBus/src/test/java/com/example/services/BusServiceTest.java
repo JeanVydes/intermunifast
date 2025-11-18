@@ -5,7 +5,7 @@ import com.example.domain.entities.Bus;
 import com.example.domain.enums.BusStatus;
 import com.example.domain.repositories.BusRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.BusServiceImpl;
+import com.example.services.implementations.BusServiceImpl;
 import com.example.services.mappers.BusMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

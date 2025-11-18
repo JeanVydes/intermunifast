@@ -8,7 +8,7 @@ import com.example.domain.repositories.BusRepository;
 import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.TripServiceImpl;
+import com.example.services.implementations.TripServiceImpl;
 import com.example.services.mappers.TripMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -129,7 +129,6 @@ class TripServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(tripMapper).patch(trip, updateRequest);
         verify(tripRepository).save(trip);
     }
 

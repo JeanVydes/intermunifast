@@ -2,12 +2,9 @@ package com.example.api.controllers;
 
 import java.util.Map;
 
-import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +15,7 @@ import com.example.api.dto.AuthenticationDTOs;
 import com.example.domain.entities.Account;
 import com.example.domain.repositories.AccountRepository;
 import com.example.security.jwt.JwtService;
-import com.example.services.definitions.AuthenticationService;
+import com.example.security.services.AuthenticationService;
 
 import lombok.RequiredArgsConstructor;
 

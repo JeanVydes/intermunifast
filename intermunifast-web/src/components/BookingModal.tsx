@@ -17,7 +17,7 @@ interface BookingModalProps {
     route: RouteResponse;
     stops: StopResponse[];
     onClose: () => void;
-    onComplete: (tripId: number, seat: string, passengerType: PassengerType) => void;
+    onComplete: (tripId: number, seat: string, passengerType: PassengerType, ticketId: number, baggageId: number | null) => void;
 }
 
 type BookingStep = 'passenger' | 'seat' | 'baggage' | 'payment' | 'confirmation';
@@ -170,28 +170,26 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
         setStep('payment');
     };
 
-    const handlePayment = async () => {
+    const handleAddToCart = async () => {
         if (!selectedSeat) return;
 
         setIsProcessing(true);
         try {
-            // Mock payment intent (en producción, integrar con Stripe real)
-            const paymentIntentId = `pi_mock_${Date.now()}`;
-
-            // Create ticket
+            // Create ticket with PENDING payment status
             const ticketRequest: CreateTicketRequest = {
                 seatNumber: selectedSeat,
                 tripId: trip.id,
                 fromStopId: fromStop,
                 toStopId: toStop,
                 paymentMethod: paymentMethod,
-                paymentIntentId: paymentIntentId,
+                paymentIntentId: null, // No payment yet
                 passengerType: passengerType
             };
 
             const ticketResponse = await TicketAPI.create(ticketRequest);
 
             // Create baggage if selected
+            let baggageId = null;
             if (baggage && baggage.weightKg > 0) {
                 const baggageRequest: CreateBaggageRequest = {
                     weightKg: baggage.weightKg,
@@ -199,7 +197,8 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     ticketId: ticketResponse.data.id
                 };
 
-                await BaggageAPI.create(baggageRequest);
+                const baggageResponse = await BaggageAPI.create(baggageRequest);
+                baggageId = baggageResponse.data.id;
             }
 
             // Delete seat hold after successful ticket creation
@@ -209,14 +208,12 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                 });
             }
 
-            setStep('confirmation');
-            setTimeout(() => {
-                onComplete(trip.id, selectedSeat, passengerType);
-                onClose();
-            }, 3000);
+            // Pass ticket data to cart (including ticketId for later payment)
+            onComplete(trip.id, selectedSeat, passengerType, ticketResponse.data.id, baggageId);
+            onClose();
         } catch (error) {
-            console.error('Error processing payment:', error);
-            alert('Error al procesar el pago. Por favor, intenta de nuevo.');
+            console.error('Error creating ticket:', error);
+            alert('Error al agregar al carrito. Por favor, intenta de nuevo.');
         } finally {
             setIsProcessing(false);
         }
@@ -500,55 +497,67 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
 
     const renderPaymentStep = () => (
         <div className="p-6">
-            <h3 className="text-xl font-bold text-white mb-6">Método de pago</h3>
+            <h3 className="text-xl font-bold text-white mb-6">Resumen del ticket</h3>
 
             {/* Timer */}
             {expiresAt && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
                     <div className="flex items-center justify-between">
-                        <p className="text-red-300 text-sm">
+                        <p className="text-amber-300 text-sm">
                             Tu reserva expira en:
                         </p>
-                        <p className="text-red-400 font-bold text-lg">
+                        <p className="text-amber-400 font-bold text-lg">
                             {formatTime(timeRemaining)}
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* Payment Methods */}
-            <div className="space-y-3 mb-6">
-                {(['CARD', 'CASH', 'DIGITAL_WALLET', 'TRANSFER', 'QR'] as PaymentMethod[]).map((method) => (
-                    <button
-                        key={method}
-                        onClick={() => setPaymentMethod(method)}
-                        className={`w-full p-4 rounded-xl border-2 transition-all ${paymentMethod === method
-                            ? 'border-amber-500 bg-amber-500/20'
-                            : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                            }`}
-                    >
-                        <div className="flex items-center space-x-3">
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === method ? 'border-amber-500' : 'border-gray-600'
-                                }`}>
-                                {paymentMethod === method && (
-                                    <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                                )}
+            {/* Info Message */}
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+                <p className="text-blue-300 text-sm">
+                    <strong>ℹ️ Nota:</strong> El ticket se agregará al carrito con pago pendiente. Podrás pagar todos tus tickets de una vez al finalizar.
+                </p>
+            </div>
+
+            {/* Payment Method Selection */}
+            <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                    Selecciona tu método de pago preferido
+                </label>
+                <div className="space-y-3">
+                    {(['CARD', 'CASH', 'DIGITAL_WALLET', 'TRANSFER', 'QR'] as PaymentMethod[]).map((method) => (
+                        <button
+                            key={method}
+                            onClick={() => setPaymentMethod(method)}
+                            className={`w-full p-4 rounded-xl border-2 transition-all ${paymentMethod === method
+                                ? 'border-amber-500 bg-amber-500/20'
+                                : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                                }`}
+                        >
+                            <div className="flex items-center space-x-3">
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === method ? 'border-amber-500' : 'border-gray-600'
+                                    }`}>
+                                    {paymentMethod === method && (
+                                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                                    )}
+                                </div>
+                                <p className="font-semibold text-white">
+                                    {method === 'CARD' && 'Tarjeta de crédito/débito'}
+                                    {method === 'CASH' && 'Efectivo en terminal'}
+                                    {method === 'DIGITAL_WALLET' && 'Billetera digital'}
+                                    {method === 'TRANSFER' && 'Transferencia bancaria'}
+                                    {method === 'QR' && 'Código QR'}
+                                </p>
                             </div>
-                            <p className="font-semibold text-white">
-                                {method === 'CARD' && 'Tarjeta de crédito/débito'}
-                                {method === 'CASH' && 'Efectivo en terminal'}
-                                {method === 'DIGITAL_WALLET' && 'Billetera digital'}
-                                {method === 'TRANSFER' && 'Transferencia bancaria'}
-                                {method === 'QR' && 'Código QR'}
-                            </p>
-                        </div>
-                    </button>
-                ))}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Summary */}
             <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
-                <h4 className="text-white font-semibold mb-3">Resumen de compra</h4>
+                <h4 className="text-white font-semibold mb-3">Resumen</h4>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                         <span className="text-gray-400">Ruta:</span>
@@ -575,7 +584,7 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     )}
                     <div className="border-t border-gray-700 pt-2 mt-2">
                         <div className="flex justify-between items-center">
-                            <span className="text-white font-semibold">Total:</span>
+                            <span className="text-white font-semibold">Total estimado:</span>
                             <span className="text-2xl font-bold text-amber-500">
                                 ${calculatePrice().toFixed(2)}
                             </span>
@@ -583,15 +592,6 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     </div>
                 </div>
             </div>
-
-            {/* Mock Payment Form */}
-            {paymentMethod === 'CARD' && (
-                <div className="bg-gray-800/50 rounded-lg p-4 mb-6 text-center">
-                    <p className="text-gray-400 text-sm italic">
-                        [Simulación de pago con Stripe - Modo desarrollo]
-                    </p>
-                </div>
-            )}
 
             <div className="flex space-x-3">
                 <button
@@ -602,52 +602,17 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                     Atrás
                 </button>
                 <button
-                    onClick={handlePayment}
+                    onClick={handleAddToCart}
                     disabled={isProcessing}
-                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white font-semibold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isProcessing ? 'Procesando...' : 'Confirmar Pago'}
+                    {isProcessing ? 'Agregando...' : 'Agregar al Carrito'}
                 </button>
             </div>
         </div>
     );
 
-    const renderConfirmationStep = () => (
-        <div className="p-6 text-center">
-            <div className="mb-6">
-                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">¡Reserva confirmada!</h3>
-                <p className="text-gray-400">
-                    Tu boleto ha sido generado exitosamente
-                </p>
-            </div>
 
-            <div className="bg-gray-800 rounded-xl p-6 mb-6">
-                <div className="text-left space-y-3">
-                    <div className="flex justify-between">
-                        <span className="text-gray-400">Ruta:</span>
-                        <span className="text-white font-semibold">{route.code}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-400">Asiento:</span>
-                        <span className="text-white font-semibold">{selectedSeat}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-400">Total pagado:</span>
-                        <span className="text-amber-500 font-bold text-xl">${calculatePrice().toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
-
-            <p className="text-gray-500 text-sm">
-                Cerrando automáticamente...
-            </p>
-        </div>
-    );
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -708,7 +673,6 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                 {step === 'seat' && renderSeatStep()}
                 {step === 'baggage' && renderBaggageStep()}
                 {step === 'payment' && renderPaymentStep()}
-                {step === 'confirmation' && renderConfirmationStep()}
             </div>
         </div>
     );

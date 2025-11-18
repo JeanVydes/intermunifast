@@ -26,9 +26,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Seat extends TimestampedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -43,5 +41,4 @@ public class Seat extends TimestampedEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "bus_id", nullable = false)
     private Bus bus;
-
 }

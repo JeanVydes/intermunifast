@@ -3,37 +3,12 @@ import { useEffect, useState } from 'preact/hooks';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import { Plus, Search, Edit, Trash2, Calendar, Clock, Bus as BusIcon, Navigation } from 'lucide-preact';
 import { TripAPI, TripResponse, BusAPI, BusResponse } from '../../api';
-import useAccountStore from '../../stores/AccountStore';
 import useRouteStore from '../../stores/RouteStore';
 import { RouteAPI } from '../../api';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 export const TripsPage: FunctionComponent = () => {
-    const { accountId, account } = useAccountStore();
     const { routes, setRoutes, lastUpdated: routesLastUpdated, setLoading: setRoutesLoading } = useRouteStore();
-
-    if (!accountId || !account) {
-        location.assign('/auth/signup');
-        return (
-            <DashboardLayout>
-                <div className="p-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
-                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    if (account.role !== 'ADMIN') {
-        return (
-            <DashboardLayout>
-                <div className="p-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Access Denied</h1>
-                    <p className="text-gray-600 mt-2">You do not have permission to view this page.</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
     const [trips, setTrips] = useState<TripResponse[]>([]);
     const [buses, setBuses] = useState<BusResponse[]>([]);
     const [showModal, setShowModal] = useState(false);
@@ -129,143 +104,145 @@ export const TripsPage: FunctionComponent = () => {
     };
 
     return (
-        <DashboardLayout>
-            <div className="p-8">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Trip Management</h1>
-                        <p className="text-gray-600 mt-1">Schedule and manage bus trips</p>
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+            <DashboardLayout>
+                <div className="p-8">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Trip Management</h1>
+                            <p className="text-gray-600 mt-1">Schedule and manage bus trips</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setSelectedTrip(null);
+                                setShowModal(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Schedule New Trip
+                        </button>
                     </div>
-                    <button
-                        onClick={() => {
-                            setSelectedTrip(null);
-                            setShowModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Schedule New Trip
-                    </button>
-                </div>
 
-                {/* Search */}
-                <div className="flex gap-4 mb-6">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search trips by route or bus..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                    {/* Search */}
+                    <div className="flex gap-4 mb-6">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search trips by route or bus..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
                     </div>
-                </div>
 
-                {/* Trips Grid */}
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                        <p className="text-gray-600 mt-4">Loading trips...</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {trips.map((trip) => (
-                            <div key={trip.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                                <div className="p-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                                {getRouteName(trip.routeId)}
-                                            </h3>
-                                            <p className="text-sm text-gray-500">Trip #{trip.id}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3 mb-4">
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <BusIcon className="w-4 h-4" />
-                                            <span>{getBusPlate(trip.busId)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <Navigation className="w-4 h-4" />
-                                            <span>Route ID: {trip.routeId}</span>
-                                        </div>
-                                        {trip.departureAt && (
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Clock className="w-4 h-4" />
-                                                <span>Departs: {formatDateTime(trip.departureAt)}</span>
+                    {/* Trips Grid */}
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                            <p className="text-gray-600 mt-4">Loading trips...</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {trips.map((trip) => (
+                                <div key={trip.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                    <div className="p-6">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                                    {getRouteName(trip.routeId)}
+                                                </h3>
+                                                <p className="text-sm text-gray-500">Trip #{trip.id}</p>
                                             </div>
-                                        )}
-                                        {trip.arrivalAt && (
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Clock className="w-4 h-4" />
-                                                <span>Arrives: {formatDateTime(trip.arrivalAt)}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                        </div>
 
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEditTrip(trip)}
-                                            className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                                        >
-                                            <Edit className="w-4 h-4 inline mr-1" />
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteTrip(trip.id)}
-                                            className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <div className="space-y-3 mb-4">
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <BusIcon className="w-4 h-4" />
+                                                <span>{getBusPlate(trip.busId)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <Navigation className="w-4 h-4" />
+                                                <span>Route ID: {trip.routeId}</span>
+                                            </div>
+                                            {trip.departureAt && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span>Departs: {formatDateTime(trip.departureAt)}</span>
+                                                </div>
+                                            )}
+                                            {trip.arrivalAt && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span>Arrives: {formatDateTime(trip.arrivalAt)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleEditTrip(trip)}
+                                                className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                                            >
+                                                <Edit className="w-4 h-4 inline mr-1" />
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteTrip(trip.id)}
+                                                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
 
-                        {trips.length === 0 && (
-                            <div className="col-span-full text-center py-12">
-                                <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-600">No trips scheduled yet</p>
-                                <p className="text-sm text-gray-500 mt-1">Click "Schedule New Trip" to create your first trip</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            {trips.length === 0 && (
+                                <div className="col-span-full text-center py-12">
+                                    <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                    <p className="text-gray-600">No trips scheduled yet</p>
+                                    <p className="text-sm text-gray-500 mt-1">Click "Schedule New Trip" to create your first trip</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
-                {/* Modals */}
-                {showModal && (
-                    <TripFormModal
-                        trip={selectedTrip}
-                        routes={routes}
-                        buses={buses}
-                        onClose={() => {
-                            setShowModal(false);
-                            setSelectedTrip(null);
-                        }}
-                        onSave={async (tripData) => {
-                            if (selectedTrip) {
-                                // Update existing trip
-                                const response = await TripAPI.update({
-                                    routeId: tripData.routeId,
-                                    busId: tripData.busId,
-                                    departureAt: tripData.departureAt,
-                                    arrivalAt: tripData.arrivalAt
-                                }, {
-                                    pathParams: { id: selectedTrip.id }
-                                });
-                                setTrips(trips.map(t => t.id === selectedTrip.id ? response.data : t));
-                            } else {
-                                // Create new trip
-                                await createTrip(tripData);
-                            }
-                            setShowModal(false);
-                            setSelectedTrip(null);
-                        }}
-                    />
-                )}
-            </div>
-        </DashboardLayout>
+                    {/* Modals */}
+                    {showModal && (
+                        <TripFormModal
+                            trip={selectedTrip}
+                            routes={routes}
+                            buses={buses}
+                            onClose={() => {
+                                setShowModal(false);
+                                setSelectedTrip(null);
+                            }}
+                            onSave={async (tripData) => {
+                                if (selectedTrip) {
+                                    // Update existing trip
+                                    const response = await TripAPI.update({
+                                        routeId: tripData.routeId,
+                                        busId: tripData.busId,
+                                        departureAt: tripData.departureAt,
+                                        arrivalAt: tripData.arrivalAt
+                                    }, {
+                                        pathParams: { id: selectedTrip.id }
+                                    });
+                                    setTrips(trips.map(t => t.id === selectedTrip.id ? response.data : t));
+                                } else {
+                                    // Create new trip
+                                    await createTrip(tripData);
+                                }
+                                setShowModal(false);
+                                setSelectedTrip(null);
+                            }}
+                        />
+                    )}
+                </div>
+            </DashboardLayout>
+        </ProtectedRoute>
     );
 };
 

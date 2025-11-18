@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.example.domain.common.TimestampedEntity;
 import com.example.domain.enums.PaymentMethod;
+import com.example.domain.enums.PaymentStatus;
 import com.example.domain.enums.TicketStatus;
 
 import jakarta.persistence.Column;
@@ -52,6 +53,10 @@ public class Ticket extends TimestampedEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus;
 
     @Column(nullable = true)
     private String paymentIntentId;
