@@ -110,15 +110,15 @@ export const TripsPage: FunctionComponent = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">Trip Management</h1>
-                            <p className="text-neutral-400 mt-1">Schedule and manage bus trips</p>
+                            <h1 className="text-3xl font-bold text-gray-900">Trip Management</h1>
+                            <p className="text-gray-600 mt-1">Schedule and manage bus trips</p>
                         </div>
                         <button
                             onClick={() => {
                                 setSelectedTrip(null);
                                 setShowModal(true);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 shadow-lg"
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                         >
                             <Plus className="w-4 h-4" />
                             Schedule New Trip
@@ -128,11 +128,11 @@ export const TripsPage: FunctionComponent = () => {
                     {/* Search */}
                     <div className="flex gap-4 mb-6">
                         <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search trips by route or bus..."
-                                className="w-full pl-10 pr-4 py-2 bg-neutral-950 border border-white/10 text-white placeholder-neutral-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
                     </div>
@@ -140,41 +140,41 @@ export const TripsPage: FunctionComponent = () => {
                     {/* Trips Grid */}
                     {loading ? (
                         <div className="text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
-                            <p className="text-neutral-400 mt-4">Loading trips...</p>
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                            <p className="text-gray-600 mt-4">Loading trips...</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {trips.map((trip) => (
-                                <div key={trip.id} className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden hover:border-accent transition-all duration-200">
+                                <div key={trip.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                                     <div className="p-6">
                                         <div className="flex items-start justify-between mb-4">
                                             <div className="flex-1">
-                                                <h3 className="text-lg font-semibold text-white mb-1">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-1">
                                                     {getRouteName(trip.routeId)}
                                                 </h3>
-                                                <p className="text-sm text-neutral-400">Trip #{trip.id}</p>
+                                                <p className="text-sm text-gray-500">Trip #{trip.id}</p>
                                             </div>
                                         </div>
 
                                         <div className="space-y-3 mb-4">
-                                            <div className="flex items-center gap-2 text-sm text-neutral-300">
-                                                <BusIcon className="w-4 h-4 text-accent" />
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <BusIcon className="w-4 h-4" />
                                                 <span>{getBusPlate(trip.busId)}</span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-sm text-neutral-300">
-                                                <Navigation className="w-4 h-4 text-accent" />
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <Navigation className="w-4 h-4" />
                                                 <span>Route ID: {trip.routeId}</span>
                                             </div>
                                             {trip.departureAt && (
-                                                <div className="flex items-center gap-2 text-sm text-neutral-300">
-                                                    <Clock className="w-4 h-4 text-accent" />
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock className="w-4 h-4" />
                                                     <span>Departs: {formatDateTime(trip.departureAt)}</span>
                                                 </div>
                                             )}
                                             {trip.arrivalAt && (
-                                                <div className="flex items-center gap-2 text-sm text-neutral-300">
-                                                    <Clock className="w-4 h-4 text-accent" />
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Clock className="w-4 h-4" />
                                                     <span>Arrives: {formatDateTime(trip.arrivalAt)}</span>
                                                 </div>
                                             )}
@@ -183,14 +183,14 @@ export const TripsPage: FunctionComponent = () => {
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => handleEditTrip(trip)}
-                                                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/10 text-neutral-300 rounded-xl hover:bg-white/20 transition-all duration-200 text-sm font-medium"
+                                                className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                                             >
-                                                <Edit className="w-4 h-4" />
+                                                <Edit className="w-4 h-4 inline mr-1" />
                                                 Edit
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteTrip(trip.id)}
-                                                className="px-3 py-2 bg-accent/20 text-accent rounded-xl hover:bg-accent/30 transition-all duration-200"
+                                                className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -200,10 +200,10 @@ export const TripsPage: FunctionComponent = () => {
                             ))}
 
                             {trips.length === 0 && (
-                                <div className="col-span-full text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
-                                    <Calendar className="w-16 h-16 text-neutral-500 mx-auto mb-4" />
-                                    <p className="text-neutral-400">No trips scheduled yet</p>
-                                    <p className="text-sm text-neutral-500 mt-1">Click "Schedule New Trip" to create your first trip</p>
+                                <div className="col-span-full text-center py-12">
+                                    <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                    <p className="text-gray-600">No trips scheduled yet</p>
+                                    <p className="text-sm text-gray-500 mt-1">Click "Schedule New Trip" to create your first trip</p>
                                 </div>
                             )}
                         </div>
@@ -292,10 +292,10 @@ const TripFormModal: FunctionComponent<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-2xl m-4 border border-white/10 max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-white/10">
-                    <h2 className="text-2xl font-bold text-white">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-2xl font-bold text-gray-900">
                         {trip ? 'Edit Trip' : 'Schedule New Trip'}
                     </h2>
                 </div>
@@ -303,13 +303,13 @@ const TripFormModal: FunctionComponent<{
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-400 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Route *
                             </label>
                             <select
                                 value={formData.routeId}
                                 onChange={(e) => setFormData({ ...formData, routeId: parseInt((e.target as HTMLSelectElement).value) })}
-                                className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 required
                             >
                                 <option value="">Select a route</option>
@@ -322,13 +322,13 @@ const TripFormModal: FunctionComponent<{
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-neutral-400 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Bus *
                             </label>
                             <select
                                 value={formData.busId}
                                 onChange={(e) => setFormData({ ...formData, busId: parseInt((e.target as HTMLSelectElement).value) })}
-                                className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 required
                             >
                                 <option value="">Select a bus</option>
@@ -341,43 +341,43 @@ const TripFormModal: FunctionComponent<{
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-neutral-400 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Departure Time *
                             </label>
                             <input
                                 type="datetime-local"
                                 value={formData.departureAt}
                                 onChange={(e) => setFormData({ ...formData, departureAt: (e.target as HTMLInputElement).value })}
-                                className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-neutral-400 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Arrival Time *
                             </label>
                             <input
                                 type="datetime-local"
                                 value={formData.arrivalAt}
                                 onChange={(e) => setFormData({ ...formData, arrivalAt: (e.target as HTMLInputElement).value })}
-                                className="w-full px-3 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 required
                             />
                         </div>
 
-                        <div className="pt-4 border-t border-white/10 flex gap-3 justify-end">
+                        <div className="pt-4 border-t border-gray-200 flex gap-3 justify-end">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200"
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-4 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 disabled:bg-accent/50 shadow-lg"
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
                             >
                                 {loading ? 'Saving...' : (trip ? 'Save Changes' : 'Schedule Trip')}
                             </button>

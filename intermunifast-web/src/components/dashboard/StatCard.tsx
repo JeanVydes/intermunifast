@@ -23,7 +23,7 @@ export const StatCard: FunctionComponent<StatCardProps> = ({
     const getTrendColor = () => {
         if (trend === 'up') return 'text-green-600';
         if (trend === 'down') return 'text-red-600';
-        return 'text-neutral-600';
+        return 'text-gray-600';
     };
 
     const getTrendIcon = () => {
@@ -33,26 +33,26 @@ export const StatCard: FunctionComponent<StatCardProps> = ({
     };
 
     return (
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/10 hover:border-accent transition-all duration-200">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-neutral-400">{title}</h3>
+                <h3 className="text-sm font-medium text-gray-600">{title}</h3>
                 {Icon && (
-                    <div className="p-2 bg-accent/10 rounded-xl">
-                        <Icon className="w-5 h-5 text-accent" />
+                    <div className="p-2 bg-purple-50 rounded-lg">
+                        <Icon className="w-5 h-5 text-purple-600" />
                     </div>
                 )}
             </div>
 
             <div className="flex items-end justify-between">
                 <div>
-                    <p className="text-3xl font-bold text-white">{value}</p>
+                    <p className="text-3xl font-bold text-gray-900">{value}</p>
                     {change !== undefined && (
                         <div className="flex items-center gap-1 mt-2">
                             <span className={`flex items-center gap-1 text-sm font-medium ${getTrendColor()}`}>
                                 {getTrendIcon()}
                                 {change > 0 ? '+' : ''}{change}%
                             </span>
-                            <span className="text-sm text-neutral-500">{changeLabel}</span>
+                            <span className="text-sm text-gray-500">{changeLabel}</span>
                         </div>
                     )}
                 </div>

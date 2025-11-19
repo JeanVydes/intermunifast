@@ -5,34 +5,21 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 import { Plus, Search, Edit, Trash2, MapPin, Users, Settings } from 'lucide-preact';
 import { BusAPI, BusResponse, SeatType, SeatAPI, SeatResponse } from '../../api';
 
-type Bus = {
-    id: string;
-    plate: string;
-    brand: string;
-    model: string;
-    capacity: number;
-    status: 'active' | 'maintenance' | 'inactive';
-    amenities: { id: string; name: string }[];
-};
-
 const getStatusColor = (status: string) => {
-    const lowerStatus = status.toLowerCase();
-    switch (lowerStatus) {
+    switch (status) {
         case 'active':
-            return 'bg-green-500/20 text-green-300';
+            return 'bg-green-100 text-green-700';
         case 'maintenance':
-            return 'bg-yellow-500/20 text-yellow-300';
+            return 'bg-yellow-100 text-yellow-700';
         case 'inactive':
-            return 'bg-neutral-600 text-neutral-300';
+            return 'bg-gray-100 text-gray-700';
         default:
-            return 'bg-gray-500/20 text-gray-300';
+            return 'bg-gray-100 text-gray-700';
     }
 };
 
 export const BusesPage: FunctionComponent = () => {
     const [buses, setBuses] = useState<BusResponse[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     // Flow control states
     const [showModal, setShowModal] = useState(false);
@@ -77,15 +64,10 @@ export const BusesPage: FunctionComponent = () => {
     useEffect(() => {
         const fetchBuses = async () => {
             try {
-                setIsLoading(true);
                 const response = await BusAPI.getAll();
                 setBuses(response.data);
-                setError(null);
-            } catch (err) {
-                setError('Failed to fetch buses. Please try again later.');
-                console.error(err);
-            } finally {
-                setIsLoading(false);
+            } catch (error) {
+                console.error('Failed to fetch buses:', error);
             }
         };
 
@@ -99,15 +81,15 @@ export const BusesPage: FunctionComponent = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">Bus Management</h1>
-                            <p className="text-white/80 mt-1">Manage your fleet of buses</p>
+                            <h1 className="text-3xl font-bold text-gray-900">Bus Management</h1>
+                            <p className="text-gray-600 mt-1">Manage your fleet of buses</p>
                         </div>
                         <button
                             onClick={() => {
                                 setSelectedBus(null);
                                 setShowModal(true);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-accent-dark transition-all duration-200 font-medium shadow-lg"
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                         >
                             <Plus className="w-4 h-4" />
                             Add New Bus
@@ -117,14 +99,14 @@ export const BusesPage: FunctionComponent = () => {
                     {/* Search and Filters */}
                     <div className="flex gap-4 mb-6">
                         <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search by license plate..."
-                                className="w-full pl-10 pr-4 py-2 bg-neutral-950 border border-white/10 text-white placeholder-neutral-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
+                                placeholder="Search by license plate, brand, or model..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
-                        <select className="px-4 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent">
+                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
                             <option value="">All Status</option>
                             <option value="active">Active</option>
                             <option value="maintenance">Maintenance</option>
@@ -135,25 +117,26 @@ export const BusesPage: FunctionComponent = () => {
                     {/* Buses Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {buses.map((bus) => (
-                            <div key={bus.id} className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden hover:border-accent transition-all duration-200">
+                            <div key={bus.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                                 <div className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
-                                            <h3 className="text-lg font-semibold text-white">{bus.plate}</h3>
+                                            <h3 className="text-lg font-semibold text-gray-900">{bus.plate}</h3>
+                                            <p className="text-sm text-gray-500 mt-1">{bus.id}</p>
                                         </div>
                                         <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(bus.status)}`}>
-                                            {bus.status.charAt(0).toUpperCase() + bus.status.slice(1).toLowerCase()}
+                                            {bus.status.charAt(0).toUpperCase() + bus.status.slice(1)}
                                         </span>
                                     </div>
 
                                     <div className="space-y-3 mb-4">
-                                        <div className="flex items-center gap-2 text-sm text-neutral-300">
-                                            <Users className="w-4 h-4 text-accent" />
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <Users className="w-4 h-4" />
                                             <span>{bus.capacity} seats</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {bus.amenities.map((amenity, index) => (
-                                                <span key={index} className="px-2 py-1 bg-white/10 text-neutral-300 text-xs rounded-lg">
+                                                <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
                                                     {amenity.name}
                                                 </span>
                                             ))}
@@ -163,18 +146,18 @@ export const BusesPage: FunctionComponent = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleManageSeats(bus)}
-                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-accent/10 text-accent rounded-xl hover:bg-accent/20 transition-all duration-200 text-sm font-medium"
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
                                         >
-                                            <Settings className="w-4 h-4" />
+                                            <MapPin className="w-4 h-4" />
                                             Manage Seats
                                         </button>
                                         <button
                                             onClick={() => handleEditBus(bus)}
-                                            className="px-3 py-2 bg-white/10 text-neutral-300 rounded-xl hover:bg-white/20 transition-all duration-200"
+                                            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
-                                        <button className="px-3 py-2 bg-accent/20 text-accent rounded-xl hover:bg-accent/30 transition-all duration-200">
+                                        <button className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -282,147 +265,269 @@ const BusFormModal: FunctionComponent<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50">
-            <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-lg border border-white/10">
-                <h2 className="text-2xl font-bold text-white mb-6">
-                    {bus ? 'Edit Bus' : 'Create New Bus'}
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label htmlFor="plate" className="block text-sm font-medium text-neutral-400 mb-2">
-                                License Plate
-                            </label>
-                            <input
-                                type="text"
-                                name="plate"
-                                id="plate"
-                                value={formData.plate}
-                                onChange={(e) => setFormData({ ...formData, plate: (e.target as HTMLInputElement).value })}
-                                className="w-full px-4 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
-                                required
-                            />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                        {bus ? 'Edit Bus' : 'Add New Bus'}
+                    </h2>
+                </div>
+
+                <div className="p-6">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    License Plate *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.plate}
+                                    onChange={(e) => setFormData({ ...formData, plate: (e.target as HTMLInputElement).value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="ABC-123"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Status
+                                </label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: (e.target as HTMLSelectElement).value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="MAINTENANCE">Maintenance</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                </select>
+                            </div>
                         </div>
+
                         <div>
-                            <label htmlFor="capacity" className="block text-sm font-medium text-neutral-400 mb-2">
-                                Capacity
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Total Seats *
                             </label>
                             <input
                                 type="number"
-                                name="capacity"
-                                id="capacity"
                                 value={formData.capacity}
                                 onChange={(e) => setFormData({ ...formData, capacity: parseInt((e.target as HTMLInputElement).value) || 0 })}
-                                className="w-full px-4 py-2 bg-neutral-950 border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="20"
+                                min="1"
                                 required
                             />
                         </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-neutral-400 mb-2">
-                            Amenities
-                        </label>
-                        <div className="grid grid-cols-2 gap-4">
-                            {availableAmenities.map(amenity => (
-                                <label key={amenity} className="flex items-center gap-3 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={isAmenityChecked(amenity)}
-                                        onChange={() => handleAmenityToggle(amenity)}
-                                        className="h-5 w-5 rounded border-neutral-600 bg-neutral-800 text-accent focus:ring-accent"
-                                    />
-                                    <span className="text-neutral-300">{amenity}</span>
-                                </label>
-                            ))}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Amenities
+                            </label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {availableAmenities.map((amenity) => (
+                                    <label key={amenity} className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={isAmenityChecked(amenity)}
+                                            onChange={() => handleAmenityToggle(amenity)}
+                                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                        />
+                                        <span className="text-sm text-gray-700">{amenity}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex justify-end gap-4 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-6 py-2 bg-white/10 border border-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-6 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 shadow-lg"
-                        >
-                            {bus ? 'Save Changes' : 'Create Bus'}
-                        </button>
-                    </div>
-                </form>
+
+                        <div className="pt-4 border-t border-gray-200 flex gap-3 justify-end">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+                            >
+                                {loading ? 'Saving...' : (bus ? 'Save Changes' : 'Create Bus')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );
 };
 
 // Seat Editor Modal Component
-const SeatEditorModal = ({ bus, onClose, onSave }: { bus: BusResponse, onClose: () => void, onSave?: (seats: any) => void }) => {
-    const [seats, setSeats] = useState(
-        Array.from({ length: bus.capacity }, (_, i) => ({
-            number: i + 1,
-            status: 'available', // available, occupied, locked
-        }))
-    );
+const SeatEditorModal: FunctionComponent<{ bus: BusResponse; onClose: () => void }> = ({ bus, onClose }) => {
+    const [seats, setSeats] = useState<SeatResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [creating, setCreating] = useState(false);
 
-    const toggleSeatLock = (seatNumber) => {
-        setSeats(prevSeats =>
-            prevSeats.map(seat =>
-                seat.number === seatNumber
-                    ? { ...seat, status: seat.status === 'locked' ? 'available' : 'locked' }
-                    : seat
-            )
-        );
+    useEffect(() => {
+        fetchSeats();
+    }, [bus.id]);
+
+    const fetchSeats = async () => {
+        try {
+            setLoading(true);
+            const response = await SeatAPI.getByBusId(undefined, {
+                pathParams: { busId: bus.id }
+            });
+            setSeats(response.data);
+        } catch (error) {
+            console.error('Failed to fetch seats:', error);
+            setSeats([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50">
-            <div className="bg-neutral-900/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-2xl border border-white/10">
-                <h2 className="text-2xl font-bold text-white mb-2">Manage Seats for {bus.plate}</h2>
-                <p className="text-neutral-400 mb-6">Click on a seat to lock or unlock it for booking.</p>
+    const createSeat = async (seatNumber: string, seatType: SeatType) => {
+        try {
+            setCreating(true);
+            const response = await SeatAPI.create({
+                number: seatNumber,
+                type: seatType,
+                busId: bus.id
+            });
+            setSeats([...seats, response.data]);
+        } catch (error) {
+            console.error('Failed to create seat:', error);
+        } finally {
+            setCreating(false);
+        }
+    };
 
-                <div className="grid grid-cols-5 gap-3 p-6 bg-neutral-950 rounded-xl border border-white/10">
-                    {seats.map(seat => (
-                        <button
-                            key={seat.number}
-                            onClick={() => toggleSeatLock(seat.number)}
-                            className={`w-12 h-12 flex items-center justify-center rounded-md font-semibold text-sm transition-colors
-                                ${seat.status === 'available' && 'bg-green-500/20 text-green-300 hover:bg-green-500/40'}
-                                ${seat.status === 'occupied' && 'bg-neutral-700 text-neutral-400 cursor-not-allowed'}
-                                ${seat.status === 'locked' && 'bg-red-500/30 text-red-300 hover:bg-red-500/50'}
-                            `}
-                        >
-                            {seat.number}
-                        </button>
-                    ))}
+    const deleteSeat = async (seatId: number) => {
+        try {
+            await SeatAPI.delete(undefined, {
+                pathParams: { id: seatId }
+            });
+            setSeats(seats.filter(s => s.id !== seatId));
+        } catch (error) {
+            console.error('Failed to delete seat:', error);
+        }
+    };
+
+    const toggleSeatType = async (seat: SeatResponse) => {
+        const newType: SeatType = seat.type === 'STANDARD' ? 'PREFERENTIAL' : 'STANDARD';
+        try {
+            const response = await SeatAPI.update({
+                type: newType
+            }, {
+                pathParams: { id: seat.id }
+            });
+            setSeats(seats.map(s => s.id === seat.id ? response.data : s));
+        } catch (error) {
+            console.error('Failed to update seat:', error);
+        }
+    };
+
+    const getSeatColor = (seat: SeatResponse) => {
+        if (seat.type === 'PREFERENTIAL') return 'bg-purple-500 text-white hover:bg-purple-600';
+        return 'bg-green-500 text-white hover:bg-green-600';
+    };
+
+    const handleAddSeat = async () => {
+        const nextNumber = (seats.length + 1).toString();
+        await createSeat(nextNumber, 'STANDARD');
+    };
+
+    // Group seats into rows (4 seats per row for horizontal bus layout)
+    const rows: SeatResponse[][] = [];
+    for (let i = 0; i < seats.length; i += 4) {
+        rows.push(seats.slice(i, i + 4));
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                        Seat Configuration - Bus {bus.plate}
+                    </h2>
+                    <p className="text-gray-600 mt-1">
+                        Capacity: {bus.capacity} | Current Seats: {seats.length}
+                    </p>
                 </div>
 
-                <div className="flex justify-end gap-4 mt-8">
+                <div className="p-6">
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                            <p className="text-gray-600 mt-4">Loading seats...</p>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Legend */}
+                            <div className="flex gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-green-500 rounded"></div>
+                                    <span className="text-sm text-gray-700">Standard</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-purple-500 rounded"></div>
+                                    <span className="text-sm text-gray-700">Preferential</span>
+                                </div>
+                            </div>
+
+                            {/* Bus Layout - Horizontal rows */}
+                            <div className="bg-gray-100 p-8 rounded-lg mb-6">
+                                <div className="max-w-2xl mx-auto space-y-3">
+                                    {rows.map((row, rowIndex) => (
+                                        <div key={rowIndex} className="flex gap-3 justify-center">
+                                            {row.map((seat) => (
+                                                <div key={seat.id} className="relative group">
+                                                    <button
+                                                        onClick={() => toggleSeatType(seat)}
+                                                        className={`w-16 h-16 rounded-lg font-semibold text-sm transition-all ${getSeatColor(seat)} shadow-md`}
+                                                    >
+                                                        {seat.number}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteSeat(seat.id)}
+                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="text-center">
+                                <button
+                                    onClick={handleAddSeat}
+                                    disabled={creating || seats.length >= bus.capacity}
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    {creating ? 'Adding...' : `Add Seat (${seats.length}/${bus.capacity})`}
+                                </button>
+                            </div>
+
+                            <p className="text-sm text-gray-500 text-center mt-4">
+                                Click on a seat to toggle between Standard and Preferential. Hover to delete.
+                            </p>
+                        </>
+                    )}
+                </div>
+
+                <div className="p-6 border-t border-gray-200 flex gap-3 justify-end">
                     <button
-                        type="button"
                         onClick={onClose}
-                        className="px-6 py-2 bg-white/10 border border-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                     >
-                        Cancel
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onSave?.(seats)}
-                        className="px-6 py-2 bg-accent text-white font-medium rounded-xl hover:bg-accent-dark transition-all duration-200 shadow-lg"
-                    >
-                        Save Seat Layout
+                        Done
                     </button>
                 </div>
             </div>
-        </div>
-    );
-};
-
-const Buses = () => {
-    return (
-        <div>
-            {/* Existing content for Buses page */}
         </div>
     );
 };

@@ -20,22 +20,19 @@ export function App() {
 		<LocationProvider>
 			<AuthContextProvider>
 				<RoleProvider>
-					<div id="app">
-						<Header />
-						<Router>
-							<Route path="/" component={Home} />
-							<Route path="/auth/signin" component={SignIn} />
-							<Route path="/auth/signup" component={SignUp} />
-							<Route path="/account" component={Account} />
-							<Route path="/dashboard" component={DashboardHome} />
-							<Route path="/dashboard/buses" component={BusesPage} />
-							<Route path="/dashboard/trips" component={TripsPage} />
-							<Route path="/dashboard/routes" component={RoutesPage} />
-							<Route path="/dashboard/tickets" component={PendingTickets} />
-							<Route path="/dashboard/users" component={UsersPage} />
-							<Route default component={NotFound} />
-						</Router>
-					</div>
+					<Router>
+						<Route path="/" component={Home} />
+						<Route path="/auth/signin" component={SignIn} />
+						<Route path="/auth/signup" component={SignUp} />
+						<Route path="/account" component={Account} />
+						<Route path="/dashboard" component={DashboardHome} />
+						<Route path="/dashboard/buses" component={BusesPage} />
+						<Route path="/dashboard/trips" component={TripsPage} />
+						<Route path="/dashboard/routes" component={RoutesPage} />
+						<Route path="/dashboard/tickets" component={PendingTickets} />
+						<Route path="/dashboard/users" component={UsersPage} />
+						<Route default component={NotFound} />
+					</Router>
 				</RoleProvider>
 			</AuthContextProvider>
 		</LocationProvider>

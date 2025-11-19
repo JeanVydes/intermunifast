@@ -70,48 +70,47 @@ export const DashboardHome: FunctionComponent = () => {
     return (
         <ProtectedRoute allowedRoles={['ADMIN']}>
             <DashboardLayout>
-                <div className="p-8">
-                    {/* Header */}
+                <div className="p-8">{/* Header */}
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">Dashboard Overview</h1>
-                            <p className="text-neutral-400 mt-1">Monitoring your bus operations - {getPeriodLabel()}</p>
+                            <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+                            <p className="text-gray-600 mt-1">Monitoring your bus operations - {getPeriodLabel()}</p>
                         </div>
 
                         {/* Period Selector */}
-                        <div className="flex gap-2 bg-white/5 backdrop-blur-xl p-1 rounded-xl border border-white/10">
+                        <div className="flex gap-2">
                             <button
                                 onClick={() => setSelectedPeriod('today')}
-                                className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${selectedPeriod === 'today'
-                                    ? 'bg-accent text-white shadow-lg'
-                                    : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+                                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'today'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 Today
                             </button>
                             <button
                                 onClick={() => setSelectedPeriod('this-week')}
-                                className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${selectedPeriod === 'this-week'
-                                    ? 'bg-accent text-white shadow-lg'
-                                    : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+                                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'this-week'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 This Week
                             </button>
                             <button
                                 onClick={() => setSelectedPeriod('this-month')}
-                                className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${selectedPeriod === 'this-month'
-                                    ? 'bg-accent text-white shadow-lg'
-                                    : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+                                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'this-month'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 This Month
                             </button>
                             <button
                                 onClick={() => setSelectedPeriod('this-year')}
-                                className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${selectedPeriod === 'this-year'
-                                    ? 'bg-accent text-white shadow-lg'
-                                    : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+                                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'this-year'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 This Year
@@ -121,23 +120,23 @@ export const DashboardHome: FunctionComponent = () => {
 
                     {loading ? (
                         <div className="flex items-center justify-center py-20">
-                            <div className="text-neutral-400">Loading metrics...</div>
+                            <div className="text-gray-500">Loading metrics...</div>
                         </div>
                     ) : metrics ? (
                         <>
                             {/* Revenue Header */}
-                            <div className="mb-8 p-6 bg-white/5 backdrop-blur-xl rounded-2xl text-white border border-white/10">
-                                <h2 className="text-lg font-medium text-neutral-400">Total Revenue</h2>
+                            <div className="mb-8 p-6 bg-gradient-to-r from-purple-600 to-orange-400 rounded-xl text-white">
+                                <h2 className="text-lg font-medium opacity-90">Total Revenue</h2>
                                 <p className="text-5xl font-bold mt-2">
                                     {formatCurrency(metrics.revenue.totalRevenue)}
                                 </p>
-                                <div className={`flex items-center mt-2 text-sm ${metrics.revenue.changePercentage >= 0 ? 'text-green-400' : 'text-accent'}`}>
+                                <div className="flex items-center mt-2">
                                     {metrics.revenue.changePercentage >= 0 ? (
                                         <TrendingUp className="w-4 h-4 mr-1" />
                                     ) : (
                                         <TrendingDown className="w-4 h-4 mr-1" />
                                     )}
-                                    <span>
+                                    <span className="text-sm">
                                         {formatPercentage(metrics.revenue.changePercentage)} vs previous period
                                     </span>
                                 </div>
@@ -146,49 +145,49 @@ export const DashboardHome: FunctionComponent = () => {
                             {/* Metrics Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                                 {/* Revenue */}
-                                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                                    <h3 className="text-sm font-medium text-neutral-400 mb-2">Tickets Sold</h3>
-                                    <p className="text-3xl font-bold text-white">
+                                <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                    <h3 className="text-sm font-medium text-gray-600 mb-2">Tickets Sold</h3>
+                                    <p className="text-3xl font-bold text-gray-900">
                                         {metrics.revenue.totalTicketsSold}
                                     </p>
-                                    <p className="text-sm text-neutral-500 mt-1">
+                                    <p className="text-sm text-gray-500 mt-1">
                                         Avg: {formatCurrency(metrics.revenue.averageTicketPrice)}
                                     </p>
                                 </div>
 
                                 {/* Occupation */}
-                                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                                    <h3 className="text-sm font-medium text-neutral-400 mb-2">Occupation Rate</h3>
-                                    <p className="text-3xl font-bold text-white">
+                                <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                    <h3 className="text-sm font-medium text-gray-600 mb-2">Occupation Rate</h3>
+                                    <p className="text-3xl font-bold text-gray-900">
                                         {metrics.occupation.averageOccupation.toFixed(1)}%
                                     </p>
                                     <div className="flex items-center mt-1">
-                                        <span className={`text-sm ${metrics.occupation.changePercentage >= 0 ? 'text-green-400' : 'text-accent'
+                                        <span className={`text-sm ${metrics.occupation.changePercentage >= 0 ? 'text-green-600' : 'text-red-600'
                                             }`}>
                                             {formatPercentage(metrics.occupation.changePercentage)}
                                         </span>
-                                        <span className="text-sm text-neutral-500 ml-1">vs previous</span>
+                                        <span className="text-sm text-gray-500 ml-1">vs previous</span>
                                     </div>
                                 </div>
 
                                 {/* Punctuality */}
-                                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                                    <h3 className="text-sm font-medium text-neutral-400 mb-2">Punctuality</h3>
-                                    <p className="text-3xl font-bold text-white">
+                                <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                    <h3 className="text-sm font-medium text-gray-600 mb-2">Punctuality</h3>
+                                    <p className="text-3xl font-bold text-gray-900">
                                         {metrics.punctuality.punctualityRate.toFixed(1)}%
                                     </p>
-                                    <p className="text-sm text-neutral-500 mt-1">
+                                    <p className="text-sm text-gray-500 mt-1">
                                         {metrics.punctuality.totalTripsOnTime}/{metrics.punctuality.totalTripsCompleted} on time
                                     </p>
                                 </div>
 
                                 {/* Cancellations */}
-                                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                                    <h3 className="text-sm font-medium text-neutral-400 mb-2">Cancellation Rate</h3>
-                                    <p className="text-3xl font-bold text-white">
+                                <div className="bg-white rounded-xl p-6 border border-gray-200">
+                                    <h3 className="text-sm font-medium text-gray-600 mb-2">Cancellation Rate</h3>
+                                    <p className="text-3xl font-bold text-gray-900">
                                         {metrics.cancellations.cancellationRate.toFixed(1)}%
                                     </p>
-                                    <p className="text-sm text-neutral-500 mt-1">
+                                    <p className="text-sm text-gray-500 mt-1">
                                         {metrics.cancellations.totalCancellations} cancellations
                                     </p>
                                 </div>
@@ -221,7 +220,7 @@ export const DashboardHome: FunctionComponent = () => {
                         </>
                     ) : (
                         <div className="flex items-center justify-center py-20">
-                            <div className="text-neutral-400">No metrics data available</div>
+                            <div className="text-gray-500">No metrics data available</div>
                         </div>
                     )}
                 </div>

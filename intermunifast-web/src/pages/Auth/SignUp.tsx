@@ -15,7 +15,6 @@ export default function SignUp() {
         isAdmin: false,
     });
     const [error, setError] = useState('');
-    const [emailError, setEmailError] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Get redirect URL from query params or default to dashboard
@@ -38,15 +37,6 @@ export default function SignUp() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
-
-        if (name === 'email') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (value && !emailRegex.test(value)) {
-                setEmailError('Por favor ingresa un email válido');
-            } else {
-                setEmailError('');
-            }
-        }
     };
 
     const handleSubmit = async (e: Event) => {
@@ -93,28 +83,27 @@ export default function SignUp() {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+                {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/10 border border-accent/30 mb-4">
-                        <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Crear cuenta</h1>
-                    <p className="text-neutral-400">Regístrate en InterMuniFast</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+                    <p className="text-gray-600">Sign up to get started with Intermunifast</p>
                 </div>
 
+                {/* Error Message */}
                 {error && (
-                    <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
+                    <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Name */}
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-neutral-300 mb-2">
-                            Nombre completo *
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                            Full Name *
                         </label>
                         <input
                             type="text"
@@ -122,15 +111,16 @@ export default function SignUp() {
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition-all"
-                            placeholder="Juan Pérez"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                            placeholder="John Doe"
                             required
                         />
                     </div>
 
+                    {/* Email */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
-                            Correo electrónico *
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address *
                         </label>
                         <input
                             type="email"
@@ -138,18 +128,16 @@ export default function SignUp() {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className={`w-full px-4 py-3 bg-neutral-900 border ${emailError ? 'border-red-500' : 'border-white/10'} rounded-xl text-white placeholder-neutral-500 focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition-all`}
-                            placeholder="tu@email.com"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                            placeholder="john@example.com"
                             required
                         />
-                        {emailError && (
-                            <p className="mt-1 text-xs text-red-400">{emailError}</p>
-                        )}
                     </div>
 
+                    {/* Phone */}
                     <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-neutral-300 mb-2">
-                            Teléfono *
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                            Phone Number *
                         </label>
                         <input
                             type="tel"
@@ -157,15 +145,16 @@ export default function SignUp() {
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition-all"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                             placeholder="+1 234 567 8900"
                             required
                         />
                     </div>
 
+                    {/* Password */}
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2">
-                            Contraseña *
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            Password *
                         </label>
                         <input
                             type="password"
@@ -173,15 +162,16 @@ export default function SignUp() {
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition-all"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                             placeholder="••••••••"
                             required
                         />
                     </div>
 
+                    {/* Confirm Password */}
                     <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-300 mb-2">
-                            Confirmar contraseña *
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                            Confirm Password *
                         </label>
                         <input
                             type="password"
@@ -189,15 +179,16 @@ export default function SignUp() {
                             name="confirmPassword"
                             value={formData.confirmPassword}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition-all"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                             placeholder="••••••••"
                             required
                         />
                     </div>
 
-                    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                        <label className="block text-sm font-medium text-neutral-300 mb-3">
-                            Tipo de cuenta
+                    {/* Account Type Selection */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Account Type
                         </label>
                         <div className="space-y-3">
                             <label className="flex items-start cursor-pointer">
@@ -206,11 +197,11 @@ export default function SignUp() {
                                     name="isAdmin"
                                     checked={!formData.isAdmin}
                                     onChange={() => setFormData(prev => ({ ...prev, isAdmin: false }))}
-                                    className="mt-1 h-4 w-4 text-accent focus:ring-accent border-white/20 bg-neutral-900"
+                                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500"
                                 />
                                 <div className="ml-3">
-                                    <span className="block text-sm font-medium text-white">Usuario regular</span>
-                                    <span className="block text-xs text-neutral-400">Reserva tickets y gestiona tus viajes</span>
+                                    <span className="block text-sm font-medium text-gray-900">Regular User</span>
+                                    <span className="block text-xs text-gray-500">Book tickets and manage your trips</span>
                                 </div>
                             </label>
 
@@ -220,40 +211,42 @@ export default function SignUp() {
                                     name="isAdmin"
                                     checked={formData.isAdmin}
                                     onChange={() => setFormData(prev => ({ ...prev, isAdmin: true }))}
-                                    className="mt-1 h-4 w-4 text-accent focus:ring-accent border-white/20 bg-neutral-900"
+                                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500"
                                 />
                                 <div className="ml-3">
-                                    <span className="block text-sm font-medium text-white">Administrador</span>
-                                    <span className="block text-xs text-neutral-400">Gestiona buses, rutas y configuración del sistema</span>
+                                    <span className="block text-sm font-medium text-gray-900">Administrator</span>
+                                    <span className="block text-xs text-gray-500">Manage buses, routes, and system settings</span>
                                 </div>
                             </label>
                         </div>
                     </div>
 
+                    {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={loading || !!emailError}
-                        className="w-full bg-accent hover:bg-accent-dark disabled:bg-neutral-700 disabled:text-neutral-500 text-white font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center shadow-lg shadow-accent/20 disabled:shadow-none"
+                        disabled={loading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center"
                     >
                         {loading ? (
                             <>
                                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Creando cuenta...
+                                Creating account...
                             </>
                         ) : (
-                            'Crear cuenta'
+                            'Create Account'
                         )}
                     </button>
                 </form>
 
+                {/* Sign In Link */}
                 <div className="mt-6 text-center">
-                    <p className="text-sm text-neutral-400">
-                        ¿Ya tienes cuenta?{' '}
-                        <a href="/auth/signin" className="text-accent hover:text-accent-dark font-bold transition-colors">
-                            Inicia sesión
+                    <p className="text-sm text-gray-600">
+                        Already have an account?{' '}
+                        <a href="/auth/signin" className="text-blue-600 hover:text-blue-700 font-medium">
+                            Sign in
                         </a>
                     </p>
                 </div>

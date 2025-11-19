@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import useAccountStore from "../../stores/AccountStore";
 import useAuthStore from "../../stores/AuthStore";
-import { TicketAPI, TicketResponse, AccountAPI } from "../../api";
+import { TicketAPI, TicketResponse, AccountAPI, TripAPI, RouteAPI, StopAPI } from "../../api";
 import { FunctionComponent } from "preact";
 import { UpdateAccountRequest } from "../../api/types/Account";
 
@@ -71,6 +71,7 @@ export const Account: FunctionComponent = () => {
         try {
             await TicketAPI.delete(undefined, { pathParams: { id: ticketId } });
             alert('Ticket cancelado exitosamente');
+            // Refresh tickets
             const response = await TicketAPI.search(null as never, {
                 queryParams: { accountId: accountId!.toString() }
             });
@@ -83,6 +84,11 @@ export const Account: FunctionComponent = () => {
         }
     };
 
+    const handleRequestRefund = (ticketId: number) => {
+        // Mockup functionality
+        alert(`Solicitud de reembolso para ticket #${ticketId} enviada. Nuestro equipo de soporte se pondrá en contacto contigo pronto.`);
+    };
+
     const handleUpdateProfile = async (e: Event) => {
         e.preventDefault();
 
@@ -93,6 +99,7 @@ export const Account: FunctionComponent = () => {
                 phone: formData.phone,
             };
 
+            // Only include password if it was changed
             if (formData.password) {
                 updateData.password = formData.password;
             }
@@ -116,10 +123,22 @@ export const Account: FunctionComponent = () => {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleString('es-ES', {
-            day: 'numeric',
+            year: 'numeric',
             month: 'long',
-            year: 'numeric'
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
+    };
+
+    const getTicketStatusColor = (status: string) => {
+        switch (status) {
+            case 'CONFIRMED': return 'bg-green-100 text-green-800';
+            case 'PENDING_APPROVAL': return 'bg-yellow-100 text-yellow-800';
+            case 'CANCELLED': return 'bg-red-100 text-red-800';
+            case 'NO_SHOW': return 'bg-gray-100 text-gray-800';
+            default: return 'bg-blue-100 text-blue-800';
+        }
     };
 
     if (!token) {
@@ -128,276 +147,253 @@ export const Account: FunctionComponent = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
-                    <p className="mt-4 text-white font-medium">Cargando...</p>
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <p className="mt-4 text-gray-600">Cargando...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-neutral-950 pt-16 pb-20">
-            <div className="bg-white/5 backdrop-blur-xl px-4 pt-8 pb-6 border-b border-white/10">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <div className="bg-white shadow">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">Mi Cuenta</h1>
-                            <p className="text-neutral-400 mt-1">Gestiona tus tickets y perfil</p>
+                            <h1 className="text-3xl font-bold text-gray-900">Mi Cuenta</h1>
+                            <p className="mt-1 text-sm text-gray-600">Gestiona tus tickets y perfil</p>
                         </div>
+                        <a href="/" className="text-blue-600 hover:text-blue-700">
+                            ← Volver al inicio
+                        </a>
                     </div>
+                </div>
+            </div>
 
-                    <div className="flex gap-3">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Tabs */}
+                <div className="mb-6 border-b border-gray-200">
+                    <nav className="-mb-px flex space-x-8">
                         <button
                             onClick={() => setActiveTab('tickets')}
-                            className={`px-6 py-2.5 rounded-2xl font-medium transition-all duration-200 ${activeTab === 'tickets'
-                                ? 'bg-accent text-white shadow-lg'
-                                : 'bg-white/10 text-white hover:bg-white/15'
+                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'tickets'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                         >
                             Mis Tickets
                         </button>
                         <button
                             onClick={() => setActiveTab('profile')}
-                            className={`px-6 py-2.5 rounded-2xl font-medium transition-all duration-200 ${activeTab === 'profile'
-                                ? 'bg-accent text-white shadow-lg'
-                                : 'bg-white/10 text-white hover:bg-white/15'
+                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'profile'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                         >
-                            Perfil
+                            Mi Perfil
                         </button>
-                    </div>
+                    </nav>
                 </div>
-            </div>
 
-            <div className="max-w-4xl mx-auto px-4 mt-8">
+                {/* Content */}
                 {activeTab === 'tickets' ? (
-                    <>
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Mis Tickets</h2>
                         {tickets.length === 0 ? (
-                            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-12 text-center">
-                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-accent/10 mb-6">
-                                    <svg className="w-10 h-10 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                                    </svg>
-                                </div>
-                                <p className="text-white text-lg font-medium mb-2">No tienes tickets activos</p>
-                                <p className="text-neutral-400 mb-6">Busca viajes y reserva tus asientos</p>
-                                <a href="/" className="inline-block bg-accent text-white px-8 py-3 rounded-2xl font-medium hover:bg-accent-dark transition-all duration-200 shadow-lg">
-                                    Buscar Viajes
+                            <div className="bg-white rounded-lg shadow p-8 text-center">
+                                <p className="text-gray-500">No tienes tickets registrados.</p>
+                                <a href="/" className="mt-4 inline-block text-blue-600 hover:text-blue-700">
+                                    Buscar viajes →
                                 </a>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {tickets.map(ticket => (
-                                    <div key={ticket.id} className="bg-white rounded-ticket shadow-ticket overflow-hidden">
-                                        <div className="p-5 border-b-2 border-dashed border-neutral-200">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${ticket.status === 'CONFIRMED' ? 'bg-accent text-white' : 'bg-neutral-200 text-neutral-700'
-                                                    }`}>
-                                                    {ticket.status === 'CONFIRMED' ? 'Active' : ticket.status}
-                                                </span>
+                                    <div key={ticket.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                    Ticket #{ticket.id}
+                                                </h3>
+                                                <p className="text-sm text-gray-600">Asiento: {ticket.seatNumber}</p>
                                             </div>
+                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTicketStatusColor(ticket.status)}`}>
+                                                {ticket.status}
+                                            </span>
+                                        </div>
 
-                                            <div className="mb-4">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div>
-                                                        <p className="text-xs text-neutral-500">Bus station</p>
-                                                        <p className="text-lg font-bold text-neutral-900">Stop #{ticket.fromStopId}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-xs text-neutral-500">Departure</p>
-                                                        <p className="text-lg font-bold text-neutral-900">--:--</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="relative py-2">
-                                                    <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-accent"></div>
-                                                    <div className="absolute left-0 top-1/2 w-2 h-2 bg-accent rounded-full -translate-y-1/2"></div>
-                                                    <div className="absolute right-0 top-1/2 w-2 h-2 bg-accent rounded-full -translate-y-1/2"></div>
-                                                </div>
-
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <div>
-                                                        <p className="text-xs text-neutral-500">Bus station</p>
-                                                        <p className="text-lg font-bold text-neutral-900">Stop #{ticket.toStopId}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-xs text-neutral-500">Arrival</p>
-                                                        <p className="text-lg font-bold text-neutral-900">--:--</p>
-                                                    </div>
-                                                </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <p className="text-sm text-gray-600">Origen</p>
+                                                <p className="font-medium">Parada #{ticket.fromStopId}</p>
                                             </div>
-
-                                            <div className="flex items-center justify-between py-3 border-t border-neutral-100">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex items-center gap-1 text-sm">
-                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                                                        </svg>
-                                                        <span className="font-medium">1</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-sm">
-                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
-                                                        </svg>
-                                                        <span className="font-medium">#{ticket.seatNumber}</span>
-                                                    </div>
-                                                </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600">Destino</p>
+                                                <p className="font-medium">Parada #{ticket.toStopId}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600">Precio</p>
+                                                <p className="font-medium">${ticket.price.toFixed(2)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600">QR Code</p>
+                                                <p className="font-medium font-mono text-sm">{ticket.qrCode || 'N/A'}</p>
                                             </div>
                                         </div>
 
-                                        <div className="px-5 py-3 bg-neutral-50">
-                                            <p className="text-xs text-neutral-500 text-center font-mono">
-                                                {ticket.id}-{ticket.fromStopId}-{ticket.toStopId}
-                                            </p>
-                                        </div>
-
-                                        <div className="p-4">
-                                            <button
-                                                onClick={() => alert(`QR Code: ${ticket.qrCode || 'N/A'}`)}
-                                                className="w-full bg-accent text-white py-3 rounded-2xl font-bold hover:bg-accent-dark transition-all duration-200 shadow-lg"
-                                            >
-                                                Show Ticket
-                                            </button>
-                                            {ticket.status === 'CONFIRMED' && (
+                                        {ticket.status === 'CONFIRMED' && (
+                                            <div className="flex gap-2 pt-4 border-t">
                                                 <button
                                                     onClick={() => handleCancelTicket(ticket.id)}
-                                                    className="w-full mt-2 text-accent py-2 rounded-full font-medium hover:bg-accent/10 transition"
+                                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                                                 >
-                                                    Cancel Ticket
+                                                    Cancelar Ticket
                                                 </button>
-                                            )}
-                                        </div>
+                                                <button
+                                                    onClick={() => handleRequestRefund(ticket.id)}
+                                                    className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition"
+                                                >
+                                                    Solicitar Reembolso
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {ticket.status === 'PENDING_APPROVAL' && (
+                                            <div className="pt-4 border-t">
+                                                <p className="text-sm text-yellow-700 mb-2">
+                                                    Este ticket está pendiente de aprobación
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
                         )}
-                    </>
+                    </div>
                 ) : (
-                    <div className="bg-white rounded-ticket shadow-ticket p-6">
-                        <h2 className="text-2xl font-bold text-neutral-900 mb-6">Profile</h2>
+                    <div className="max-w-2xl">
+                        <div className="bg-white rounded-lg shadow p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-gray-900">Mi Perfil</h2>
+                                {!editMode && (
+                                    <button
+                                        onClick={() => setEditMode(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                    >
+                                        Editar Perfil
+                                    </button>
+                                )}
+                            </div>
 
-                        {!editMode ? (
-                            <>
-                                <div className="space-y-4 mb-6">
+                            {!editMode ? (
+                                <div className="space-y-4">
                                     <div>
-                                        <p className="text-xs text-neutral-500 mb-1">Name</p>
-                                        <p className="text-lg font-semibold text-neutral-900">{account?.name}</p>
+                                        <p className="text-sm text-gray-600">Nombre</p>
+                                        <p className="text-lg font-medium">{account?.name}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-neutral-500 mb-1">Email</p>
-                                        <p className="text-lg font-semibold text-neutral-900">{account?.email}</p>
+                                        <p className="text-sm text-gray-600">Email</p>
+                                        <p className="text-lg font-medium">{account?.email}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-neutral-500 mb-1">Phone</p>
-                                        <p className="text-lg font-semibold text-neutral-900">{account?.phone}</p>
+                                        <p className="text-sm text-gray-600">Teléfono</p>
+                                        <p className="text-lg font-medium">{account?.phone}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-neutral-500 mb-1">Role</p>
-                                        <p className="text-lg font-semibold text-neutral-900">{account?.role}</p>
+                                        <p className="text-sm text-gray-600">Rol</p>
+                                        <p className="text-lg font-medium">{account?.role}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Estado</p>
+                                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${account?.status === 'ACTIVE'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
+                                            }`}>
+                                            {account?.status}
+                                        </span>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setEditMode(true)}
-                                    className="w-full bg-accent text-white py-3 rounded-2xl font-bold hover:bg-accent-dark transition-all duration-200 shadow-lg"
-                                >
-                                    Edit Profile
-                                </button>
-                            </>
-                        ) : (
-                            <form onSubmit={handleUpdateProfile} className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-neutral-600 mb-2">Name</label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
-                                        className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-neutral-600 mb-2">Email</label>
-                                    <input
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: (e.target as HTMLInputElement).value })}
-                                        className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-neutral-600 mb-2">Phone</label>
-                                    <input
-                                        type="tel"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: (e.target as HTMLInputElement).value })}
-                                        className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-neutral-600 mb-2">New Password (optional)</label>
-                                    <input
-                                        type="password"
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: (e.target as HTMLInputElement).value })}
-                                        className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
-                                        placeholder="Leave blank to keep current"
-                                    />
-                                </div>
-                                <div className="flex gap-2 pt-2">
-                                    <button
-                                        type="submit"
-                                        className="flex-1 bg-accent text-white py-3 rounded-2xl font-bold hover:bg-accent-dark transition-all duration-200 shadow-lg"
-                                    >
-                                        Save Changes
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setEditMode(false);
-                                            setFormData({
-                                                name: account?.name || '',
-                                                email: account?.email || '',
-                                                phone: account?.phone || '',
-                                                password: ''
-                                            });
-                                        }}
-                                        className="flex-1 bg-white/10 text-white py-3 rounded-2xl font-bold hover:bg-white/20 transition-all duration-200"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </form>
-                        )}
+                            ) : (
+                                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Nombre
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: (e.target as HTMLInputElement).value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: (e.target as HTMLInputElement).value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Teléfono
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: (e.target as HTMLInputElement).value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Nueva Contraseña (opcional)
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: (e.target as HTMLInputElement).value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="Dejar en blanco para no cambiar"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 pt-4">
+                                        <button
+                                            type="submit"
+                                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                        >
+                                            Guardar Cambios
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setEditMode(false);
+                                                setFormData({
+                                                    name: account?.name || '',
+                                                    email: account?.email || '',
+                                                    phone: account?.phone || '',
+                                                    password: ''
+                                                });
+                                            }}
+                                            className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
                     </div>
                 )}
-            </div>
-
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 px-4 py-3">
-                <div className="max-w-md mx-auto flex items-center justify-around">
-                    <a href="/" className="flex flex-col items-center text-neutral-400 hover:text-accent transition">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <span className="text-xs mt-1">Booking</span>
-                    </a>
-                    <a href="/account" className="flex flex-col items-center text-accent">
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                            <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-xs mt-1 font-bold">Tickets</span>
-                    </a>
-                    <a href={account?.role === 'ADMIN' ? '/dashboard' : '#'} className="flex flex-col items-center text-neutral-400 hover:text-accent transition">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span className="text-xs mt-1">Profile</span>
-                    </a>
-                </div>
             </div>
         </div>
     );

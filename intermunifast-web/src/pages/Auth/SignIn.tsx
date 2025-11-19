@@ -13,7 +13,6 @@ export default function SignIn() {
         password: '',
     });
     const [error, setError] = useState('');
-    const [emailError, setEmailError] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Get redirect URL from query params
@@ -35,15 +34,6 @@ export default function SignIn() {
             ...prev,
             [name]: value
         }));
-
-        if (name === 'email') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (value && !emailRegex.test(value)) {
-                setEmailError('Please enter a valid email address');
-            } else {
-                setEmailError('');
-            }
-        }
     };
 
     const handleSubmit = async (e: Event) => {
@@ -89,28 +79,27 @@ export default function SignIn() {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+                {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/10 border border-accent/30 mb-4">
-                        <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Bienvenido</h1>
-                    <p className="text-neutral-400">Inicia sesión en tu cuenta</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+                    <p className="text-gray-600">Sign in to your Intermunifast account</p>
                 </div>
 
+                {/* Error Message */}
                 {error && (
-                    <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
+                    <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                         {error}
                     </div>
                 )}
 
+                {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Email */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2">
-                            Correo electrónico
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address
                         </label>
                         <input
                             type="email"
@@ -118,18 +107,16 @@ export default function SignIn() {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className={`w-full px-4 py-3 bg-neutral-900 border ${emailError ? 'border-red-500' : 'border-white/10'} rounded-xl text-white placeholder-neutral-500 focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition-all`}
-                            placeholder="tu@email.com"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                            placeholder="john@example.com"
                             required
                         />
-                        {emailError && (
-                            <p className="mt-1 text-xs text-red-400">{emailError}</p>
-                        )}
                     </div>
 
+                    {/* Password */}
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2">
-                            Contraseña
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            Password
                         </label>
                         <input
                             type="password"
@@ -137,49 +124,52 @@ export default function SignIn() {
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-neutral-900 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none transition-all"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                             placeholder="••••••••"
                             required
                         />
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
-                        <label className="flex items-center cursor-pointer">
+                    {/* Remember Me & Forgot Password */}
+                    <div className="flex items-center justify-between">
+                        <label className="flex items-center">
                             <input
                                 type="checkbox"
-                                className="h-4 w-4 text-accent focus:ring-accent border-white/20 rounded bg-neutral-900"
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             />
-                            <span className="ml-2 text-neutral-400">Recordarme</span>
+                            <span className="ml-2 text-sm text-gray-600">Remember me</span>
                         </label>
-                        <a href="#" className="text-accent hover:text-accent-dark font-medium transition-colors">
-                            ¿Olvidaste tu contraseña?
+                        <a href="#" className="text-sm text-blue-600 hover:text-blue-700">
+                            Forgot password?
                         </a>
                     </div>
 
+                    {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={loading || !!emailError}
-                        className="w-full bg-accent hover:bg-accent-dark disabled:bg-neutral-700 disabled:text-neutral-500 text-white font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center shadow-lg shadow-accent/20 disabled:shadow-none"
+                        disabled={loading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 rounded-lg transition duration-200 flex items-center justify-center"
                     >
                         {loading ? (
                             <>
                                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Iniciando sesión...
+                                Signing in...
                             </>
                         ) : (
-                            'Iniciar sesión'
+                            'Sign In'
                         )}
                     </button>
                 </form>
 
+                {/* Sign Up Link */}
                 <div className="mt-6 text-center">
-                    <p className="text-sm text-neutral-400">
-                        ¿No tienes cuenta?{' '}
-                        <a href="/auth/signup" className="text-accent hover:text-accent-dark font-bold transition-colors">
-                            Regístrate
+                    <p className="text-sm text-gray-600">
+                        Don't have an account?{' '}
+                        <a href="/auth/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+                            Create one
                         </a>
                     </p>
                 </div>
