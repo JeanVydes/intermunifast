@@ -55,13 +55,13 @@ services:
       context: ./intermunifast-web
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=http://backend:8080
+        - VITE_API_URL=http://localhost:8080
         - VITE_PRODUCTION=false
     container_name: intermunifast-frontend
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://backend:8080
+      - VITE_API_URL=http://localhost:8080
       - VITE_PRODUCTION=false
     depends_on:
       - backend
