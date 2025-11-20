@@ -55,11 +55,20 @@ export const TicketAPI = {
     }),
 
     /**
+     * Get ALL tickets (ADMIN/DISPATCHER/CLERK only)
+     */
+    getAll: createEndpoint<TicketResponse[], never>({
+        url: '/api/tickets',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
      * Search tickets by accountId and/or seatNumber
-     * Query params: accountId, seatNumber
+     * Pass query params via options: { queryParams: { accountId: 123, seatNumber: 'A1' } }
      */
     search: createEndpoint<TicketResponse[], never>({
-        url: '/api/tickets',
+        url: '/api/tickets/search',
         method: 'GET',
         requireAuth: true,
     }),

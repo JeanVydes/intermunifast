@@ -4,7 +4,7 @@ import { Check, X, Search, Filter } from 'lucide-preact';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { TicketAPI } from '../../api';
-import { TicketResponse, TicketStatus } from '../../api/types/Booking';
+import { TicketResponse, TicketStatus, PaymentStatus } from '../../api/types/Booking';
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
     CONFIRMED: 'bg-green-100 text-green-800',
@@ -13,13 +13,20 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
     NO_SHOW: 'bg-gray-100 text-gray-800',
 };
 
+const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
+    COMPLETED: 'bg-green-100 text-green-800',
+    PENDING: 'bg-yellow-100 text-yellow-800',
+    FAILED: 'bg-red-100 text-red-800',
+};
+
 export const PendingTickets: FunctionComponent = () => {
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
     const [filteredTickets, setFilteredTickets] = useState<TicketResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<TicketStatus | 'ALL'>('PENDING_APPROVAL');
+    const [ticketStatusFilter, setTicketStatusFilter] = useState<TicketStatus | 'ALL'>('PENDING_APPROVAL');
+    const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatus | 'ALL'>('ALL');
     const [processingTicket, setProcessingTicket] = useState<number | null>(null);
 
     useEffect(() => {
@@ -28,14 +35,14 @@ export const PendingTickets: FunctionComponent = () => {
 
     useEffect(() => {
         filterTickets();
-    }, [tickets, searchTerm, statusFilter]);
+    }, [tickets, searchTerm, ticketStatusFilter, paymentStatusFilter]);
 
     const fetchTickets = async () => {
         try {
             setLoading(true);
             setError(null);
-            // Always fetch all tickets
-            const response = await TicketAPI.search();
+            // Fetch all tickets (ADMIN/DISPATCHER only)
+            const response = await TicketAPI.getAll();
             setTickets(response.data);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch tickets');
@@ -45,25 +52,37 @@ export const PendingTickets: FunctionComponent = () => {
     };
 
     const filterTickets = () => {
-        let filtered = tickets;
-        // Filter by status
-        if (statusFilter !== 'ALL') {
-            filtered = filtered.filter(ticket => ticket.status === statusFilter);
+        let filtered = [...tickets];
+
+        // Filter by ticket status
+        if (ticketStatusFilter !== 'ALL') {
+            filtered = filtered.filter(ticket => ticket.status === ticketStatusFilter);
         }
-        // Filter by search term
-        if (searchTerm) {
+
+        // Filter by payment status
+        if (paymentStatusFilter !== 'ALL') {
+            filtered = filtered.filter(ticket => ticket.paymentStatus === paymentStatusFilter);
+        }
+
+        // Filter by search term (searches in: ID, seat number, trip ID, price, payment method)
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase().trim();
             filtered = filtered.filter(ticket =>
-                ticket.seatNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                ticket.id.toString().includes(searchTerm)
+                ticket.id.toString().includes(term) ||
+                ticket.seatNumber.toLowerCase().includes(term) ||
+                ticket.tripId.toString().includes(term) ||
+                ticket.price.toString().includes(term) ||
+                ticket.paymentMethod.toLowerCase().includes(term)
             );
         }
+
         setFilteredTickets(filtered);
     };
 
     const handleApprove = async (ticketId: number) => {
         try {
             setProcessingTicket(ticketId);
-            await TicketAPI.approve({ id: ticketId });
+            await TicketAPI.approve(undefined, { pathParams: { id: ticketId } });
             setTickets(prev => prev.filter(t => t.id !== ticketId));
             alert('Ticket approved successfully!');
         } catch (err: any) {
@@ -78,7 +97,7 @@ export const PendingTickets: FunctionComponent = () => {
 
         try {
             setProcessingTicket(ticketId);
-            await TicketAPI.cancelPending({ id: ticketId });
+            await TicketAPI.cancelPending(undefined, { pathParams: { id: ticketId } });
             setTickets(prev => prev.filter(t => t.id !== ticketId));
             alert('Ticket cancelled successfully!');
         } catch (err: any) {
@@ -126,18 +145,34 @@ export const PendingTickets: FunctionComponent = () => {
                             <div className="flex items-center gap-2">
                                 <Filter className="w-5 h-5 text-gray-400" />
                                 <select
-                                    value={statusFilter}
+                                    value={ticketStatusFilter}
                                     onChange={(e) => {
                                         const value = (e.target as HTMLSelectElement).value as TicketStatus | 'ALL';
-                                        setStatusFilter(value);
+                                        setTicketStatusFilter(value);
                                     }}
                                     className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                                 >
-                                    <option value="PENDING_APPROVAL">Pending Approval</option>
-                                    <option value="ALL">All Tickets</option>
-                                    <option value="CONFIRMED">Confirmed</option>
-                                    <option value="CANCELLED">Cancelled</option>
-                                    <option value="NO_SHOW">No Show</option>
+                                    <option value="PENDING_APPROVAL">⏳ Pending Approval (Awaiting Dispatcher)</option>
+                                    <option value="ALL">All Ticket Statuses</option>
+                                    <option value="CONFIRMED">✅ Confirmed (Can Board)</option>
+                                    <option value="CANCELLED">❌ Cancelled</option>
+                                    <option value="NO_SHOW">🚫 No Show (Didn't Arrive)</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-5 h-5 text-gray-400" />
+                                <select
+                                    value={paymentStatusFilter}
+                                    onChange={(e) => {
+                                        const value = (e.target as HTMLSelectElement).value as PaymentStatus | 'ALL';
+                                        setPaymentStatusFilter(value);
+                                    }}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                                >
+                                    <option value="ALL">All Payment Statuses</option>
+                                    <option value="COMPLETED">💳 Completed</option>
+                                    <option value="PENDING">⏱️ Pending</option>
+                                    <option value="FAILED">⚠️ Failed</option>
                                 </select>
                             </div>
                         </div>
@@ -165,15 +200,16 @@ export const PendingTickets: FunctionComponent = () => {
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seat</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trip ID</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Method</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Status</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ticket Status</th>
                                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {filteredTickets.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">No tickets found</td>
+                                                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500">No tickets found</td>
                                                 </tr>
                                             ) : (
                                                 filteredTickets.map((ticket) => (
@@ -182,12 +218,17 @@ export const PendingTickets: FunctionComponent = () => {
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.seatNumber}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">#{ticket.tripId}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">${ticket.price.toFixed(2)}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.paymentMethod}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${PAYMENT_STATUS_COLORS[ticket.paymentStatus]}`}>
+                                                                {ticket.paymentStatus}
+                                                            </span>
+                                                        </td>
                                                         <td className="px-6 py-4 whitespace-nowrap">
                                                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[ticket.status]}`}>
                                                                 {ticket.status.replace('_', ' ')}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.paymentMethod}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                             {ticket.status === 'PENDING_APPROVAL' ? (
                                                                 <div className="flex gap-2 justify-end">

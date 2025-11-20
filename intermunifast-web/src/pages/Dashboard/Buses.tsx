@@ -20,6 +20,8 @@ const getStatusColor = (status: string) => {
 
 export const BusesPage: FunctionComponent = () => {
     const [buses, setBuses] = useState<BusResponse[]>([]);
+    const [filteredBuses, setFilteredBuses] = useState<BusResponse[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Flow control states
     const [showModal, setShowModal] = useState(false);
@@ -44,12 +46,37 @@ export const BusesPage: FunctionComponent = () => {
                 amenities: busData.amenities
             });
 
-            setBuses([...buses, response.data]);
+            const newBus = response.data;
+            setBuses([...buses, newBus]);
+            setFilteredBuses([...filteredBuses, newBus]);
         } catch (error) {
             console.error('Failed to create bus:', error);
             throw error;
         }
     }
+
+    // Filter buses based on search term
+    useEffect(() => {
+        if (!searchTerm.trim()) {
+            setFilteredBuses(buses);
+            return;
+        }
+
+        const term = searchTerm.toLowerCase().trim();
+        const filtered = buses.filter(bus => {
+            const plateMatch = bus.plate.toLowerCase().includes(term);
+            const idMatch = bus.id.toString().includes(term);
+            const capacityMatch = bus.capacity.toString().includes(term);
+            const amenitiesMatch = bus.amenities.some(a =>
+                a.name.toLowerCase().includes(term) ||
+                a.description?.toLowerCase().includes(term)
+            );
+
+            return plateMatch || idMatch || capacityMatch || amenitiesMatch;
+        });
+
+        setFilteredBuses(filtered);
+    }, [searchTerm, buses]);
 
     const handleEditBus = (bus: BusResponse) => {
         setSelectedBus(bus);
@@ -66,6 +93,7 @@ export const BusesPage: FunctionComponent = () => {
             try {
                 const response = await BusAPI.getAll();
                 setBuses(response.data);
+                setFilteredBuses(response.data);
             } catch (error) {
                 console.error('Failed to fetch buses:', error);
             }
@@ -102,21 +130,17 @@ export const BusesPage: FunctionComponent = () => {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search by license plate, brand, or model..."
+                                placeholder="Search by license plate, capacity, or amenities..."
+                                value={searchTerm}
+                                onInput={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
-                        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
                     </div>
 
                     {/* Buses Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {buses.map((bus) => (
+                        {filteredBuses.map((bus) => (
                             <div key={bus.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                                 <div className="p-6">
                                     <div className="flex items-start justify-between mb-4">
@@ -164,6 +188,22 @@ export const BusesPage: FunctionComponent = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {filteredBuses.length === 0 && buses.length > 0 && (
+                            <div className="col-span-full text-center py-12">
+                                <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600">No buses match your search</p>
+                                <p className="text-sm text-gray-500 mt-1">Try a different search term</p>
+                            </div>
+                        )}
+
+                        {buses.length === 0 && (
+                            <div className="col-span-full text-center py-12">
+                                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600">No buses yet</p>
+                                <p className="text-sm text-gray-500 mt-1">Click "Add New Bus" to create your first bus</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Modals */}

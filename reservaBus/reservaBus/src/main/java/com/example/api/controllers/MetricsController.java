@@ -2,7 +2,6 @@ package com.example.api.controllers;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -28,16 +27,16 @@ public class MetricsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        LocalDateTime start = startDate != null ? startDate.atStartOfDay()
-                : LocalDate.now().withDayOfMonth(1).atStartOfDay();
-        LocalDateTime end = endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDateTime.now();
+        LocalDateTime start = startDate != null ? startDate.atTime(0, 0, 0, 0)
+                : LocalDate.now().withDayOfMonth(1).atTime(0, 0, 0, 0);
+        LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999999999) : LocalDateTime.now();
 
         return ResponseEntity.ok(metricsService.getDashboardMetrics(start, end));
     }
 
     @GetMapping("/dashboard/today")
     public ResponseEntity<MetricsDTO.DashboardMetrics> getTodayMetrics() {
-        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime start = LocalDate.now().atTime(0, 0, 0, 0);
         LocalDateTime end = LocalDateTime.now();
         return ResponseEntity.ok(metricsService.getDashboardMetrics(start, end));
     }
@@ -45,22 +44,30 @@ public class MetricsController {
     @GetMapping("/dashboard/this-week")
     public ResponseEntity<MetricsDTO.DashboardMetrics> getThisWeekMetrics() {
         LocalDateTime start = LocalDate.now().minusDays((long) LocalDate.now().getDayOfWeek().getValue() - 1)
-                .atStartOfDay();
+                .atTime(0, 0, 0, 0);
         LocalDateTime end = LocalDateTime.now();
         return ResponseEntity.ok(metricsService.getDashboardMetrics(start, end));
     }
 
     @GetMapping("/dashboard/this-month")
     public ResponseEntity<MetricsDTO.DashboardMetrics> getThisMonthMetrics() {
-        LocalDateTime start = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime start = LocalDate.now().withDayOfMonth(1).atTime(0, 0, 0, 0);
         LocalDateTime end = LocalDateTime.now();
         return ResponseEntity.ok(metricsService.getDashboardMetrics(start, end));
     }
 
     @GetMapping("/dashboard/this-year")
     public ResponseEntity<MetricsDTO.DashboardMetrics> getThisYearMetrics() {
-        LocalDateTime start = LocalDate.now().withDayOfYear(1).atStartOfDay();
+        LocalDateTime start = LocalDate.now().withDayOfYear(1).atTime(0, 0, 0, 0);
         LocalDateTime end = LocalDateTime.now();
+        return ResponseEntity.ok(metricsService.getDashboardMetrics(start, end));
+    }
+
+    @GetMapping("/dashboard/all-time")
+    public ResponseEntity<MetricsDTO.DashboardMetrics> getAllTimeMetrics() {
+        // 1 year in the past to 1 year in the future
+        LocalDateTime start = LocalDate.now().minusYears(1).atTime(0, 0, 0, 0);
+        LocalDateTime end = LocalDate.now().plusYears(1).atTime(23, 59, 59, 999999999);
         return ResponseEntity.ok(metricsService.getDashboardMetrics(start, end));
     }
 }

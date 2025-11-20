@@ -8,9 +8,32 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 
 export const RoutesPage: FunctionComponent = () => {
     const { routes, setRoutes, addRoute, updateRoute, removeRoute, lastUpdated, isLoading, setLoading } = useRouteStore();
+    const [filteredRoutes, setFilteredRoutes] = useState<RouteResponse[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState<RouteResponse | null>(null);
     const [showStopEditor, setShowStopEditor] = useState(false);
+
+    // Filter routes based on search term
+    useEffect(() => {
+        if (!searchTerm.trim()) {
+            setFilteredRoutes(routes);
+            return;
+        }
+
+        const term = searchTerm.toLowerCase().trim();
+        const filtered = routes.filter(route => {
+            const codeMatch = route.code.toLowerCase().includes(term);
+            const nameMatch = route.name.toLowerCase().includes(term);
+            const originMatch = route.origin.toLowerCase().includes(term);
+            const destMatch = route.destination.toLowerCase().includes(term);
+            const idMatch = route.id.toString().includes(term);
+
+            return codeMatch || nameMatch || originMatch || destMatch || idMatch;
+        });
+
+        setFilteredRoutes(filtered);
+    }, [searchTerm, routes]);
 
     async function createRoute(routeData: any) {
         try {
@@ -105,6 +128,8 @@ export const RoutesPage: FunctionComponent = () => {
                             <input
                                 type="text"
                                 placeholder="Search by route code, name, origin, or destination..."
+                                value={searchTerm}
+                                onInput={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
@@ -112,7 +137,7 @@ export const RoutesPage: FunctionComponent = () => {
 
                     {/* Routes Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {routes.map((route) => (
+                        {filteredRoutes.map((route) => (
                             <div key={route.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                                 <div className="p-6">
                                     <div className="flex items-start justify-between mb-4">
@@ -167,6 +192,22 @@ export const RoutesPage: FunctionComponent = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {filteredRoutes.length === 0 && routes.length > 0 && (
+                            <div className="col-span-full text-center py-12">
+                                <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600">No routes match your search</p>
+                                <p className="text-sm text-gray-500 mt-1">Try a different search term</p>
+                            </div>
+                        )}
+
+                        {routes.length === 0 && (
+                            <div className="col-span-full text-center py-12">
+                                <Navigation className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-600">No routes yet</p>
+                                <p className="text-sm text-gray-500 mt-1">Click "Add New Route" to create your first route</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Modals */}

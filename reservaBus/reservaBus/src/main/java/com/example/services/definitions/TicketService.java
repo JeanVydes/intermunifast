@@ -29,6 +29,8 @@ public interface TicketService {
 
     void deleteTicket(Long id);
 
+    List<TicketDTOs.TicketResponse> getAllTickets();
+
     List<TicketDTOs.TicketResponse> searchTickets(Long accountId, String seatNumber);
 
     List<BaggageDTOs.BaggageResponse> getBaggagesByTicketId(Long id);

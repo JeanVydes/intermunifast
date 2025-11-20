@@ -33,7 +33,9 @@ public class TicketDTOs {
                         Optional<Long> toStopId,
                         PaymentMethod paymentMethod,
                         String paymentIntentId,
-                        String status, // UNPAID, SOLD, CANCELLED, NO_SHOW
+                        FareRulePassengerType passengerType,
+                        String status, // CONFIRMED, PENDING_APPROVAL, CANCELLED, NO_SHOW
+                        String paymentStatus, // PENDING, COMPLETED, FAILED
                         Double price, // ticket price
                         String qrCode // QR code for validation
         ) implements java.io.Serializable {

@@ -3,6 +3,9 @@
 // Payment Method Enum
 export type PaymentMethod = 'CASH' | 'TRANSFER' | 'QR' | 'CARD' | 'DIGITAL_WALLET';
 
+// Payment Status Enum
+export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+
 // Seat Type Enum
 export type SeatType = 'STANDARD' | 'PREFERENTIAL';
 
@@ -51,9 +54,10 @@ export interface TicketResponse {
     paymentMethod: PaymentMethod;
     paymentIntentId?: string;
     passengerType: PassengerType;
-    status: TicketStatus;  // Ticket payment status
-    price: number;         // Ticket price
-    qrCode?: string;       // QR code for validation
+    status: TicketStatus;          // Ticket approval status (CONFIRMED, PENDING_APPROVAL, etc.)
+    paymentStatus: PaymentStatus;  // Payment status (PENDING, COMPLETED, FAILED)
+    price: number;                 // Ticket price
+    qrCode?: string;               // QR code for validation
 }
 
 export interface CreateTicketRequest {

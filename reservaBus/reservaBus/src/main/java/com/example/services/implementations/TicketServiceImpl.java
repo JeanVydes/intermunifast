@@ -80,14 +80,29 @@ public class TicketServiceImpl implements TicketService {
                     .formatted(req.seatNumber(), req.tripId(), fromName, toName, reason));
         }
 
-        var existingTickets = repo.findByTrip_IdAndStatus(req.tripId(), TicketStatus.CONFIRMED);
-        if (bus.getCapacity() <= existingTickets.size()) {
-            throw new IllegalStateException("No seats available for trip %d".formatted(req.tripId()));
+        // Count occupied seats in the specific segment (fromStop -> toStop)
+        int occupiedSeatsInSegment = seatAvailabilityService.getOccupiedSeatsInSegment(req.tripId(), fromStop, toStop);
+
+        if (bus.getCapacity() <= occupiedSeatsInSegment) {
+            throw new IllegalStateException("No seats available for trip %d in this segment".formatted(req.tripId()));
         }
 
-        var status = (double) existingTickets.size() / bus.getCapacity() >= 0.95
+        // Determine ticket status based on segment occupation
+        // If >= 95% of bus capacity is occupied in this segment, ticket needs approval
+        double occupationRate = (double) occupiedSeatsInSegment / bus.getCapacity();
+        var status = occupationRate >= 0.95
                 ? TicketStatus.PENDING_APPROVAL
                 : TicketStatus.CONFIRMED;
+
+        { // debugging
+            System.out.println("Bus capacity: " + bus.getCapacity());
+            System.out.println("Occupied seats in segment: " + occupiedSeatsInSegment);
+            System.out.println("Occupation rate: " + (occupationRate * 100) + "%");
+            System.out.println("Ticket status: " + status);
+            var fromName = fromStop != null ? fromStop.getName() : "origin";
+            var toName = toStop != null ? toStop.getName() : "destination";
+            System.out.println("Segment: " + fromName + " -> " + toName);
+        }
 
         var route = trip.getRoute();
         var fareRule = getOrCreateFareRule(route);
@@ -104,6 +119,7 @@ public class TicketServiceImpl implements TicketService {
                 .price(price)
                 .status(status)
                 .paymentStatus(PaymentStatus.PENDING)
+                .passengerType(req.passengerType())
                 .build();
 
         return mapper.toResponse(repo.save(ticket));
@@ -179,6 +195,14 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<TicketDTOs.TicketResponse> getAllTickets() {
+        return repo.findAll().stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<TicketDTOs.TicketResponse> searchTickets(Long accountId, String seatNumber) {
         List<Ticket> tickets;
         if (accountId != null && seatNumber != null) {
@@ -188,7 +212,7 @@ public class TicketServiceImpl implements TicketService {
         } else if (seatNumber != null) {
             tickets = repo.findBySeatNumber(seatNumber);
         } else {
-            tickets = repo.findAll();
+            tickets = List.of();
         }
         return tickets.stream().map(mapper::toResponse).toList();
     }

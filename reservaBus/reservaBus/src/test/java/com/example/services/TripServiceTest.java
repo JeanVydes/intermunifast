@@ -155,4 +155,57 @@ class TripServiceTest {
         assertThatThrownBy(() -> tripService.deleteTrip(999L))
                 .isInstanceOf(NotFoundException.class);
     }
+
+    @Test
+    @DisplayName("Should throw NotFoundException when route not found during trip creation")
+    void shouldThrowNotFoundExceptionWhenRouteNotFound() {
+        // Given
+        when(routeRepository.findById(999L)).thenReturn(Optional.empty());
+
+        TripDTOs.CreateTripRequest invalidRequest = new TripDTOs.CreateTripRequest(
+                999L,
+                1L,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(2));
+
+        // When & Then
+        assertThatThrownBy(() -> tripService.createTrip(invalidRequest))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Route 999 not found");
+    }
+
+    @Test
+    @DisplayName("Should throw NotFoundException when bus not found during trip creation")
+    void shouldThrowNotFoundExceptionWhenBusNotFound() {
+        // Given
+        when(routeRepository.findById(1L)).thenReturn(Optional.of(route));
+        when(busRepository.findById(999L)).thenReturn(Optional.empty());
+
+        TripDTOs.CreateTripRequest invalidRequest = new TripDTOs.CreateTripRequest(
+                1L,
+                999L,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(2));
+
+        // When & Then
+        assertThatThrownBy(() -> tripService.createTrip(invalidRequest))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Bus 999 not found");
+    }
+
+    @Test
+    @DisplayName("Should get all trips")
+    void shouldGetAllTrips() {
+        // Given
+        when(tripRepository.findAll()).thenReturn(java.util.List.of(trip));
+        when(tripMapper.toResponse(trip)).thenReturn(tripResponse);
+
+        // When
+        var results = tripService.getAllTrips();
+
+        // Then
+        assertThat(results).isNotNull();
+        assertThat(results).hasSize(1);
+        verify(tripRepository).findAll();
+    }
 }

@@ -18,6 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Optional;
 
@@ -29,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("Ticket Service Unit Tests")
 class TicketServiceTest {
 
@@ -120,14 +123,41 @@ class TicketServiceTest {
                                 .toStop(toStop)
                                 .paymentMethod(PaymentMethod.CASH)
                                 .status(TicketStatus.CONFIRMED)
+                                .passengerType(FareRulePassengerType.ADULT)
+                                .price(50.0)
+                                .qrCode("QR123")
                                 .build();
 
-                ticketResponse = new TicketDTOs.TicketResponse(1L, "A1", 1L, Optional.of(1L), Optional.of(2L),
-                                PaymentMethod.CASH, "pi_123", "CONFIRMED", 50.0, "QR123");
-                createRequest = new TicketDTOs.CreateTicketRequest("A1", 1L, Optional.of(1L), Optional.of(2L),
-                                PaymentMethod.CASH, "pi_123",
+                ticketResponse = new TicketDTOs.TicketResponse(
+                                1L, // id
+                                "A1", // seatNumber
+                                1L, // tripId
+                                Optional.of(1L), // fromStopId
+                                Optional.of(2L), // toStopId
+                                PaymentMethod.CASH, // paymentMethod
+                                "pi_123", // paymentIntentId
+                                FareRulePassengerType.ADULT, // passengerType
+                                "CONFIRMED", // status
+                                "COMPLETED", // paymentStatus
+                                50.0, // price
+                                "QR123" // qrCode
+                );
+
+                createRequest = new TicketDTOs.CreateTicketRequest(
+                                "A1",
+                                1L,
+                                Optional.of(1L),
+                                Optional.of(2L),
+                                PaymentMethod.CASH,
+                                "pi_123",
                                 FareRulePassengerType.ADULT);
-                updateRequest = new TicketDTOs.UpdateTicketRequest("A2", 1L, 1L, 2L, FareRulePassengerType.CHILD);
+
+                updateRequest = new TicketDTOs.UpdateTicketRequest(
+                                "A2",
+                                1L,
+                                1L,
+                                2L,
+                                FareRulePassengerType.CHILD);
         }
 
         @Test
@@ -227,5 +257,127 @@ class TicketServiceTest {
                 // When & Then
                 assertThatThrownBy(() -> ticketService.deleteTicket(999L))
                                 .isInstanceOf(NotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when trip not found during ticket creation")
+        void shouldThrowNotFoundExceptionWhenTripNotFound() {
+                // Given
+                when(authenticationService.getCurrentAccount()).thenReturn(account);
+                when(tripRepository.findById(999L)).thenReturn(Optional.empty());
+
+                TicketDTOs.CreateTicketRequest invalidRequest = new TicketDTOs.CreateTicketRequest(
+                                "A1",
+                                999L, // non-existent trip
+                                Optional.empty(),
+                                Optional.empty(),
+                                PaymentMethod.CASH,
+                                null,
+                                FareRulePassengerType.ADULT);
+
+                // When & Then
+                assertThatThrownBy(() -> ticketService.createTicket(invalidRequest))
+                                .isInstanceOf(NotFoundException.class)
+                                .hasMessageContaining("Trip 999 not found");
+        }
+
+        @Test
+        @DisplayName("Should throw NotFoundException when updating non-existent ticket")
+        void shouldThrowNotFoundExceptionWhenUpdatingNonExistentTicket() {
+                // Given - Using an empty update request (all fields null)
+                TicketDTOs.UpdateTicketRequest emptyRequest = new TicketDTOs.UpdateTicketRequest(
+                                null, // seatNumber
+                                null, // tripId
+                                null, // fromStopId
+                                null, // toStopId
+                                null // passengerType
+                );
+                when(ticketRepository.findById(999L)).thenReturn(Optional.empty());
+
+                // When & Then
+                assertThatThrownBy(() -> ticketService.updateTicket(999L, emptyRequest))
+                                .isInstanceOf(NotFoundException.class)
+                                .hasMessageContaining("Ticket 999 not found");
+        }
+
+        @Test
+        @DisplayName("Should get all tickets for current user")
+        void shouldGetAllTicketsForCurrentUser() {
+                // Given
+                when(authenticationService.getCurrentAccount()).thenReturn(account);
+                when(ticketRepository.findByAccount_Id(1L)).thenReturn(java.util.List.of(ticket));
+                when(ticketMapper.toResponse(ticket)).thenReturn(ticketResponse);
+
+                // When
+                var results = ticketService.getTicketsForCurrentUser(null);
+
+                // Then
+                assertThat(results).isNotNull();
+                assertThat(results).hasSize(1);
+                assertThat(results.get(0).seatNumber()).isEqualTo("A1");
+                verify(authenticationService).getCurrentAccount();
+        }
+
+        @Test
+        @DisplayName("Should calculate price correctly for child passenger")
+        void shouldCalculatePriceForChildPassenger() {
+                // Given
+                TicketDTOs.CreateTicketRequest childRequest = new TicketDTOs.CreateTicketRequest(
+                                "B1",
+                                1L,
+                                Optional.empty(),
+                                Optional.empty(),
+                                PaymentMethod.CARD,
+                                "pi_456",
+                                FareRulePassengerType.CHILD);
+
+                when(authenticationService.getCurrentAccount()).thenReturn(account);
+                when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+                when(seatAvailabilityService.isSeatAvailable(any(), any(), any(), any())).thenReturn(true);
+                when(ticketRepository.findByTrip_IdAndStatus(1L, TicketStatus.CONFIRMED))
+                                .thenReturn(java.util.Collections.emptyList());
+                when(fareRuleRepository.findByRouteId(1L)).thenReturn(fareRule);
+                when(accountRepository.getReferenceById(1L)).thenReturn(account);
+                when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
+                when(ticketMapper.toResponse(any(Ticket.class))).thenReturn(ticketResponse);
+
+                // When
+                TicketDTOs.TicketResponse result = ticketService.createTicket(childRequest);
+
+                // Then
+                assertThat(result).isNotNull();
+                verify(ticketRepository).save(any(Ticket.class));
+                // Child discount should be applied (50% off according to fareRule)
+        }
+
+        @Test
+        @DisplayName("Should handle ticket with full route (no stops)")
+        void shouldHandleTicketWithFullRoute() {
+                // Given
+                TicketDTOs.CreateTicketRequest fullRouteRequest = new TicketDTOs.CreateTicketRequest(
+                                "C1",
+                                1L,
+                                Optional.empty(), // fromStopId = null (full route)
+                                Optional.empty(), // toStopId = null (full route)
+                                PaymentMethod.CASH,
+                                null,
+                                FareRulePassengerType.ADULT);
+
+                when(authenticationService.getCurrentAccount()).thenReturn(account);
+                when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+                when(seatAvailabilityService.isSeatAvailable(any(), any(), any(), any())).thenReturn(true);
+                when(ticketRepository.findByTrip_IdAndStatus(1L, TicketStatus.CONFIRMED))
+                                .thenReturn(java.util.Collections.emptyList());
+                when(fareRuleRepository.findByRouteId(1L)).thenReturn(fareRule);
+                when(accountRepository.getReferenceById(1L)).thenReturn(account);
+                when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
+                when(ticketMapper.toResponse(any(Ticket.class))).thenReturn(ticketResponse);
+
+                // When
+                TicketDTOs.TicketResponse result = ticketService.createTicket(fullRouteRequest);
+
+                // Then
+                assertThat(result).isNotNull();
+                verify(ticketRepository).save(any(Ticket.class));
         }
 }

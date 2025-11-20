@@ -10,10 +10,12 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 export const TripsPage: FunctionComponent = () => {
     const { routes, setRoutes, lastUpdated: routesLastUpdated, setLoading: setRoutesLoading } = useRouteStore();
     const [trips, setTrips] = useState<TripResponse[]>([]);
+    const [filteredTrips, setFilteredTrips] = useState<TripResponse[]>([]);
     const [buses, setBuses] = useState<BusResponse[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedTrip, setSelectedTrip] = useState<TripResponse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     async function createTrip(tripData: any) {
         try {
@@ -24,12 +26,41 @@ export const TripsPage: FunctionComponent = () => {
                 arrivalAt: tripData.arrivalAt
             });
 
-            setTrips([...trips, response.data]);
+            const newTrip = response.data;
+            setTrips([...trips, newTrip]);
+            setFilteredTrips([...filteredTrips, newTrip]);
         } catch (error) {
             console.error('Failed to create trip:', error);
             throw error;
         }
     }
+
+    // Filter trips based on search term
+    useEffect(() => {
+        if (!searchTerm.trim()) {
+            setFilteredTrips(trips);
+            return;
+        }
+
+        const term = searchTerm.toLowerCase().trim();
+        const filtered = trips.filter(trip => {
+            const routeName = getRouteName(trip.routeId).toLowerCase();
+            const busPlate = getBusPlate(trip.busId).toLowerCase();
+            const tripId = trip.id.toString();
+            const departure = formatDateTime(trip.departureAt).toLowerCase();
+            const arrival = formatDateTime(trip.arrivalAt).toLowerCase();
+
+            return (
+                routeName.includes(term) ||
+                busPlate.includes(term) ||
+                tripId.includes(term) ||
+                departure.includes(term) ||
+                arrival.includes(term)
+            );
+        });
+
+        setFilteredTrips(filtered);
+    }, [searchTerm, trips, routes, buses]);
 
     const handleEditTrip = (trip: TripResponse) => {
         setSelectedTrip(trip);
@@ -44,6 +75,7 @@ export const TripsPage: FunctionComponent = () => {
                 pathParams: { id: tripId }
             });
             setTrips(trips.filter(t => t.id !== tripId));
+            setFilteredTrips(filteredTrips.filter(t => t.id !== tripId));
         } catch (error) {
             console.error('Failed to delete trip:', error);
         }
@@ -67,6 +99,7 @@ export const TripsPage: FunctionComponent = () => {
                 // Fetch trips
                 const tripsResponse = await TripAPI.getAll();
                 setTrips(tripsResponse.data);
+                setFilteredTrips(tripsResponse.data);
 
                 // Fetch buses
                 const busesResponse = await BusAPI.getAll();
@@ -131,7 +164,9 @@ export const TripsPage: FunctionComponent = () => {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search trips by route or bus..."
+                                placeholder="Search trips by route, bus, ID, or date..."
+                                value={searchTerm}
+                                onInput={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
@@ -145,7 +180,7 @@ export const TripsPage: FunctionComponent = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {trips.map((trip) => (
+                            {filteredTrips.map((trip) => (
                                 <div key={trip.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                                     <div className="p-6">
                                         <div className="flex items-start justify-between mb-4">
@@ -199,6 +234,14 @@ export const TripsPage: FunctionComponent = () => {
                                 </div>
                             ))}
 
+                            {filteredTrips.length === 0 && trips.length > 0 && (
+                                <div className="col-span-full text-center py-12">
+                                    <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                    <p className="text-gray-600">No trips match your search</p>
+                                    <p className="text-sm text-gray-500 mt-1">Try a different search term</p>
+                                </div>
+                            )}
+
                             {trips.length === 0 && (
                                 <div className="col-span-full text-center py-12">
                                     <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -230,7 +273,9 @@ export const TripsPage: FunctionComponent = () => {
                                     }, {
                                         pathParams: { id: selectedTrip.id }
                                     });
-                                    setTrips(trips.map(t => t.id === selectedTrip.id ? response.data : t));
+                                    const updatedTrip = response.data;
+                                    setTrips(trips.map(t => t.id === selectedTrip.id ? updatedTrip : t));
+                                    setFilteredTrips(filteredTrips.map(t => t.id === selectedTrip.id ? updatedTrip : t));
                                 } else {
                                     // Create new trip
                                     await createTrip(tripData);

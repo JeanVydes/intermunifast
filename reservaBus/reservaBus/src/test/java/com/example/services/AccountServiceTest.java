@@ -197,4 +197,89 @@ class AccountServiceTest {
         verify(accountRepository).findById(999L);
         verify(accountRepository, never()).delete(any());
     }
+
+    @Test
+    @DisplayName("Should get all accounts")
+    void shouldGetAllAccounts() {
+        // Given
+        when(accountRepository.findAll()).thenReturn(java.util.List.of(testAccount));
+        when(accountMapper.toResponse(testAccount)).thenReturn(accountResponse);
+
+        // When
+        var results = accountService.getAllAccounts();
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).email()).isEqualTo("test@example.com");
+        verify(accountRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Should create admin account")
+    void shouldCreateAdminAccount() {
+        // Given
+        AccountDTOs.CreateAccountRequest adminRequest = new AccountDTOs.CreateAccountRequest(
+                "Admin User",
+                "admin@example.com",
+                "1234567890",
+                "admin123",
+                true // isAdmin = true
+        );
+
+        Account adminAccount = Account.builder()
+                .id(2L)
+                .name("Admin User")
+                .email("admin@example.com")
+                .role(AccountRole.ADMIN)
+                .status(AccountStatus.ACTIVE)
+                .build();
+
+        AccountDTOs.AccountResponse adminResponse = new AccountDTOs.AccountResponse(
+                2L,
+                "Admin User",
+                "admin@example.com",
+                "1234567890",
+                AccountRole.ADMIN,
+                AccountStatus.ACTIVE);
+
+        when(accountMapper.toEntity(adminRequest)).thenReturn(adminAccount);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        when(accountRepository.save(any(Account.class))).thenReturn(adminAccount);
+        when(accountMapper.toResponse(adminAccount)).thenReturn(adminResponse);
+
+        // When
+        AccountDTOs.AccountResponse result = accountService.createAccount(adminRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.role()).isEqualTo(AccountRole.ADMIN);
+        verify(accountRepository).save(any(Account.class));
+    }
+
+    @Test
+    @DisplayName("Should update account password")
+    void shouldUpdateAccountPassword() {
+        // Given
+        AccountDTOs.UpdateAccountRequest passwordUpdateRequest = new AccountDTOs.UpdateAccountRequest(
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of("newPassword123"),
+                Optional.empty(),
+                Optional.empty());
+
+        when(authenticationService.getCurrentAccount()).thenReturn(testAccount);
+        when(accountRepository.findById(1L)).thenReturn(Optional.of(testAccount));
+        when(passwordEncoder.encode("newPassword123")).thenReturn("newEncodedPassword");
+        when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
+        when(accountMapper.toResponse(testAccount)).thenReturn(accountResponse);
+
+        // When
+        AccountDTOs.AccountResponse result = accountService.updateAccount(1L, passwordUpdateRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(passwordEncoder).encode("newPassword123");
+        verify(accountRepository).save(any(Account.class));
+    }
 }

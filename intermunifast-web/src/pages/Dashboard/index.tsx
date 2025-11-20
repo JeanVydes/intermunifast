@@ -6,11 +6,11 @@ import StatCard from '../../components/dashboard/StatCard';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { MetricsAPI, type DashboardMetrics } from '../../api';
 
-type Period = 'today' | 'this-week' | 'this-month' | 'this-year';
+type Period = 'today' | 'this-week' | 'this-month' | 'this-year' | 'all-time';
 
 export const DashboardHome: FunctionComponent = () => {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-    const [selectedPeriod, setSelectedPeriod] = useState<Period>('this-month');
+    const [selectedPeriod, setSelectedPeriod] = useState<Period>('all-time');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -18,8 +18,8 @@ export const DashboardHome: FunctionComponent = () => {
     }, [selectedPeriod]);
 
     async function fetchMetrics(period: Period) {
+        setLoading(true);
         try {
-            setLoading(true);
             let response;
 
             switch (period) {
@@ -34,6 +34,9 @@ export const DashboardHome: FunctionComponent = () => {
                     break;
                 case 'this-year':
                     response = await MetricsAPI.getThisYear(null as never);
+                    break;
+                case 'all-time':
+                    response = await MetricsAPI.getAllTime(null as never);
                     break;
             }
 
@@ -64,6 +67,7 @@ export const DashboardHome: FunctionComponent = () => {
             case 'this-week': return 'This Week';
             case 'this-month': return 'This Month';
             case 'this-year': return 'This Year';
+            case 'all-time': return 'All Time';
         }
     };
 
@@ -82,8 +86,8 @@ export const DashboardHome: FunctionComponent = () => {
                             <button
                                 onClick={() => setSelectedPeriod('today')}
                                 className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'today'
-                                        ? 'bg-purple-600 text-white'
-                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 Today
@@ -91,8 +95,8 @@ export const DashboardHome: FunctionComponent = () => {
                             <button
                                 onClick={() => setSelectedPeriod('this-week')}
                                 className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'this-week'
-                                        ? 'bg-purple-600 text-white'
-                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 This Week
@@ -100,8 +104,8 @@ export const DashboardHome: FunctionComponent = () => {
                             <button
                                 onClick={() => setSelectedPeriod('this-month')}
                                 className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'this-month'
-                                        ? 'bg-purple-600 text-white'
-                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 This Month
@@ -109,11 +113,20 @@ export const DashboardHome: FunctionComponent = () => {
                             <button
                                 onClick={() => setSelectedPeriod('this-year')}
                                 className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'this-year'
-                                        ? 'bg-purple-600 text-white'
-                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 This Year
+                            </button>
+                            <button
+                                onClick={() => setSelectedPeriod('all-time')}
+                                className={`px-4 py-2 rounded-lg transition-colors ${selectedPeriod === 'all-time'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    }`}
+                            >
+                                All Time
                             </button>
                         </div>
                     </div>

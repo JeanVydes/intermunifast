@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.domain.common.TimestampedEntity;
+import com.example.domain.enums.FareRulePassengerType;
 import com.example.domain.enums.PaymentMethod;
 import com.example.domain.enums.PaymentStatus;
 import com.example.domain.enums.TicketStatus;
@@ -63,6 +64,10 @@ public class Ticket extends TimestampedEntity {
 
     @Column(nullable = true)
     private String qrCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FareRulePassengerType passengerType;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "trip_id", nullable = false)

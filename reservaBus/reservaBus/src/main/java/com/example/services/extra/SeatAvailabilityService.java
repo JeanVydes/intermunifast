@@ -86,4 +86,41 @@ public class SeatAvailabilityService {
 
                 return overlappingHolds.isEmpty();
         }
+
+        /**
+         * Count how many seats are occupied (CONFIRMED tickets) in the specified
+         * segment
+         * 
+         * @param tripId   The trip ID
+         * @param fromStop Starting stop (null = route origin)
+         * @param toStop   Ending stop (null = route destination)
+         * @return Count of occupied seats in this segment
+         */
+        public int getOccupiedSeatsInSegment(Long tripId, Stop fromStop, Stop toStop) {
+                Integer fromSeq = fromStop != null ? fromStop.getSequence() : Integer.MIN_VALUE;
+                Integer toSeq = toStop != null ? toStop.getSequence() : Integer.MAX_VALUE;
+
+                if (fromStop != null && toStop != null && fromStop.getSequence() >= toStop.getSequence()) {
+                        throw new IllegalArgumentException("Invalid stop sequence: fromStop must be before toStop");
+                }
+
+                // Get all CONFIRMED tickets for this trip
+                List<Ticket> confirmedTickets = ticketRepository.findByTrip_IdAndStatus(tripId,
+                                com.example.domain.enums.TicketStatus.CONFIRMED);
+
+                // Count how many overlap with our segment
+                return (int) confirmedTickets.stream()
+                                .filter(ticket -> {
+                                        Integer ticketFromSeq = ticket.getFromStop() != null
+                                                        ? ticket.getFromStop().getSequence()
+                                                        : Integer.MIN_VALUE;
+                                        Integer ticketToSeq = ticket.getToStop() != null
+                                                        ? ticket.getToStop().getSequence()
+                                                        : Integer.MAX_VALUE;
+
+                                        // Check if segments overlap
+                                        return ticketFromSeq < toSeq && ticketToSeq > fromSeq;
+                                })
+                                .count();
+        }
 }

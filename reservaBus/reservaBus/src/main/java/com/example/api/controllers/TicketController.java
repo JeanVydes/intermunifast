@@ -114,7 +114,20 @@ public class TicketController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Get ALL tickets (ADMIN/DISPATCHER/CLERK only)
+     */
+    @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @GetMapping
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> getAll() {
+        List<TicketDTOs.TicketResponse> tickets = ticketService.getAllTickets();
+        return ResponseEntity.ok(tickets);
+    }
+
+    /**
+     * Search tickets by accountId and/or seatNumber
+     */
+    @GetMapping("/search")
     public ResponseEntity<List<TicketDTOs.TicketResponse>> search(
             @RequestParam(required = false) Long accountId,
             @RequestParam(required = false) String seatNumber) {

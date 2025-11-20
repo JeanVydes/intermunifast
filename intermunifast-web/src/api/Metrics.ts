@@ -94,6 +94,15 @@ export const MetricsAPI = {
         method: 'GET',
         requireAuth: true,
     }),
+
+    /**
+     * Get all-time metrics (1 year past to 1 year future)
+     */
+    getAllTime: createEndpoint<DashboardMetrics, never>({
+        url: '/api/metrics/dashboard/all-time',
+        method: 'GET',
+        requireAuth: true,
+    }),
 };
 
 export default MetricsAPI;
