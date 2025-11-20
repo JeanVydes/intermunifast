@@ -7,6 +7,13 @@ import com.example.domain.enums.AccountRole;
 import com.example.domain.enums.AccountStatus;
 
 public class AccountDTOs {
+
+        /*
+         * {
+         *      "name": "Juan"
+         * }
+         */
+
         public record CreateAccountRequest(
                         String name,
                         String email,

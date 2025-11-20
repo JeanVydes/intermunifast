@@ -138,7 +138,8 @@ class TicketServiceTest {
                 when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
                 when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
                 when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
-                when(ticketRepository.findTicketsSameTripAndStops(any(), any(), any()))
+                when(seatAvailabilityService.isSeatAvailable(any(), any(), any(), any())).thenReturn(true);
+                when(ticketRepository.findByTrip_IdAndStatus(1L, TicketStatus.CONFIRMED))
                                 .thenReturn(java.util.Collections.emptyList());
                 when(fareRuleRepository.findByRouteId(1L)).thenReturn(fareRule);
                 when(accountRepository.getReferenceById(1L)).thenReturn(account);
@@ -186,9 +187,9 @@ class TicketServiceTest {
         @DisplayName("Should update ticket successfully")
         void shouldUpdateTicket() {
                 // Given
-                when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
-                when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
-                when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
+                when(tripRepository.existsById(1L)).thenReturn(true);
+                when(stopRepository.existsById(1L)).thenReturn(true);
+                when(stopRepository.existsById(2L)).thenReturn(true);
                 when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
                 when(authenticationService.getCurrentAccount()).thenReturn(account);
                 when(fareRuleRepository.findByRouteId(1L)).thenReturn(fareRule);

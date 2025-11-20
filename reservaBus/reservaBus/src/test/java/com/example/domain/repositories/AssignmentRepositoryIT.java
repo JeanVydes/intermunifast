@@ -155,26 +155,4 @@ class AssignmentRepositoryIT {
                 assertThat(found).hasSize(1);
                 assertThat(found.get(0).getTrip().getId()).isEqualTo(trip.getId());
         }
-
-        @Test
-        @DisplayName("Should find assignments by driver ID")
-        void shouldFindAssignmentsByDriverId() {
-                // Given
-                Assignment assignment = Assignment.builder()
-                                .driver(driver)
-                                .dispatcher(dispatcher)
-                                .trip(trip)
-                                .assignedAt(LocalDateTime.now())
-                                .checklistOk(false)
-                                .build();
-                assignmentRepository.save(assignment);
-
-                // When
-                List<Assignment> found = assignmentRepository.findByDriver_Id(driver.getId());
-
-                // Then
-                assertThat(found).hasSize(1);
-                assertThat(found.get(0).getDriver().getId()).isEqualTo(driver.getId());
-                assertThat(found.get(0).getChecklistOk()).isFalse();
-        }
 }

@@ -28,6 +28,8 @@ public interface SeatHoldRepository extends JpaRepository<SeatHold, Long> {
      * - El nuevo tramo empieza dentro de un tramo existente, O
      * - El nuevo tramo termina dentro de un tramo existente, O
      * - El nuevo tramo contiene completamente a un tramo existente
+     * 
+     * Maneja stops nulos usando COALESCE con MIN_VALUE/MAX_VALUE de Integer
      */
     @Query("""
                 SELECT h FROM SeatHold h
@@ -35,9 +37,9 @@ public interface SeatHoldRepository extends JpaRepository<SeatHold, Long> {
                 AND h.seatNumber = :seatNumber
                 AND h.expiresAt > :now
                 AND (
-                    (h.fromStop.sequence <= :newFromSeq AND h.toStop.sequence > :newFromSeq)
-                    OR (h.fromStop.sequence < :newToSeq AND h.toStop.sequence >= :newToSeq)
-                    OR (h.fromStop.sequence >= :newFromSeq AND h.toStop.sequence <= :newToSeq)
+                    (COALESCE(h.fromStop.sequence, -2147483648) <= :newFromSeq AND COALESCE(h.toStop.sequence, 2147483647) > :newFromSeq)
+                    OR (COALESCE(h.fromStop.sequence, -2147483648) < :newToSeq AND COALESCE(h.toStop.sequence, 2147483647) >= :newToSeq)
+                    OR (COALESCE(h.fromStop.sequence, -2147483648) >= :newFromSeq AND COALESCE(h.toStop.sequence, 2147483647) <= :newToSeq)
                 )
             """)
     List<SeatHold> findOverlappingActiveHolds(

@@ -7,12 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.api.dto.BaggageDTOs;
 import com.example.domain.entities.Baggage;
-import com.example.domain.entities.Ticket;
 import com.example.domain.repositories.BaggageRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.ConfigCacheService;
 import com.example.services.definitions.BaggageService;
+import com.example.services.extra.ConfigCacheService;
 import com.example.services.mappers.BaggageMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -29,15 +28,13 @@ public class BaggageServiceImpl implements BaggageService {
 
     @Override
     public BaggageDTOs.BaggageResponse createBaggage(BaggageDTOs.CreateBaggageRequest req) {
-        Ticket ticket = ticketRepo.findById(req.ticketId())
+        var ticket = ticketRepo.findById(req.ticketId())
                 .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(req.ticketId())));
 
-        // Get configuration from cache instead of hardcoded values
         double maxWeightKg = configCache.getMaxBaggageWeightKg();
         double feePercentage = configCache.getBaggageFeePercentage();
 
-        // Calculate fee based on weight
-        BigDecimal fee = BigDecimal.ZERO;
+        var fee = BigDecimal.ZERO;
         if (req.weightKg() > maxWeightKg) {
             var ticketPrice = ticket.getPrice();
             double extraFee = (req.weightKg() - maxWeightKg) * (ticketPrice * feePercentage);
@@ -46,7 +43,7 @@ public class BaggageServiceImpl implements BaggageService {
             ticketRepo.save(ticket);
         }
 
-        Baggage baggage = Baggage.builder()
+        var baggage = Baggage.builder()
                 .weight(req.weightKg())
                 .fee(fee)
                 .tagCode(req.tagCode())
@@ -73,12 +70,12 @@ public class BaggageServiceImpl implements BaggageService {
     public BaggageDTOs.BaggageResponse updateBaggage(Long id, BaggageDTOs.UpdateBaggageRequest req) {
         var baggage = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Baggage %d not found".formatted(id)));
-        if (req.ticketId() != null) {
-            ticketRepo.findById(req.ticketId())
-                    .orElseThrow(() -> new NotFoundException("Ticket %d not found".formatted(req.ticketId())));
+
+        if (req.ticketId() != null && !ticketRepo.existsById(req.ticketId())) {
+            throw new NotFoundException("Ticket %d not found".formatted(req.ticketId()));
         }
+
         mapper.patch(baggage, req);
         return mapper.toResponse(repo.save(baggage));
     }
-
 }

@@ -1,7 +1,6 @@
 package com.example.services.implementations;
 
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAmount;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -11,12 +10,12 @@ import com.example.api.dto.BaggageDTOs;
 import com.example.api.dto.IncidentDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.domain.entities.Account;
-import com.example.domain.entities.Bus;
 import com.example.domain.entities.FareRule;
 import com.example.domain.entities.Route;
 import com.example.domain.entities.Stop;
 import com.example.domain.entities.Ticket;
 import com.example.domain.entities.Trip;
+import com.example.domain.enums.FareRulePassengerType;
 import com.example.domain.enums.PaymentStatus;
 import com.example.domain.enums.TicketStatus;
 import com.example.domain.repositories.AccountRepository;
@@ -39,7 +38,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-
 public class TicketServiceImpl implements TicketService {
 
     private static final String TICKET_NOT_FOUND = "Ticket %d not found";
@@ -59,93 +57,43 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public TicketDTOs.TicketResponse createTicket(TicketDTOs.CreateTicketRequest req) {
-        Account account = authenticationService.getCurrentAccount();
-
-        Trip trip = tripRepo.findById(req.tripId())
+        var account = authenticationService.getCurrentAccount();
+        var trip = tripRepo.findById(req.tripId())
                 .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(req.tripId())));
+        var bus = trip.getBus();
 
-        Bus bus = trip.getBus();
+        var fromStop = req.fromStopId().isPresent()
+                ? stopRepo.findById(req.fromStopId().get())
+                        .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId().get())))
+                : null;
+        var toStop = req.toStopId().isPresent()
+                ? stopRepo.findById(req.toStopId().get())
+                        .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId().get())))
+                : null;
 
-        Stop fromStop = null;
-        if (req.fromStopId().isPresent()) {
-            fromStop = stopRepo.findById(req.fromStopId().get())
-                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId().get())));
+        if (!seatAvailabilityService.isSeatAvailable(req.tripId(), req.seatNumber(), fromStop, toStop)) {
+            var reason = seatAvailabilityService.getAvailabilityConflictReason(req.tripId(), req.seatNumber(), fromStop,
+                    toStop);
+            var fromName = fromStop != null ? fromStop.getName() : "origin";
+            var toName = toStop != null ? toStop.getName() : "destination";
+            throw new IllegalStateException("Seat %s is not available for trip %d (segment %s -> %s): %s"
+                    .formatted(req.seatNumber(), req.tripId(), fromName, toName, reason));
         }
 
-        Stop toStop = null;
-        if (req.toStopId().isPresent()) {
-            toStop = stopRepo.findById(req.toStopId().get())
-                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId().get())));
-        }
-
-        List<Ticket> existingTickets = repo.findTicketsSameTripAndStops(
-                req.tripId(),
-                fromStop != null ? fromStop.getId() : null,
-                toStop != null ? toStop.getId() : null);
-
+        var existingTickets = repo.findByTrip_IdAndStatus(req.tripId(), TicketStatus.CONFIRMED);
         if (bus.getCapacity() <= existingTickets.size()) {
             throw new IllegalStateException("No seats available for trip %d".formatted(req.tripId()));
         }
 
-        TicketStatus status = TicketStatus.CONFIRMED;
-        double percentageFull = (double) existingTickets.size() / bus.getCapacity();
-        if (percentageFull > 0.95) {
-            status = TicketStatus.PENDING_APPROVAL;
-        }
+        var status = (double) existingTickets.size() / bus.getCapacity() >= 0.95
+                ? TicketStatus.PENDING_APPROVAL
+                : TicketStatus.CONFIRMED;
 
-        // Validar disponibilidad del asiento para el tramo especificado
-        if (existingTickets.stream().anyMatch(t -> t.getSeatNumber().equals(req.seatNumber()))) {
-            String reason = seatAvailabilityService.getAvailabilityConflictReason(
-                    req.tripId(), req.seatNumber(), fromStop, toStop);
-            String fromStopName = fromStop != null ? fromStop.getName() : "origin";
-            String toStopName = toStop != null ? toStop.getName() : "destination";
-            throw new IllegalStateException(
-                    "Seat %s is not available for trip %d (segment %s -> %s): %s"
-                            .formatted(req.seatNumber(), req.tripId(), fromStopName, toStopName, reason));
-        }
+        var route = trip.getRoute();
+        var fareRule = getOrCreateFareRule(route);
+        var price = calculatePrice(route, fareRule, req.passengerType());
 
-        Route route = trip.getRoute();
-        FareRule fareRule = fareRuleRepo.findByRouteId(route.getId());
-
-        // Si no existe FareRule para esta ruta, crear una por defecto
-        if (fareRule == null) {
-            // Precio base: distancia * precio por km (sin descuentos)
-            Double basePrice = route.getDistanceKm() * route.getPricePerKm();
-
-            fareRule = FareRule.builder()
-                    .route(route)
-                    .basePrice(basePrice)
-                    .dynamicPricing(false)
-                    .childrenDiscount(0.25) // 25% descuento para niños
-                    .seniorDiscount(0.15) // 15% descuento para seniors
-                    .studentDiscount(0.10) // 10% descuento para estudiantes
-                    .build();
-            fareRule = fareRuleRepo.save(fareRule);
-
-            System.out.println("⚠️  FareRule creada automáticamente para ruta " + route.getId() + " (" + route.getName()
-                    + ") con precio base: $" + basePrice);
-        }
-
-        Double discount = 0.0;
-
-        switch (req.passengerType()) {
-            case ADULT -> {
-                // no discount
-            }
-            case CHILD -> {
-                discount = fareRule.getChildrenDiscount();
-            }
-            case SENIOR -> {
-                discount = fareRule.getSeniorDiscount();
-            }
-            case STUDENT -> {
-                discount = fareRule.getStudentDiscount();
-            }
-        }
-
-        Double price = route.getDistanceKm() * route.getPricePerKm() * (1 - discount);
-
-        Ticket ticket = Ticket.builder()
+        var ticket = Ticket.builder()
                 .seatNumber(req.seatNumber())
                 .trip(trip)
                 .fromStop(fromStop)
@@ -156,7 +104,6 @@ public class TicketServiceImpl implements TicketService {
                 .price(price)
                 .status(status)
                 .paymentStatus(PaymentStatus.PENDING)
-                .qrCode(null)
                 .build();
 
         return mapper.toResponse(repo.save(ticket));
@@ -178,69 +125,28 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public TicketDTOs.TicketResponse updateTicket(Long id, TicketDTOs.UpdateTicketRequest req) {
-        if (req.tripId() != null) {
-            tripRepo.findById(req.tripId())
-                    .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(req.tripId())));
+        if (req.tripId() != null && !tripRepo.existsById(req.tripId())) {
+            throw new NotFoundException("Trip %d not found".formatted(req.tripId()));
         }
-        if (req.fromStopId() != null) {
-            stopRepo.findById(req.fromStopId())
-                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.fromStopId())));
+        if (req.fromStopId() != null && !stopRepo.existsById(req.fromStopId())) {
+            throw new NotFoundException("Stop %d not found".formatted(req.fromStopId()));
         }
-        if (req.toStopId() != null) {
-            stopRepo.findById(req.toStopId())
-                    .orElseThrow(() -> new NotFoundException("Stop %d not found".formatted(req.toStopId())));
+        if (req.toStopId() != null && !stopRepo.existsById(req.toStopId())) {
+            throw new NotFoundException("Stop %d not found".formatted(req.toStopId()));
         }
 
         var ticket = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
 
-        Account account = authenticationService.getCurrentAccount();
+        var account = authenticationService.getCurrentAccount();
         if (!ticket.getAccount().getId().equals(account.getId())) {
             throw new NotFoundException(TICKET_NOT_FOUND.formatted(id));
         }
 
         if (req.passengerType() != null) {
-            Route route = ticket.getTrip().getRoute();
-            FareRule fareRule = fareRuleRepo.findByRouteId(route.getId());
-
-            // Si no existe FareRule para esta ruta, crear una por defecto
-            if (fareRule == null) {
-                // Precio base: distancia * precio por km (sin descuentos)
-                Double basePrice = route.getDistanceKm() * route.getPricePerKm();
-
-                fareRule = FareRule.builder()
-                        .route(route)
-                        .basePrice(basePrice)
-                        .dynamicPricing(false)
-                        .childrenDiscount(0.25) // 25% descuento para niños
-                        .seniorDiscount(0.15) // 15% descuento para seniors
-                        .studentDiscount(0.10) // 10% descuento para estudiantes
-                        .build();
-                fareRule = fareRuleRepo.save(fareRule);
-
-                System.out.println("⚠️  FareRule creada automáticamente para ruta " + route.getId() + " ("
-                        + route.getName() + ") con precio base: $" + basePrice);
-            }
-
-            Double discount = 0.0;
-
-            switch (req.passengerType()) {
-                case ADULT -> {
-                    // no discount
-                }
-                case CHILD -> {
-                    discount = fareRule.getChildrenDiscount();
-                }
-                case SENIOR -> {
-                    discount = fareRule.getSeniorDiscount();
-                }
-                case STUDENT -> {
-                    discount = fareRule.getStudentDiscount();
-                }
-            }
-
-            Double price = route.getDistanceKm() * route.getPricePerKm() * (1 - discount);
-            ticket.setPrice(price);
+            var route = ticket.getTrip().getRoute();
+            var fareRule = getOrCreateFareRule(route);
+            ticket.setPrice(calculatePrice(route, fareRule, req.passengerType()));
         }
 
         mapper.patch(ticket, req);
@@ -274,38 +180,36 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<TicketDTOs.TicketResponse> searchTickets(Long accountId, String seatNumber) {
-        if (accountId == null && seatNumber != null) {
-            var tickets = repo.findBySeatNumber(seatNumber);
-            return tickets.stream().map(mapper::toResponse).toList();
-        }
-        if (accountId != null && seatNumber == null) {
-            var tickets = repo.findByAccount_Id(accountId);
-            return tickets.stream().map(mapper::toResponse).toList();
-        }
+        List<Ticket> tickets;
         if (accountId != null && seatNumber != null) {
-            var tickets = repo.findByAccount_IdAndSeatNumber(accountId, seatNumber);
-            return tickets.stream().map(mapper::toResponse).toList();
+            tickets = repo.findByAccount_IdAndSeatNumber(accountId, seatNumber);
+        } else if (accountId != null) {
+            tickets = repo.findByAccount_Id(accountId);
+        } else if (seatNumber != null) {
+            tickets = repo.findBySeatNumber(seatNumber);
+        } else {
+            tickets = repo.findAll();
         }
-        // Return all tickets when no parameters are provided
-        var allTickets = repo.findAll();
-        return allTickets.stream().map(mapper::toResponse).toList();
+        return tickets.stream().map(mapper::toResponse).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BaggageDTOs.BaggageResponse> getBaggagesByTicketId(Long id) {
-        var ticket = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
-        return baggageRepo.findByTicket_Id(ticket.getId()).stream()
+        if (!repo.existsById(id)) {
+            throw new NotFoundException(TICKET_NOT_FOUND.formatted(id));
+        }
+        return baggageRepo.findByTicket_Id(id).stream()
                 .map(baggageMapper::toResponse)
                 .toList();
     }
 
     @Override
     public List<IncidentDTOs.IncidentResponse> getIncidentsByTicketId(Long id) {
-        var ticket = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
-        return incidentRepo.findByTicketId(ticket.getId()).stream()
+        if (!repo.existsById(id)) {
+            throw new NotFoundException(TICKET_NOT_FOUND.formatted(id));
+        }
+        return incidentRepo.findByTicketId(id).stream()
                 .map(incidentMapper::toResponse)
                 .toList();
     }
@@ -397,11 +301,11 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public List<TicketDTOs.TicketResponse> getTicketsForCurrentUser(String status) {
-        Account account = authenticationService.getCurrentAccount();
+        var account = authenticationService.getCurrentAccount();
 
         if (status != null && !status.isBlank()) {
             try {
-                TicketStatus ticketStatus = TicketStatus.valueOf(status.toUpperCase());
+                var ticketStatus = TicketStatus.valueOf(status.toUpperCase());
                 return repo.findByAccount_IdAndStatus(account.getId(), ticketStatus).stream()
                         .map(mapper::toResponse)
                         .toList();
@@ -415,10 +319,33 @@ public class TicketServiceImpl implements TicketService {
                 .toList();
     }
 
-    /**
-     * Generates a unique QR code for a ticket
-     * Format: TICKET-{ticketId}-{timestamp}
-     */
+    private FareRule getOrCreateFareRule(Route route) {
+        var fareRule = fareRuleRepo.findByRouteId(route.getId());
+        if (fareRule != null) {
+            return fareRule;
+        }
+
+        var basePrice = route.getDistanceKm() * route.getPricePerKm();
+        return fareRuleRepo.save(FareRule.builder()
+                .route(route)
+                .basePrice(basePrice)
+                .dynamicPricing(false)
+                .childrenDiscount(0.25)
+                .seniorDiscount(0.15)
+                .studentDiscount(0.10)
+                .build());
+    }
+
+    private Double calculatePrice(Route route, FareRule fareRule, FareRulePassengerType passengerType) {
+        var discount = switch (passengerType) {
+            case ADULT -> 0.0;
+            case CHILD -> fareRule.getChildrenDiscount();
+            case SENIOR -> fareRule.getSeniorDiscount();
+            case STUDENT -> fareRule.getStudentDiscount();
+        };
+        return route.getDistanceKm() * route.getPricePerKm() * (1 - discount);
+    }
+
     private String generateQrCode(Ticket ticket) {
         return "TICKET-%d-%d".formatted(ticket.getId(), System.currentTimeMillis());
     }

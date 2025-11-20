@@ -136,9 +136,9 @@ class AssignmentServiceTest {
     void shouldUpdateAssignment() {
         // Given
         when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
-        when(accountRepository.findById(1L)).thenReturn(Optional.of(driver));
-        when(accountRepository.findById(2L)).thenReturn(Optional.of(dispatcher));
-        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+        when(accountRepository.existsById(1L)).thenReturn(true);
+        when(accountRepository.existsById(2L)).thenReturn(true);
+        when(tripRepository.existsById(1L)).thenReturn(true);
         when(assignmentRepository.save(assignment)).thenReturn(assignment);
         when(assignmentMapper.toResponse(assignment)).thenReturn(assignmentResponse);
 

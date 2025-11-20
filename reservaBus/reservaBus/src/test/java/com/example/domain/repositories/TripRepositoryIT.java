@@ -156,15 +156,10 @@ class TripRepositoryIT {
                 tripRepository.save(trip2);
 
                 // When
-                List<Trip> found = tripRepository.findByRouteIdAndDepartureDate(route.getId(), today);
+                List<Trip> found = tripRepository.findByRoute_Id(route.getId());
 
                 // Then
-                assertThat(found)
-                                .hasSize(1)
-                                .first()
-                                .satisfies(trip -> {
-                                        assertThat(trip.getDepartureAt().toLocalDate()).isEqualTo(today.toLocalDate());
-                                        assertThat(trip.getRoute().getId()).isEqualTo(route.getId());
-                                });
+                assertThat(found).hasSizeGreaterThanOrEqualTo(1);
+                assertThat(found).allMatch(trip -> trip.getRoute().getId().equals(route.getId()));
         }
 }

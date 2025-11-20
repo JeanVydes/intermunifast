@@ -9,12 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.api.dto.AssignmentDTOs;
 import com.example.api.dto.IncidentDTOs;
-import com.example.api.dto.RouteDTOs;
 import com.example.api.dto.SeatDTOs;
 import com.example.api.dto.TicketDTOs;
 import com.example.api.dto.TripDTOs;
-import com.example.domain.entities.Bus;
-import com.example.domain.entities.Route;
 import com.example.domain.entities.Trip;
 import com.example.domain.enums.TicketStatus;
 import com.example.domain.enums.TripStatus;
@@ -41,7 +38,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-
 public class TripServiceImpl implements TripService {
 
         private final TripRepository repo;
@@ -62,11 +58,12 @@ public class TripServiceImpl implements TripService {
 
         @Override
         public TripDTOs.TripResponse createTrip(TripDTOs.CreateTripRequest req) {
-                Route route = routeRepo.findById(req.routeId())
+                var route = routeRepo.findById(req.routeId())
                                 .orElseThrow(() -> new NotFoundException(
                                                 "Route %d not found".formatted(req.routeId())));
-                Bus bus = busRepo.findById(req.busId())
+                var bus = busRepo.findById(req.busId())
                                 .orElseThrow(() -> new NotFoundException("Bus %d not found".formatted(req.busId())));
+
                 Trip trip = Trip.builder()
                                 .route(route)
                                 .bus(bus)
@@ -74,6 +71,7 @@ public class TripServiceImpl implements TripService {
                                 .arrivalAt(req.arrivalAt())
                                 .status(TripStatus.SCHEDULED)
                                 .build();
+
                 return mapper.toResponse(repo.save(trip));
         }
 
@@ -97,16 +95,14 @@ public class TripServiceImpl implements TripService {
                                 .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(id)));
 
                 if (req.routeId() != null) {
-                        Route route = routeRepo.findById(req.routeId())
+                        trip.setRoute(routeRepo.findById(req.routeId())
                                         .orElseThrow(() -> new NotFoundException(
-                                                        "Route %d not found".formatted(req.routeId())));
-                        trip.setRoute(route);
+                                                        "Route %d not found".formatted(req.routeId()))));
                 }
                 if (req.busId() != null) {
-                        Bus bus = busRepo.findById(req.busId())
+                        trip.setBus(busRepo.findById(req.busId())
                                         .orElseThrow(() -> new NotFoundException(
-                                                        "Bus %d not found".formatted(req.busId())));
-                        trip.setBus(bus);
+                                                        "Bus %d not found".formatted(req.busId()))));
                 }
                 if (req.departureAt() != null) {
                         trip.setDepartureAt(req.departureAt());
@@ -121,9 +117,10 @@ public class TripServiceImpl implements TripService {
         @Override
         @Transactional(readOnly = true)
         public List<TicketDTOs.TicketResponse> getTicketsByTripIdAndStatus(Long id, TicketStatus status) {
-                var trip = repo.findById(id)
-                                .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(id)));
-                return ticketRepo.findByTrip_IdAndStatus(trip.getId(), status).stream()
+                if (!repo.existsById(id)) {
+                        throw new NotFoundException("Trip %d not found".formatted(id));
+                }
+                return ticketRepo.findByTrip_IdAndStatus(id, status).stream()
                                 .map(ticketMapper::toResponse)
                                 .toList();
         }
@@ -141,9 +138,10 @@ public class TripServiceImpl implements TripService {
         @Override
         @Transactional(readOnly = true)
         public List<AssignmentDTOs.AssignmentResponse> getAssignmentsByTripId(Long id) {
-                var trip = repo.findById(id)
-                                .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(id)));
-                return assignmentRepo.findByTrip_Id(trip.getId()).stream()
+                if (!repo.existsById(id)) {
+                        throw new NotFoundException("Trip %d not found".formatted(id));
+                }
+                return assignmentRepo.findByTrip_Id(id).stream()
                                 .map(assignmentMapper::toResponse)
                                 .toList();
         }
@@ -151,9 +149,10 @@ public class TripServiceImpl implements TripService {
         @Override
         @Transactional(readOnly = true)
         public List<IncidentDTOs.IncidentResponse> getIncidentsByTripId(Long id) {
-                var trip = repo.findById(id)
-                                .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(id)));
-                return incidentRepo.findByTripId(trip.getId()).stream()
+                if (!repo.existsById(id)) {
+                        throw new NotFoundException("Trip %d not found".formatted(id));
+                }
+                return incidentRepo.findByTripId(id).stream()
                                 .map(incidentMapper::toResponse)
                                 .toList();
         }
@@ -161,9 +160,10 @@ public class TripServiceImpl implements TripService {
         @Override
         @Transactional(readOnly = true)
         public List<TripDTOs.TripResponse> getTripsByRouteId(Long routeId) {
-                var route = routeRepo.findById(routeId)
-                                .orElseThrow(() -> new NotFoundException("Route %d not found".formatted(routeId)));
-                return repo.findByRoute_Id(route.getId()).stream()
+                if (!routeRepo.existsById(routeId)) {
+                        throw new NotFoundException("Route %d not found".formatted(routeId));
+                }
+                return repo.findByRoute_Id(routeId).stream()
                                 .map(mapper::toResponse)
                                 .toList();
         }
@@ -171,8 +171,7 @@ public class TripServiceImpl implements TripService {
         @Override
         @Transactional(readOnly = true)
         public List<TripDTOs.TripResponse> getAllTrips() {
-                var trips = repo.findAll();
-                return trips.stream()
+                return repo.findAll().stream()
                                 .map(mapper::toResponse)
                                 .toList();
         }
@@ -181,34 +180,19 @@ public class TripServiceImpl implements TripService {
         @Transactional(readOnly = true)
         public TripDTOs.TripSearchResponse searchTrips(String origin, String destination,
                         Optional<LocalDateTime> departureDate) {
-                LocalDateTime startOfDay;
-                LocalDateTime endOfDay;
-
-                if (departureDate.isPresent()) {
-                        // Si se proporciona una fecha específica, buscar desde esa fecha hasta 3 meses
-                        // después
-                        startOfDay = departureDate.get().toLocalDate().atStartOfDay();
-                        endOfDay = startOfDay.plusMonths(3);
-                } else {
-                        // Si NO se proporciona fecha, buscar desde ahora hasta 3 meses en el futuro
-                        startOfDay = LocalDateTime.now();
-                        endOfDay = LocalDateTime.now().plusMonths(3);
-                }
+                LocalDateTime startOfDay = departureDate.map(dt -> dt.toLocalDate().atStartOfDay())
+                                .orElse(LocalDateTime.now());
+                LocalDateTime endOfDay = startOfDay.plusMonths(3);
 
                 var trips = repo.searchAvailableTrips(origin, destination, startOfDay, endOfDay);
+                var tripResponses = trips.stream().map(mapper::toResponse).toList();
 
-                var tripResponses = trips.stream()
-                                .map(mapper::toResponse)
-                                .toList();
-
-                // Get unique routes from the trips found
                 var routes = trips.stream()
                                 .map(Trip::getRoute)
                                 .distinct()
                                 .map(routeMapper::toResponse)
                                 .toList();
 
-                // Get all stops for these routes, ordered by sequence
                 var stops = trips.stream()
                                 .map(Trip::getRoute)
                                 .distinct()

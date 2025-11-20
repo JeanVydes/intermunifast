@@ -124,8 +124,8 @@ class ParcelServiceTest {
     void shouldUpdateParcel() {
         // Given
         when(parcelRepository.findById(1L)).thenReturn(Optional.of(parcel));
-        when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
-        when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
+        when(stopRepository.existsById(1L)).thenReturn(true);
+        when(stopRepository.existsById(2L)).thenReturn(true);
         when(parcelRepository.save(parcel)).thenReturn(parcel);
         when(parcelMapper.toResponse(parcel)).thenReturn(parcelResponse);
 

@@ -15,7 +15,7 @@ import com.example.domain.repositories.StopRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
 import com.example.security.services.AuthenticationService;
-import com.example.services.ConfigCacheService;
+import com.example.services.extra.ConfigCacheService;
 import com.example.services.definitions.SeatHoldService;
 import com.example.services.extra.SeatAvailabilityService;
 import com.example.services.mappers.SeatHoldMapper;
@@ -39,50 +39,44 @@ public class SeatHoldServiceImpl implements SeatHoldService {
         @Override
         public SeatHoldDTOs.SeatHoldResponse reserveSeat(SeatHoldDTOs.CreateSeatHoldRequest req) {
                 Long userId = authenticationService.getCurrentAccountId();
-
                 Trip trip = tripRepo.findById(req.tripId())
                                 .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(req.tripId())));
 
-                Stop fromStop = null;
-                if (req.fromStopId().isPresent()) {
-                        fromStop = stopRepo.findById(req.fromStopId().get())
-                                        .orElseThrow(() -> new NotFoundException(
-                                                        "From Stop %d not found".formatted(req.fromStopId().get())));
-                }
+                Stop fromStop = req.fromStopId().isPresent()
+                                ? stopRepo.findById(req.fromStopId().get())
+                                                .orElseThrow(() -> new NotFoundException(
+                                                                "From Stop %d not found"
+                                                                                .formatted(req.fromStopId().get())))
+                                : null;
 
-                Stop toStop = null;
-                if (req.toStopId().isPresent()) {
-                        toStop = stopRepo.findById(req.toStopId().get())
-                                        .orElseThrow(() -> new NotFoundException(
-                                                        "To Stop %d not found".formatted(req.toStopId().get())));
-                }
+                Stop toStop = req.toStopId().isPresent()
+                                ? stopRepo.findById(req.toStopId().get())
+                                                .orElseThrow(() -> new NotFoundException(
+                                                                "To Stop %d not found".formatted(req.toStopId().get())))
+                                : null;
 
-                // Validar disponibilidad del asiento para el tramo especificado
                 if (!seatAvailabilityService.isSeatAvailable(req.tripId(), req.seatNumber(), fromStop, toStop)) {
                         String reason = seatAvailabilityService.getAvailabilityConflictReason(
                                         req.tripId(), req.seatNumber(), fromStop, toStop);
-                        String fromStopName = fromStop != null ? fromStop.getName() : "origin";
-                        String toStopName = toStop != null ? toStop.getName() : "destination";
-                        throw new IllegalStateException(
-                                        "Seat %s is not available for trip %d (segment %s -> %s): %s"
-                                                        .formatted(req.seatNumber(), req.tripId(), fromStopName,
-                                                                        toStopName, reason));
+                        String fromName = fromStop != null ? fromStop.getName() : "origin";
+                        String toName = toStop != null ? toStop.getName() : "destination";
+                        throw new IllegalStateException("Seat %s is not available for trip %d (segment %s -> %s): %s"
+                                        .formatted(req.seatNumber(), req.tripId(), fromName, toName, reason));
                 }
 
-                var seatHold = mapper.toEntity(req);
-
-                // Get hold duration from config cache instead of hardcoded value
                 int holdMinutes = configCache.getMaxSeatHoldMinutes();
+                LocalDateTime expiresAt = req.expiresAt() != null ? req.expiresAt()
+                                : LocalDateTime.now().plusMinutes(holdMinutes);
 
                 SeatHold savedSeatHold = repo.save(SeatHold.builder()
-                                .expiresAt(req.expiresAt() != null ? req.expiresAt()
-                                                : LocalDateTime.now().plusMinutes(holdMinutes))
-                                .seatNumber(seatHold.getSeatNumber())
+                                .expiresAt(expiresAt)
+                                .seatNumber(req.seatNumber())
                                 .trip(trip)
                                 .fromStop(fromStop)
                                 .toStop(toStop)
                                 .account(accountRepository.getReferenceById(userId))
                                 .build());
+
                 return mapper.toResponse(savedSeatHold);
         }
 
@@ -107,46 +101,25 @@ public class SeatHoldServiceImpl implements SeatHoldService {
 
                 req.seatNumber().ifPresent(seatHold::setSeatNumber);
                 req.expiresAt().ifPresent(seatHold::setExpiresAt);
+                req.tripId().ifPresent(tripId -> seatHold.setTrip(tripRepo.findById(tripId)
+                                .orElseThrow(() -> new NotFoundException("Trip %d not found".formatted(tripId)))));
+                req.fromStopId().ifPresent(fromStopId -> seatHold.setFromStop(stopRepo.findById(fromStopId)
+                                .orElseThrow(() -> new NotFoundException(
+                                                "From Stop %d not found".formatted(fromStopId)))));
+                req.toStopId().ifPresent(toStopId -> seatHold.setToStop(stopRepo.findById(toStopId)
+                                .orElseThrow(() -> new NotFoundException("To Stop %d not found".formatted(toStopId)))));
 
-                req.tripId().ifPresent(tripId -> {
-                        Trip trip = tripRepo.findById(tripId)
-                                        .orElseThrow(() -> new NotFoundException(
-                                                        "Trip %d not found".formatted(tripId)));
-                        seatHold.setTrip(trip);
-                });
-
-                req.fromStopId().ifPresent(fromStopId -> {
-                        Stop fromStop = stopRepo.findById(fromStopId)
-                                        .orElseThrow(() -> new NotFoundException(
-                                                        "From Stop %d not found".formatted(fromStopId)));
-                        seatHold.setFromStop(fromStop);
-                });
-
-                req.toStopId().ifPresent(toStopId -> {
-                        Stop toStop = stopRepo.findById(toStopId)
-                                        .orElseThrow(() -> new NotFoundException(
-                                                        "To Stop %d not found".formatted(toStopId)));
-                        seatHold.setToStop(toStop);
-                });
-
-                // Validar disponibilidad si se modificó algún campo crítico
                 if (req.seatNumber().isPresent() || req.tripId().isPresent() ||
                                 req.fromStopId().isPresent() || req.toStopId().isPresent()) {
 
-                        Long tripId = seatHold.getTrip().getId();
-                        String seatNumber = seatHold.getSeatNumber();
-                        Stop fromStop = seatHold.getFromStop();
-                        Stop toStop = seatHold.getToStop();
-
-                        // Validar disponibilidad excluyendo el hold actual
                         if (!seatAvailabilityService.isSeatAvailableExcludingHold(
-                                        tripId, seatNumber, fromStop, toStop, id)) {
+                                        seatHold.getTrip().getId(), seatHold.getSeatNumber(),
+                                        seatHold.getFromStop(), seatHold.getToStop(), id)) {
                                 String reason = seatAvailabilityService.getAvailabilityConflictReason(
-                                                tripId, seatNumber, fromStop, toStop);
-                                throw new IllegalStateException(
-                                                "Cannot update hold: Seat %s is not available for trip %d (segment %s -> %s): %s"
-                                                                .formatted(seatNumber, tripId, fromStop.getName(),
-                                                                                toStop.getName(), reason));
+                                                seatHold.getTrip().getId(), seatHold.getSeatNumber(),
+                                                seatHold.getFromStop(), seatHold.getToStop());
+                                throw new IllegalStateException("Cannot update hold: Seat %s is not available: %s"
+                                                .formatted(seatHold.getSeatNumber(), reason));
                         }
                 }
 

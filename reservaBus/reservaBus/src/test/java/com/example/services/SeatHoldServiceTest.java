@@ -11,6 +11,7 @@ import com.example.domain.repositories.StopRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
 import com.example.security.services.AuthenticationService;
+import com.example.services.extra.ConfigCacheService;
 import com.example.services.extra.SeatAvailabilityService;
 import com.example.services.implementations.SeatHoldServiceImpl;
 import com.example.services.mappers.SeatHoldMapper;
@@ -56,6 +57,9 @@ class SeatHoldServiceTest {
 
         @Mock
         private SeatAvailabilityService seatAvailabilityService;
+
+        @Mock
+        private ConfigCacheService configCache;
 
         @InjectMocks
         private SeatHoldServiceImpl seatHoldService;
@@ -128,9 +132,9 @@ class SeatHoldServiceTest {
                 when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
                 when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
                 when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
+                when(configCache.getMaxSeatHoldMinutes()).thenReturn(10);
                 when(seatAvailabilityService.isSeatAvailable(anyLong(), anyString(), any(Stop.class), any(Stop.class)))
                                 .thenReturn(true);
-                when(seatHoldMapper.toEntity(createRequest)).thenReturn(seatHold);
                 when(seatHoldRepository.save(any(SeatHold.class))).thenReturn(seatHold);
                 when(seatHoldMapper.toResponse(seatHold)).thenReturn(seatHoldResponse);
                 when(accountRepository.getReferenceById(1L)).thenReturn(account);

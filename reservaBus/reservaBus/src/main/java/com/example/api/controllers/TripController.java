@@ -67,6 +67,7 @@ public class TripController {
         return ResponseEntity.ok(trips);
     }
 
+    
     @GetMapping("/search")
     public ResponseEntity<TripDTOs.TripSearchResponse> search(
             @RequestParam String origin,

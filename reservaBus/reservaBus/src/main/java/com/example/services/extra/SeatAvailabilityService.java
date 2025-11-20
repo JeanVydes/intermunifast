@@ -13,164 +13,77 @@ import com.example.domain.repositories.SeatHoldRepository;
 import com.example.domain.repositories.TicketRepository;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@Slf4j
 public class SeatAvailabilityService {
 
-    private final TicketRepository ticketRepository;
-    private final SeatHoldRepository seatHoldRepository;
+        private final TicketRepository ticketRepository;
+        private final SeatHoldRepository seatHoldRepository;
 
-    private static final String ORIGIN_PLACEHOLDER = "origin";
-    private static final String DESTINATION_PLACEHOLDER = "destination";
-
-    public boolean isSeatAvailable(
-            Long tripId,
-            String seatNumber,
-            Stop fromStop,
-            Stop toStop) {
-
-        // Handle null stops: use MIN/MAX sequence for full trip availability check
-        Integer fromSequence = fromStop != null ? fromStop.getSequence() : Integer.MIN_VALUE;
-        Integer toSequence = toStop != null ? toStop.getSequence() : Integer.MAX_VALUE;
-
-        // 1. Validar que la secuencia de paradas sea válida (solo si ambos están
-        // presentes)
-        if (fromStop != null && toStop != null && fromStop.getSequence() >= toStop.getSequence()) {
-            throw new IllegalArgumentException(
-                    "Invalid stop sequence: fromStop (%d) must be before toStop (%d)"
-                            .formatted(fromStop.getSequence(), toStop.getSequence()));
+        public boolean isSeatAvailable(Long tripId, String seatNumber, Stop fromStop, Stop toStop) {
+                return isSeatAvailable(tripId, seatNumber, fromStop, toStop, null);
         }
 
-        // 2. Verificar tickets vendidos que solapen con este tramo
-        List<Ticket> overlappingTickets = ticketRepository.findOverlappingSoldTickets(
-                tripId,
-                seatNumber,
-                fromSequence,
-                toSequence);
-
-        if (!overlappingTickets.isEmpty()) {
-            log.debug("Seat {} in trip {} is not available: {} overlapping sold tickets found",
-                    seatNumber, tripId, overlappingTickets.size());
-            return false;
+        public boolean isSeatAvailableExcludingHold(Long tripId, String seatNumber, Stop fromStop, Stop toStop,
+                        Long excludeHoldId) {
+                return isSeatAvailable(tripId, seatNumber, fromStop, toStop, excludeHoldId);
         }
 
-        // 3. Verificar holds activos que solapen con este tramo
-        List<SeatHold> overlappingHolds = seatHoldRepository.findOverlappingActiveHolds(
-                tripId,
-                seatNumber,
-                fromSequence,
-                toSequence,
-                LocalDateTime.now());
+        public String getAvailabilityConflictReason(Long tripId, String seatNumber, Stop fromStop, Stop toStop) {
+                Integer fromSeq = fromStop != null ? fromStop.getSequence() : Integer.MIN_VALUE;
+                Integer toSeq = toStop != null ? toStop.getSequence() : Integer.MAX_VALUE;
 
-        if (!overlappingHolds.isEmpty()) {
-            log.debug("Seat {} in trip {} is not available: {} overlapping active holds found",
-                    seatNumber, tripId, overlappingHolds.size());
-            return false;
+                if (fromStop != null && toStop != null && fromStop.getSequence() >= toStop.getSequence()) {
+                        return "Invalid stop sequence";
+                }
+
+                List<Ticket> overlappingTickets = ticketRepository.findOverlappingSoldTickets(tripId, seatNumber,
+                                fromSeq, toSeq);
+                if (!overlappingTickets.isEmpty()) {
+                        Ticket conflict = overlappingTickets.get(0);
+                        String from = conflict.getFromStop() != null ? conflict.getFromStop().getName() : "origin";
+                        String to = conflict.getToStop() != null ? conflict.getToStop().getName() : "destination";
+                        return "Already sold: %s -> %s".formatted(from, to);
+                }
+
+                List<SeatHold> overlappingHolds = seatHoldRepository.findOverlappingActiveHolds(tripId, seatNumber,
+                                fromSeq, toSeq, LocalDateTime.now());
+                if (!overlappingHolds.isEmpty()) {
+                        SeatHold conflict = overlappingHolds.get(0);
+                        String from = conflict.getFromStop() != null ? conflict.getFromStop().getName() : "origin";
+                        String to = conflict.getToStop() != null ? conflict.getToStop().getName() : "destination";
+                        return "On hold: %s -> %s (expires %s)".formatted(from, to, conflict.getExpiresAt());
+                }
+
+                return null;
         }
 
-        // 4. Asiento disponible
-        String fromStopName = fromStop != null ? fromStop.getName() : ORIGIN_PLACEHOLDER;
-        String toStopName = toStop != null ? toStop.getName() : DESTINATION_PLACEHOLDER;
-        log.debug("Seat {} in trip {} is available for route segment {} -> {}",
-                seatNumber, tripId, fromStopName, toStopName);
-        return true;
-    }
+        private boolean isSeatAvailable(Long tripId, String seatNumber, Stop fromStop, Stop toStop,
+                        Long excludeHoldId) {
+                Integer fromSeq = fromStop != null ? fromStop.getSequence() : Integer.MIN_VALUE;
+                Integer toSeq = toStop != null ? toStop.getSequence() : Integer.MAX_VALUE;
 
-    public boolean isSeatAvailableExcludingHold(
-            Long tripId,
-            String seatNumber,
-            Stop fromStop,
-            Stop toStop,
-            Long excludeHoldId) {
+                if (fromStop != null && toStop != null && fromStop.getSequence() >= toStop.getSequence()) {
+                        throw new IllegalArgumentException("Invalid stop sequence: fromStop must be before toStop");
+                }
 
-        // Handle null stops: use MIN/MAX sequence for full trip availability check
-        Integer fromSequence = fromStop != null ? fromStop.getSequence() : Integer.MIN_VALUE;
-        Integer toSequence = toStop != null ? toStop.getSequence() : Integer.MAX_VALUE;
+                List<Ticket> overlappingTickets = ticketRepository.findOverlappingSoldTickets(tripId, seatNumber,
+                                fromSeq, toSeq);
+                if (!overlappingTickets.isEmpty()) {
+                        return false;
+                }
 
-        // Validar secuencia (solo si ambos están presentes)
-        if (fromStop != null && toStop != null && fromStop.getSequence() >= toStop.getSequence()) {
-            throw new IllegalArgumentException(
-                    "Invalid stop sequence: fromStop (%d) must be before toStop (%d)"
-                            .formatted(fromStop.getSequence(), toStop.getSequence()));
+                List<SeatHold> overlappingHolds = seatHoldRepository.findOverlappingActiveHolds(tripId, seatNumber,
+                                fromSeq, toSeq, LocalDateTime.now());
+
+                if (excludeHoldId != null) {
+                        overlappingHolds = overlappingHolds.stream()
+                                        .filter(hold -> !hold.getId().equals(excludeHoldId))
+                                        .toList();
+                }
+
+                return overlappingHolds.isEmpty();
         }
-
-        // Verificar tickets vendidos
-        List<Ticket> overlappingTickets = ticketRepository.findOverlappingSoldTickets(
-                tripId,
-                seatNumber,
-                fromSequence,
-                toSequence);
-
-        if (!overlappingTickets.isEmpty()) {
-            return false;
-        }
-
-        // Verificar holds activos, excluyendo el especificado
-        List<SeatHold> overlappingHolds = seatHoldRepository.findOverlappingActiveHolds(
-                tripId,
-                seatNumber,
-                fromSequence,
-                toSequence,
-                LocalDateTime.now());
-
-        // Filtrar el hold excluido
-        boolean hasConflict = overlappingHolds.stream()
-                .anyMatch(hold -> !hold.getId().equals(excludeHoldId));
-
-        return !hasConflict;
-    }
-
-    public String getAvailabilityConflictReason(
-            Long tripId,
-            String seatNumber,
-            Stop fromStop,
-            Stop toStop) {
-
-        // Handle null stops: use MIN/MAX sequence for full trip availability check
-        Integer fromSequence = fromStop != null ? fromStop.getSequence() : Integer.MIN_VALUE;
-        Integer toSequence = toStop != null ? toStop.getSequence() : Integer.MAX_VALUE;
-
-        if (fromStop != null && toStop != null && fromStop.getSequence() >= toStop.getSequence()) {
-            return "Invalid stop sequence: origin must be before destination";
-        }
-
-        List<Ticket> overlappingTickets = ticketRepository.findOverlappingSoldTickets(
-                tripId,
-                seatNumber,
-                fromSequence,
-                toSequence);
-
-        if (!overlappingTickets.isEmpty()) {
-            Ticket conflict = overlappingTickets.get(0);
-            String fromName = conflict.getFromStop() != null ? conflict.getFromStop().getName()
-                    : ORIGIN_PLACEHOLDER;
-            String toName = conflict.getToStop() != null ? conflict.getToStop().getName()
-                    : DESTINATION_PLACEHOLDER;
-            return "Seat already sold for overlapping route segment: %s -> %s"
-                    .formatted(fromName, toName);
-        }
-
-        List<SeatHold> overlappingHolds = seatHoldRepository.findOverlappingActiveHolds(
-                tripId,
-                seatNumber,
-                fromSequence,
-                toSequence,
-                LocalDateTime.now());
-
-        if (!overlappingHolds.isEmpty()) {
-            SeatHold conflict = overlappingHolds.get(0);
-            String fromName = conflict.getFromStop() != null ? conflict.getFromStop().getName()
-                    : ORIGIN_PLACEHOLDER;
-            String toName = conflict.getToStop() != null ? conflict.getToStop().getName()
-                    : DESTINATION_PLACEHOLDER;
-            return "Seat currently on hold for overlapping route segment: %s -> %s (expires at %s)"
-                    .formatted(fromName, toName, conflict.getExpiresAt());
-        }
-
-        return null; // Disponible
-    }
 }

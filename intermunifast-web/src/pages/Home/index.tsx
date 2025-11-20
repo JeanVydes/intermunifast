@@ -5,6 +5,10 @@ import { BusSearchBar, SearchParams } from '../../components/BusSearchBar';
 import { BookingModal } from '../../components/BookingModal';
 import { TripAPI, TicketAPI, RouteAPI, TripResponse, PassengerType } from '../../api';
 import { RouteResponse, StopResponse } from '../../api/types/Transport';
+import useAccountStore from '../../stores/AccountStore';
+import useAuthStore from '../../stores/AuthStore';
+import { formatDateTime, formatTime } from '../../utils/helpers';
+import { handleLogout as performLogout } from '../../utils/auth';
 
 interface CartItem {
 	trip: TripResponse;
@@ -22,6 +26,8 @@ interface CartItem {
 
 export const Home: FunctionComponent = () => {
 	const location = useLocation();
+	const { account } = useAccountStore();
+	const { token, logout } = useAuthStore();
 	const [results, setResults] = useState<TripResponse[]>([]);
 	const [routes, setRoutes] = useState<RouteResponse[]>([]);
 	const [stops, setStops] = useState<StopResponse[]>([]);
@@ -31,6 +37,7 @@ export const Home: FunctionComponent = () => {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 	const [isLoadingCart, setIsLoadingCart] = useState(true);
+	const [showMobileMenu, setShowMobileMenu] = useState(false);
 
 	// State for initial search params from URL
 	const [initialOrigin, setInitialOrigin] = useState('');
@@ -39,9 +46,8 @@ export const Home: FunctionComponent = () => {
 
 	// Check authentication status
 	useEffect(() => {
-		const token = localStorage.getItem('authToken');
 		setIsAuthenticated(!!token);
-	}, []);
+	}, [token]);
 
 	// Load cart from localStorage and fetch pending tickets on mount
 	useEffect(() => {
@@ -290,25 +296,10 @@ export const Home: FunctionComponent = () => {
 		}
 	};
 
-	const formatDateTime = (dateString: string | undefined) => {
-		if (!dateString) return 'N/A';
-		const date = new Date(dateString);
-		return date.toLocaleString('es-ES', {
-			day: '2-digit',
-			month: 'short',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		});
-	};
-
-	const formatTime = (dateString: string | undefined) => {
-		if (!dateString) return 'N/A';
-		const date = new Date(dateString);
-		return date.toLocaleTimeString('es-ES', {
-			hour: '2-digit',
-			minute: '2-digit'
-		});
+	const handleLogout = () => {
+		setCart([]);
+		setIsAuthenticated(false);
+		performLogout();
 	};
 
 	const openMobileSearchModal = () => {
@@ -317,29 +308,144 @@ export const Home: FunctionComponent = () => {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-			{/* Header */}
+			{/* Header with Navigation */}
 			<div className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-xl border-b border-gray-700">
-				<div className="max-w-7xl mx-auto px-4 py-8">
-					<div className="flex items-center space-x-3">
-						{/* Logo/Icon */}
-						<div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-3 shadow-lg">
-							<svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+				<div className="max-w-7xl mx-auto px-4 py-4">
+					<div className="flex items-center justify-between">
+						{/* Logo/Brand */}
+						<div className="flex items-center space-x-3">
+							<div>
+								<h1 className="text-3xl font-extrabold bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 bg-clip-text text-transparent">
+									Intermuni<span className="text-white">Fast</span>
+								</h1>
+							</div>
+						</div>
+
+						{/* Desktop Navigation */}
+						<nav className="hidden md:flex items-center space-x-2">
+							{!isAuthenticated ? (
+								<>
+									<a
+										href="/auth/signin"
+										className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors duration-200"
+									>
+										Iniciar Sesión
+									</a>
+									<a
+										href="/auth/signup"
+										className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-medium rounded-lg shadow-lg transition-all duration-200"
+									>
+										Registrarse
+									</a>
+								</>
+							) : (
+								<>
+									{account?.role === 'ADMIN' && (
+										<a
+											href="/dashboard"
+											className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors duration-200"
+										>
+											<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+											</svg>
+											<span>Dashboard</span>
+										</a>
+									)}
+									<a
+										href="/account"
+										className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors duration-200"
+									>
+										<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+										</svg>
+										<span>Mi Cuenta</span>
+									</a>
+									<button
+										onClick={handleLogout}
+										className="flex items-center space-x-2 px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+									>
+										<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+										</svg>
+										<span>Salir</span>
+									</button>
+								</>
+							)}
+						</nav>
+
+						{/* Mobile Menu Button */}
+						<button
+							onClick={() => setShowMobileMenu(!showMobileMenu)}
+							className="md:hidden p-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors"
+						>
+							<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								{showMobileMenu ? (
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+								) : (
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+								)}
 							</svg>
-						</div>
-						{/* Title */}
-						<div>
-							<h1 className="text-4xl font-extrabold bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 bg-clip-text text-transparent">
-								InterMuni<span className="text-white">Fast</span>
-							</h1>
-							<p className="text-gray-400 text-sm mt-1">Viaja cómodo y seguro entre ciudades</p>
-						</div>
+						</button>
 					</div>
+
+					{/* Mobile Navigation */}
+					{showMobileMenu && (
+						<nav className="md:hidden mt-4 pb-4 space-y-2 border-t border-gray-700 pt-4">
+							{!isAuthenticated ? (
+								<>
+									<a
+										href="/auth/signin"
+										className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors duration-200"
+									>
+										Iniciar Sesión
+									</a>
+									<a
+										href="/auth/signup"
+										className="block px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-medium rounded-lg shadow-lg transition-all duration-200 text-center"
+									>
+										Registrarse
+									</a>
+								</>
+							) : (
+								<>
+									{account?.role === 'ADMIN' && (
+										<a
+											href="/dashboard"
+											className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors duration-200"
+										>
+											<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+											</svg>
+											<span>Dashboard</span>
+										</a>
+									)}
+									<a
+										href="/account"
+										className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors duration-200"
+									>
+										<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+										</svg>
+										<span>Mi Cuenta</span>
+									</a>
+									<button
+										onClick={handleLogout}
+										className="flex items-center space-x-2 w-full px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+									>
+										<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+										</svg>
+										<span>Salir</span>
+									</button>
+								</>
+							)}
+						</nav>
+					)}
 				</div>
 			</div>
 
 			{/* Search Bar */}
-			<div className="max-w-7xl mx-auto px-4 -mt-8">
+			<div className="max-w-7xl mx-auto px-4 mt-8">
 				<div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl shadow-2xl p-6">
 					<BusSearchBar
 						onSubmit={handleSearch}
@@ -367,7 +473,7 @@ export const Home: FunctionComponent = () => {
 								{results.map((trip) => {
 									const route = routes.find(r => r.id === trip.routeId);
 									const routeStops = stops.filter(s => s.routeId === trip.routeId);
-									const isInCart = cart.some(item => item.trip.id === trip.id);
+									const ticketsInCart = cart.filter(item => item.trip.id === trip.id);
 
 									if (!route) return null;
 
@@ -502,28 +608,40 @@ export const Home: FunctionComponent = () => {
 												)}
 
 												{/* Action Button */}
+												{ticketsInCart.length > 0 && (
+													<div className="mb-4">
+														<div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3">
+															<p className="text-amber-400 text-sm font-medium mb-2">
+																{ticketsInCart.length} {ticketsInCart.length === 1 ? 'asiento reservado' : 'asientos reservados'} en el carrito:
+															</p>
+															<div className="flex flex-wrap gap-2">
+																{ticketsInCart.map((ticket) => (
+																	<div key={ticket.ticketId} className="flex items-center space-x-2 bg-gray-900/50 px-3 py-1 rounded-lg border border-gray-700">
+																		<span className="text-white text-sm font-medium">{ticket.selectedSeat}</span>
+																		<button
+																			onClick={() => removeFromCart(ticket.ticketId)}
+																			className="text-red-400 hover:text-red-300 transition-colors"
+																		>
+																			<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+																			</svg>
+																		</button>
+																	</div>
+																))}
+															</div>
+														</div>
+													</div>
+												)}
 												<button
-													onClick={() => isInCart ? removeFromCart(trip.id) : addToCart(trip, route, routeStops)}
-													className={`w-full py-4 rounded-xl font-semibold transition-all duration-300 ${isInCart
-														? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30'
-														: 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-500/30'
-														}`}
+													onClick={() => addToCart(trip, route, routeStops)}
+													className="w-full py-4 rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg shadow-amber-500/30"
 												>
-													{isInCart ? (
-														<span className="flex items-center justify-center space-x-2">
-															<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-															</svg>
-															<span>Remover del carrito</span>
-														</span>
-													) : (
-														<span className="flex items-center justify-center space-x-2">
-															<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-																<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-															</svg>
-															<span>Reservar asiento</span>
-														</span>
-													)}
+													<span className="flex items-center justify-center space-x-2">
+														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+														</svg>
+														<span>Reservar {ticketsInCart.length > 0 ? 'otro ' : ''}asiento</span>
+													</span>
 												</button>
 											</div>
 										</div>

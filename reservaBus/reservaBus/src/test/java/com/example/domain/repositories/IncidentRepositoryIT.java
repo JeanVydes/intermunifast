@@ -77,33 +77,11 @@ class IncidentRepositoryIT {
                 incidentRepository.save(incident2);
 
                 // When
-                List<Incident> incidents = incidentRepository.findByEntityTypeAndEntityId(EntityType.TRIP, 100L);
+                List<Incident> incidents = incidentRepository.findByTripId(100L);
 
                 // Then
                 assertThat(incidents).hasSize(2);
                 assertThat(incidents).allMatch(i -> i.getEntityId().equals(100L));
-        }
-
-        @Test
-        @DisplayName("Should find incidents by type")
-        void shouldFindIncidentsByType() {
-                // Given
-                Incident incident1 = Incident.builder()
-                                .type(IncidentType.DELIVERY_FAIL)
-                                .note("Delivery failed")
-                                .entityType(EntityType.PARCEL)
-                                .entityId(1L)
-                                .build();
-
-                Incident incident2 = Incident.builder()
-                                .type(IncidentType.DELIVERY_FAIL)
-                                .note("Another delivery failure")
-                                .entityType(EntityType.PARCEL)
-                                .entityId(2L)
-                                .build();
-
-                incidentRepository.save(incident1);
-                incidentRepository.save(incident2);
         }
 
         @Test
@@ -124,25 +102,15 @@ class IncidentRepositoryIT {
                                 .entityId(1L)
                                 .build();
 
-                Incident parcelIncident = Incident.builder()
-                                .type(IncidentType.DELIVERY_FAIL)
-                                .note("Parcel issue")
-                                .entityType(EntityType.PARCEL)
-                                .entityId(1L)
-                                .build();
-
                 incidentRepository.save(tripIncident);
                 incidentRepository.save(ticketIncident);
-                incidentRepository.save(parcelIncident);
 
                 // When
-                List<Incident> tripIncidents = incidentRepository.findByEntityTypeAndEntityId(EntityType.TRIP, 1L);
-                List<Incident> ticketIncidents = incidentRepository.findByEntityTypeAndEntityId(EntityType.TICKET, 1L);
-                List<Incident> parcelIncidents = incidentRepository.findByEntityTypeAndEntityId(EntityType.PARCEL, 1L);
+                List<Incident> tripIncidents = incidentRepository.findByTripId(1L);
+                List<Incident> ticketIncidents = incidentRepository.findByTicketId(1L);
 
                 // Then
                 assertThat(tripIncidents).hasSize(1);
                 assertThat(ticketIncidents).hasSize(1);
-                assertThat(parcelIncidents).hasSize(1);
         }
 }

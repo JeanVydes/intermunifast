@@ -963,7 +963,7 @@ else
         SEAT_NUMBER="${SEAT_LETTER}${SEAT_ROW}"
         
         # Random passenger type for discounts
-        PASSENGER_TYPES=("ADULT" "STUDENT" "SENIOR" "CHILDREN")
+        PASSENGER_TYPES=("ADULT" "STUDENT" "SENIOR" "CHILD")
         PASSENGER_TYPE=${PASSENGER_TYPES[$((RANDOM % 4))]}
         
         # Create ticket

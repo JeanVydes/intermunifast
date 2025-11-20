@@ -50,6 +50,7 @@ export interface TicketResponse {
     toStopId: number | null;
     paymentMethod: PaymentMethod;
     paymentIntentId?: string;
+    passengerType: PassengerType;
     status: TicketStatus;  // Ticket payment status
     price: number;         // Ticket price
     qrCode?: string;       // QR code for validation

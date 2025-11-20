@@ -1,15 +1,14 @@
 package com.example.services.mappers;
 
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import com.example.api.dto.SeatDTOs;
 import com.example.domain.entities.Seat;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SeatMapper {
 
-    @Mapping(target = "id", ignore = true)
     Seat toEntity(SeatDTOs.CreateSeatRequest dto);
 
     SeatDTOs.SeatResponse toResponse(Seat entity);

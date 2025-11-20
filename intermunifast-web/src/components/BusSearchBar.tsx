@@ -50,6 +50,13 @@ export const BusSearchBar: FunctionComponent<BusSearchBarProps> = ({
         onSubmit({ origin, destination, date });
     };
 
+    const handleKeyPress = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSearchSubmit();
+        }
+    };
+
     const handleMobileTrigger = () => {
         if (onMobileClick) {
             onMobileClick();
@@ -92,6 +99,7 @@ export const BusSearchBar: FunctionComponent<BusSearchBarProps> = ({
                         className="w-full pl-6 pr-4 pt-5 pb-3 rounded-l-full text-sm text-gray-600 placeholder-gray-400 focus:outline-none"
                         value={origin}
                         onInput={handleOrigin}
+                        onKeyPress={handleKeyPress}
                     />
                 </div>
 
@@ -110,6 +118,7 @@ export const BusSearchBar: FunctionComponent<BusSearchBarProps> = ({
                         className="w-full pl-6 pr-4 pt-5 pb-3 text-sm text-gray-600 placeholder-gray-400 focus:outline-none"
                         value={destination}
                         onInput={handleDestination}
+                        onKeyPress={handleKeyPress}
                     />
                 </div>
 
@@ -130,6 +139,7 @@ export const BusSearchBar: FunctionComponent<BusSearchBarProps> = ({
                         className="w-full pl-6 pr-4 pt-5 pb-3 text-sm text-gray-600 placeholder-gray-400 focus:outline-none"
                         value={date}
                         onInput={handleDate}
+                        onKeyPress={handleKeyPress}
                     />
                 </div>
 

@@ -7,7 +7,8 @@ import {
     PaymentMethod,
     CreateTicketRequest,
     CreateBaggageRequest,
-    CreateSeatHoldRequest
+    CreateSeatHoldRequest,
+    TicketResponse
 } from '../api/types/Booking';
 import { RouteResponse, StopResponse } from '../api/types/Transport';
 import { TripAPI, SeatHoldAPI, TicketAPI, BaggageAPI } from '../api';
@@ -38,6 +39,7 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
     const [passengerType, setPassengerType] = useState<PassengerType>('ADULT');
     const [selectedSeat, setSelectedSeat] = useState<string | null>(null);
     const [seats, setSeats] = useState<SeatResponse[]>([]);
+    const [occupiedTickets, setOccupiedTickets] = useState<TicketResponse[]>([]);
     const [fromStop, setFromStop] = useState<number | null>(null);
     const [toStop, setToStop] = useState<number | null>(null);
     const [baggage, setBaggage] = useState<BaggageInfo | null>(null);
@@ -50,6 +52,7 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
     // Load seats when component mounts
     useEffect(() => {
         loadSeats();
+        loadOccupiedTickets();
     }, []);
 
     // Debug stops data
@@ -80,6 +83,13 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
         }
     }, [expiresAt]);
 
+    // Reload occupied tickets when stops change (to update available seats)
+    useEffect(() => {
+        if (step === 'seat') {
+            loadOccupiedTickets();
+        }
+    }, [fromStop, toStop, step]);
+
     const loadSeats = async () => {
         try {
             const response = await TripAPI.getSeats(undefined, {
@@ -88,6 +98,18 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
             setSeats(response.data);
         } catch (error) {
             console.error('Error loading seats:', error);
+        }
+    };
+
+    const loadOccupiedTickets = async () => {
+        try {
+            const response = await TripAPI.getTickets(undefined, {
+                pathParams: { id: trip.id.toString() },
+                queryParams: { status: 'CONFIRMED' } // Solo tickets confirmados (pagados) ocupan asientos
+            });
+            setOccupiedTickets(response.data);
+        } catch (error) {
+            console.error('Error loading occupied tickets:', error);
         }
     };
 
@@ -366,76 +388,160 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
         </div>
     );
 
-    const renderSeatStep = () => (
-        <div className="p-6">
-            <h3 className="text-xl font-bold text-white mb-6">Selecciona tu asiento</h3>
+    const renderSeatStep = () => {
+        // Helper function to check if a seat is occupied for the selected route segment
+        const isSeatOccupied = (seatNumber: string): TicketResponse | undefined => {
+            // Get sequence values for the selected segment
+            const fromSeq = fromStop ? stops.find(s => s.id === fromStop)?.sequence : -2147483648;
+            const toSeq = toStop ? stops.find(s => s.id === toStop)?.sequence : 2147483647;
 
-            {/* Legend */}
-            <div className="flex items-center justify-center space-x-6 mb-6 text-sm">
-                <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-green-500 rounded"></div>
-                    <span className="text-gray-300">Disponible</span>
+            // Check if any ticket overlaps with our selected segment
+            return occupiedTickets.find(ticket => {
+                if (ticket.seatNumber !== seatNumber) return false;
+
+                // Get ticket's from/to sequence
+                const ticketFromSeq = ticket.fromStopId
+                    ? stops.find(s => s.id === ticket.fromStopId)?.sequence ?? -2147483648
+                    : -2147483648;
+                const ticketToSeq = ticket.toStopId
+                    ? stops.find(s => s.id === ticket.toStopId)?.sequence ?? 2147483647
+                    : 2147483647;
+
+                // Check overlap: segment overlaps if it starts before ticket ends AND ends after ticket starts
+                return fromSeq < ticketToSeq && toSeq > ticketFromSeq;
+            });
+        };
+
+        return (
+            <div className="p-6">
+                <h3 className="text-xl font-bold text-white mb-6">Selecciona tu asiento</h3>
+
+                {/* Legend */}
+                <div className="flex items-center justify-center space-x-6 mb-6 text-sm">
+                    <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-green-500 rounded"></div>
+                        <span className="text-gray-300">Disponible</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-amber-500 rounded"></div>
+                        <span className="text-gray-300">Preferencial</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-gray-600 rounded"></div>
+                        <span className="text-gray-300">Ocupado</span>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-amber-500 rounded"></div>
-                    <span className="text-gray-300">Preferencial</span>
+
+                {/* Seat Grid */}
+                <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
+                    <div className="grid grid-cols-4 gap-3">
+                        {seats.map((seat) => {
+                            const isSelected = selectedSeat === seat.number;
+                            const isPreferential = seat.type === 'PREFERENTIAL';
+                            const occupiedTicket = isSeatOccupied(seat.number);
+                            const isOccupied = !!occupiedTicket;
+
+                            return (
+                                <div key={seat.id} className="relative group">
+                                    <button
+                                        onClick={() => !isOccupied && handleSelectSeat(seat.number)}
+                                        disabled={isOccupied}
+                                        className={`w-full h-12 rounded-lg font-semibold text-sm transition-all ${isOccupied
+                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                                : isSelected
+                                                    ? 'bg-blue-500 text-white scale-105 shadow-lg'
+                                                    : isPreferential
+                                                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                                                        : 'bg-green-500 text-white hover:bg-green-600'
+                                            }`}
+                                    >
+                                        {seat.number}
+                                    </button>
+
+                                    {/* Tooltip for occupied seats */}
+                                    {isOccupied && occupiedTicket && (
+                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                                            <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl min-w-[200px]">
+                                                <p className="text-xs font-bold text-red-400 mb-2">OCUPADO</p>
+                                                <div className="space-y-1 text-xs">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-400">Asiento:</span>
+                                                        <span className="text-white font-semibold">{occupiedTicket.seatNumber}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-400">De:</span>
+                                                        <span className="text-white">
+                                                            {occupiedTicket.fromStopId
+                                                                ? stops.find(s => s.id === occupiedTicket.fromStopId)?.name
+                                                                : route.origin}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-400">A:</span>
+                                                        <span className="text-white">
+                                                            {occupiedTicket.toStopId
+                                                                ? stops.find(s => s.id === occupiedTicket.toStopId)?.name
+                                                                : route.destination}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-400">Tipo:</span>
+                                                        <span className="text-white">
+                                                            {occupiedTicket.passengerType === 'ADULT' && 'Adulto'}
+                                                            {occupiedTicket.passengerType === 'CHILD' && 'Niño'}
+                                                            {occupiedTicket.passengerType === 'SENIOR' && 'Anciano'}
+                                                            {occupiedTicket.passengerType === 'STUDENT' && 'Estudiante'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-400">Estado:</span>
+                                                        <span className="text-yellow-400">
+                                                            {occupiedTicket.status === 'CONFIRMED' && 'Confirmado (Pagado)'}
+                                                            {occupiedTicket.status === 'PENDING_APPROVAL' && 'Pendiente Aprobación'}
+                                                            {occupiedTicket.status === 'CANCELLED' && 'Cancelado'}
+                                                            {occupiedTicket.status === 'NO_SHOW' && 'No se presentó'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {/* Arrow */}
+                                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                                    <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-700"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gray-600 rounded"></div>
-                    <span className="text-gray-300">Ocupado</span>
+
+                {selectedSeat && (
+                    <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-amber-500">
+                        <p className="text-white text-center">
+                            Asiento seleccionado: <span className="font-bold text-amber-500">{selectedSeat}</span>
+                        </p>
+                    </div>
+                )}
+
+                <div className="flex space-x-3">
+                    <button
+                        onClick={() => setStep('passenger')}
+                        className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-xl transition-all"
+                    >
+                        Atrás
+                    </button>
+                    <button
+                        onClick={handleCreateSeatHold}
+                        disabled={!selectedSeat || isProcessing}
+                        className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isProcessing ? 'Reservando...' : 'Continuar'}
+                    </button>
                 </div>
             </div>
-
-            {/* Seat Grid */}
-            <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
-                <div className="grid grid-cols-4 gap-3">
-                    {seats.map((seat) => {
-                        const isSelected = selectedSeat === seat.number;
-                        const isPreferential = seat.type === 'PREFERENTIAL';
-
-                        return (
-                            <button
-                                key={seat.id}
-                                onClick={() => handleSelectSeat(seat.number)}
-                                className={`h-12 rounded-lg font-semibold text-sm transition-all ${isSelected
-                                    ? 'bg-blue-500 text-white scale-105 shadow-lg'
-                                    : isPreferential
-                                        ? 'bg-amber-500 text-white hover:bg-amber-600'
-                                        : 'bg-green-500 text-white hover:bg-green-600'
-                                    }`}
-                            >
-                                {seat.number}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {selectedSeat && (
-                <div className="bg-gray-800 rounded-lg p-4 mb-6 border border-amber-500">
-                    <p className="text-white text-center">
-                        Asiento seleccionado: <span className="font-bold text-amber-500">{selectedSeat}</span>
-                    </p>
-                </div>
-            )}
-
-            <div className="flex space-x-3">
-                <button
-                    onClick={() => setStep('passenger')}
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-4 rounded-xl transition-all"
-                >
-                    Atrás
-                </button>
-                <button
-                    onClick={handleCreateSeatHold}
-                    disabled={!selectedSeat || isProcessing}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {isProcessing ? 'Reservando...' : 'Continuar'}
-                </button>
-            </div>
-        </div>
-    );
+        );
+    };
 
     const renderBaggageStep = () => {
         const [weight, setWeight] = useState<string>('0');
