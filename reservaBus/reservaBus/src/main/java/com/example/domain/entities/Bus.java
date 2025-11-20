@@ -31,7 +31,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Bus extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -58,5 +57,4 @@ public class Bus extends TimestampedEntity {
     @OneToMany(mappedBy = "bus")
     @Builder.Default
     private List<Trip> trips = new ArrayList<>();
-
 }

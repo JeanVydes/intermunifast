@@ -62,6 +62,51 @@ public class TicketController {
         return ResponseEntity.ok(canceledTicket);
     }
 
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'ADMIN')")
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<TicketDTOs.TicketResponse> approve(@PathVariable Long id) {
+        TicketDTOs.TicketResponse approvedTicket = ticketService.approveTicket(id);
+        return ResponseEntity.ok(approvedTicket);
+    }
+
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'ADMIN')")
+    @PostMapping("/{id}/cancel-pending")
+    public ResponseEntity<TicketDTOs.TicketResponse> cancelPending(@PathVariable Long id) {
+        TicketDTOs.TicketResponse canceledTicket = ticketService.cancelPendingTicket(id);
+        return ResponseEntity.ok(canceledTicket);
+    }
+
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'ADMIN')")
+    @GetMapping("/pending-approval")
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> getPendingApproval() {
+        List<TicketDTOs.TicketResponse> tickets = ticketService.getPendingApprovalTickets();
+        return ResponseEntity.ok(tickets);
+    }
+
+    @PostMapping("/payments/{id}")
+    public ResponseEntity<TicketDTOs.TicketResponse> markAsPaid(
+            @PathVariable Long id,
+            @RequestParam(required = false) String paymentIntentId) {
+        TicketDTOs.TicketResponse paidTicket = ticketService.markTicketAsPaid(id, paymentIntentId);
+        return ResponseEntity.ok(paidTicket);
+    }
+
+    @PostMapping("/payments/confirm")
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> markMultipleAsPaid(
+            @RequestBody List<Long> ticketIds,
+            @RequestParam(required = false) String paymentIntentId) {
+        List<TicketDTOs.TicketResponse> paidTickets = ticketService.markMultipleTicketsAsPaid(ticketIds,
+                paymentIntentId);
+        return ResponseEntity.ok(paidTickets);
+    }
+
+    @GetMapping("/my-tickets")
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> getMyTickets(
+            @RequestParam(required = false) String status) {
+        List<TicketDTOs.TicketResponse> tickets = ticketService.getTicketsForCurrentUser(status);
+        return ResponseEntity.ok(tickets);
+    }
+
     @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
@@ -69,7 +114,20 @@ public class TicketController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Get ALL tickets (ADMIN/DISPATCHER/CLERK only)
+     */
+    @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @GetMapping
+    public ResponseEntity<List<TicketDTOs.TicketResponse>> getAll() {
+        List<TicketDTOs.TicketResponse> tickets = ticketService.getAllTickets();
+        return ResponseEntity.ok(tickets);
+    }
+
+    /**
+     * Search tickets by accountId and/or seatNumber
+     */
+    @GetMapping("/search")
     public ResponseEntity<List<TicketDTOs.TicketResponse>> search(
             @RequestParam(required = false) Long accountId,
             @RequestParam(required = false) String seatNumber) {

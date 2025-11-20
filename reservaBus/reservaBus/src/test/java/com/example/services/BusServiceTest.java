@@ -5,7 +5,7 @@ import com.example.domain.entities.Bus;
 import com.example.domain.enums.BusStatus;
 import com.example.domain.repositories.BusRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.BusServiceImpl;
+import com.example.services.implementations.BusServiceImpl;
 import com.example.services.mappers.BusMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -141,5 +141,43 @@ class BusServiceTest {
         assertThatThrownBy(() -> busService.deleteBus(999L))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("Bus 999 not found");
+    }
+
+    @Test
+    @DisplayName("Should get all buses")
+    void shouldGetAllBuses() {
+        // Given
+        when(busRepository.findAll()).thenReturn(java.util.List.of(bus));
+        when(busMapper.toResponse(bus)).thenReturn(busResponse);
+
+        // When
+        var results = busService.getAll();
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).plate()).isEqualTo("ABC123");
+        verify(busRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("Should update bus status to maintenance")
+    void shouldUpdateBusStatusToMaintenance() {
+        // Given
+        BusDTOs.UpdateBusRequest maintenanceRequest = new BusDTOs.UpdateBusRequest(
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of(BusStatus.MAINTENANCE));
+
+        when(busRepository.findById(1L)).thenReturn(Optional.of(bus));
+        when(busRepository.save(bus)).thenReturn(bus);
+        when(busMapper.toResponse(bus)).thenReturn(busResponse);
+
+        // When
+        BusDTOs.BusResponse result = busService.updateBus(1L, maintenanceRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(busRepository).save(bus);
     }
 }

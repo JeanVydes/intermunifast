@@ -25,9 +25,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Incident  extends TimestampedEntity {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -45,5 +43,4 @@ public class Incident  extends TimestampedEntity {
 
     @Column(nullable = false)
     private Long entityId;
-
 }

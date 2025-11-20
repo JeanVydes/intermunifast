@@ -36,6 +36,12 @@ public class BusController {
                 .body(createdBus);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<Iterable<BusDTOs.BusResponse>> getAll() {
+        Iterable<BusDTOs.BusResponse> buses = busService.getAll();
+        return ResponseEntity.ok(buses);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BusDTOs.BusResponse> getById(@PathVariable Long id) {
         BusDTOs.BusResponse bus = busService.getBusById(id);

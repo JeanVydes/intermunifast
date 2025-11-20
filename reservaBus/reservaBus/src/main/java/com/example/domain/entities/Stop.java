@@ -37,7 +37,6 @@ public class Stop extends TimestampedEntity {
     @Column(nullable = false)
     private String name;
 
-    // changed `order` in favor of `sequence`
     @Column(nullable = false)
     private Integer sequence;
 

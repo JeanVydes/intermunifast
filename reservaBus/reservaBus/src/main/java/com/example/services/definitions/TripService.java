@@ -1,6 +1,8 @@
 package com.example.services.definitions;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import com.example.api.dto.AssignmentDTOs;
 import com.example.api.dto.IncidentDTOs;
@@ -25,4 +27,10 @@ public interface TripService {
     List<AssignmentDTOs.AssignmentResponse> getAssignmentsByTripId(Long id);
 
     List<IncidentDTOs.IncidentResponse> getIncidentsByTripId(Long id);
+
+    List<TripDTOs.TripResponse> getTripsByRouteId(Long routeId);
+
+    List<TripDTOs.TripResponse> getAllTrips();
+
+    TripDTOs.TripSearchResponse searchTrips(String origin, String destination, Optional<LocalDateTime> departureDate);
 }

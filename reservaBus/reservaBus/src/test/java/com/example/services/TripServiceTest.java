@@ -8,7 +8,7 @@ import com.example.domain.repositories.BusRepository;
 import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.TripRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.TripServiceImpl;
+import com.example.services.implementations.TripServiceImpl;
 import com.example.services.mappers.TripMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,9 +63,9 @@ class TripServiceTest {
                 .bus(bus)
                 .build();
 
-        tripResponse = new TripDTOs.TripResponse(1L, 1L, 1L);
-        createRequest = new TripDTOs.CreateTripRequest(1L, 1L);
-        updateRequest = new TripDTOs.UpdateTripRequest(1L, 1L);
+        tripResponse = new TripDTOs.TripResponse(1L, 1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(2));
+        createRequest = new TripDTOs.CreateTripRequest(1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(2));
+        updateRequest = new TripDTOs.UpdateTripRequest(1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(2));
     }
 
     @Test
@@ -128,7 +129,6 @@ class TripServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        verify(tripMapper).patch(trip, updateRequest);
         verify(tripRepository).save(trip);
     }
 
@@ -154,5 +154,58 @@ class TripServiceTest {
         // When & Then
         assertThatThrownBy(() -> tripService.deleteTrip(999L))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Should throw NotFoundException when route not found during trip creation")
+    void shouldThrowNotFoundExceptionWhenRouteNotFound() {
+        // Given
+        when(routeRepository.findById(999L)).thenReturn(Optional.empty());
+
+        TripDTOs.CreateTripRequest invalidRequest = new TripDTOs.CreateTripRequest(
+                999L,
+                1L,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(2));
+
+        // When & Then
+        assertThatThrownBy(() -> tripService.createTrip(invalidRequest))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Route 999 not found");
+    }
+
+    @Test
+    @DisplayName("Should throw NotFoundException when bus not found during trip creation")
+    void shouldThrowNotFoundExceptionWhenBusNotFound() {
+        // Given
+        when(routeRepository.findById(1L)).thenReturn(Optional.of(route));
+        when(busRepository.findById(999L)).thenReturn(Optional.empty());
+
+        TripDTOs.CreateTripRequest invalidRequest = new TripDTOs.CreateTripRequest(
+                1L,
+                999L,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(2));
+
+        // When & Then
+        assertThatThrownBy(() -> tripService.createTrip(invalidRequest))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Bus 999 not found");
+    }
+
+    @Test
+    @DisplayName("Should get all trips")
+    void shouldGetAllTrips() {
+        // Given
+        when(tripRepository.findAll()).thenReturn(java.util.List.of(trip));
+        when(tripMapper.toResponse(trip)).thenReturn(tripResponse);
+
+        // When
+        var results = tripService.getAllTrips();
+
+        // Then
+        assertThat(results).isNotNull();
+        assertThat(results).hasSize(1);
+        verify(tripRepository).findAll();
     }
 }

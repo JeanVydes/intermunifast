@@ -7,8 +7,8 @@ public class SeatHoldDTOs {
         public record CreateSeatHoldRequest(
                         String seatNumber,
                         Long tripId,
-                        Long fromStopId,
-                        Long toStopId,
+                        Optional<Long> fromStopId,
+                        Optional<Long> toStopId,
                         LocalDateTime expiresAt) implements java.io.Serializable {
         }
 
@@ -24,8 +24,8 @@ public class SeatHoldDTOs {
                         Long id,
                         String seatNumber,
                         Long tripId,
-                        Long fromStopId,
-                        Long toStopId,
+                        Optional<Long> fromStopId,
+                        Optional<Long> toStopId,
                         LocalDateTime expiresAt,
                         Long createdAt) implements java.io.Serializable {
         }

@@ -1,5 +1,7 @@
 package com.example.api.controllers;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,6 +34,12 @@ public class AccountController {
         return ResponseEntity.created(
                 uriBuilder.path("/api/accounts/{id}").buildAndExpand(createdAccount.id()).toUri())
                 .body(createdAccount);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<AccountDTOs.AccountResponse>> getAll() {
+        List<AccountDTOs.AccountResponse> accounts = accountService.getAllAccounts();
+        return ResponseEntity.ok(accounts);
     }
 
     @GetMapping("/{id}")

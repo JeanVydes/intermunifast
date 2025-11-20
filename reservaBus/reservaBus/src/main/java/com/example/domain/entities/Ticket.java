@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.domain.common.TimestampedEntity;
+import com.example.domain.enums.FareRulePassengerType;
 import com.example.domain.enums.PaymentMethod;
+import com.example.domain.enums.PaymentStatus;
 import com.example.domain.enums.TicketStatus;
 
 import jakarta.persistence.Column;
@@ -53,11 +55,19 @@ public class Ticket extends TimestampedEntity {
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus;
+
     @Column(nullable = true)
     private String paymentIntentId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String qrCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FareRulePassengerType passengerType;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "trip_id", nullable = false)
@@ -67,12 +77,14 @@ public class Ticket extends TimestampedEntity {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "from_stop_id", nullable = false)
+    // if there is not fromStop, mean the passenger boards at the route origin
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "from_stop_id", nullable = true)
     private Stop fromStop;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "to_stop_id", nullable = false)
+    // if there is not toStop, mean the passenger alights at the route destination
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "to_stop_id", nullable = true)
     private Stop toStop;
 
     @OneToMany(mappedBy = "ticket")
