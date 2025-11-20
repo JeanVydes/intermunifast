@@ -32,7 +32,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Account extends TimestampedEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

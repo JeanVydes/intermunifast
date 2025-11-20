@@ -24,9 +24,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class SeatHold extends TimestampedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -45,11 +43,13 @@ public class SeatHold extends TimestampedEntity {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "from_stop_id", nullable = false)
+    // If there is no fromStop, means the passenger boards at the route origin
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "from_stop_id", nullable = true)
     private Stop fromStop;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "to_stop_id", nullable = false)
+    // If there is no toStop, means the passenger alights at the route destination
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "to_stop_id", nullable = true)
     private Stop toStop;
 }

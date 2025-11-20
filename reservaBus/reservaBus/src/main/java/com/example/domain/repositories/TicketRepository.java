@@ -11,9 +11,13 @@ import com.example.domain.enums.TicketStatus;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
+    List<Ticket> findByStatus(TicketStatus status);
+
     List<Ticket> findByTrip_IdAndStatus(Long tripId, TicketStatus status);
 
     List<Ticket> findByAccount_Id(Long accountId);
+
+    List<Ticket> findByAccount_IdAndStatus(Long accountId, TicketStatus status);
 
     List<Ticket> findBySeatNumber(String seatNumber);
 
@@ -21,43 +25,34 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     Ticket findByQrCode(String qrCode);
 
-    List<Ticket> findByStatusIn(List<TicketStatus> statuses);
-
-    List<Ticket> findByFromStop_IdAndToStop_IdAndStatus(Long fromStopId, Long toStopId, TicketStatus status);
-
-    @Query("SELECT DISTINCT t.paymentMethod FROM Ticket t WHERE t.trip.id = :tripId")
-    List<String> findPaymentMethodsUsedInTrip(@Param("tripId") Long tripId);
-
     @Query("SELECT t FROM Ticket t WHERE t.seatNumber IN :seatNumbers AND t.trip.id = :tripId")
     List<Ticket> findTicketsByListOfSeatNumbersFilteredByTripId(List<String> seatNumbers, Long tripId);
 
     Ticket findByTrip_IdAndSeatNumber(Long tripId, String seatNumber);
 
-    @Query("SELECT t FROM Ticket t WHERE t.trip.id = :tripId AND t.seatNumber = :seatNumber AND t.fromStop.id = :fromStopId AND t.toStop.id = :toStopId")
-    Ticket findByTripIdAndSeatNumberAndFromStopIdAndToStopId(Long tripId, String seatNumber, Long fromStopId,
-            Long toStopId);
-
-    /**
-     * Encuentra tickets vendidos (SOLD) que solapen con el tramo especificado.
-     * Solapamiento ocurre cuando:
-     * - El nuevo tramo empieza dentro de un tramo existente, O
-     * - El nuevo tramo termina dentro de un tramo existente, O
-     * - El nuevo tramo contiene completamente a un tramo existente
-     */
     @Query("""
-                SELECT t FROM Ticket t
-                WHERE t.trip.id = :tripId
-                AND t.seatNumber = :seatNumber
-                AND t.status = 'SOLD'
-                AND (
-                    (t.fromStop.sequence <= :newFromSeq AND t.toStop.sequence > :newFromSeq)
-                    OR (t.fromStop.sequence < :newToSeq AND t.toStop.sequence >= :newToSeq)
-                    OR (t.fromStop.sequence >= :newFromSeq AND t.toStop.sequence <= :newToSeq)
-                )
+            SELECT t FROM Ticket t
+            WHERE t.trip.id = :tripId
+            AND t.seatNumber = :seatNumber
+            AND t.status = 'CONFIRMED'
+            AND (
+                (COALESCE(t.fromStop.sequence, -2147483648) <= :newFromSeq AND COALESCE(t.toStop.sequence, 2147483647) > :newFromSeq)
+                OR (COALESCE(t.fromStop.sequence, -2147483648) < :newToSeq AND COALESCE(t.toStop.sequence, 2147483647) >= :newToSeq)
+                OR (COALESCE(t.fromStop.sequence, -2147483648) >= :newFromSeq AND COALESCE(t.toStop.sequence, 2147483647) <= :newToSeq)
+            )
             """)
     List<Ticket> findOverlappingSoldTickets(
             @Param("tripId") Long tripId,
             @Param("seatNumber") String seatNumber,
             @Param("newFromSeq") Integer newFromSequence,
             @Param("newToSeq") Integer newToSequence);
+
+    @Query("SELECT COALESCE(SUM(t.price), 0.0) FROM Ticket t WHERE t.status = ?1 AND t.createdAt >= ?2 AND t.createdAt <= ?3")
+    Double getTotalRevenue(TicketStatus status, Long startDate, Long endDate);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = ?1 AND t.createdAt >= ?2 AND t.createdAt <= ?3")
+    Long countConfirmedTickets(TicketStatus status, Long startDate, Long endDate);
+
+    @Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = ?1 AND t.updatedAt >= ?2 AND t.updatedAt <= ?3")
+    Long countCancelledTickets(TicketStatus status, Long startDate, Long endDate);
 }

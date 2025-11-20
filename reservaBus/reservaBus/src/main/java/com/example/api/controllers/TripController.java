@@ -1,6 +1,8 @@
 package com.example.api.controllers;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,9 +50,52 @@ public class TripController {
     public ResponseEntity<TripDTOs.TripResponse> getById(@PathVariable Long id,
             @RequestParam(required = false) String routeId, @RequestParam(required = false) String status) {
 
-
         TripDTOs.TripResponse trip = tripService.getTripById(id);
         return ResponseEntity.ok(trip);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<TripDTOs.TripResponse>> getAll() {
+        List<TripDTOs.TripResponse> trips = tripService.getAllTrips();
+        return ResponseEntity.ok(trips);
+    }
+
+    @GetMapping("/byRoute/{routeId}")
+    public ResponseEntity<List<TripDTOs.TripResponse>> getByRouteId(@PathVariable Long routeId,
+            @RequestParam(required = false) String status) {
+        List<TripDTOs.TripResponse> trips = tripService.getTripsByRouteId(routeId);
+        return ResponseEntity.ok(trips);
+    }
+
+    
+    @GetMapping("/search")
+    public ResponseEntity<TripDTOs.TripSearchResponse> search(
+            @RequestParam String origin,
+            @RequestParam String destination,
+            // optional
+            @RequestParam(required = false) String departureDate) {
+
+        // Validate required parameters
+        if (origin == null || origin.isBlank()) {
+            throw new IllegalArgumentException("Origin parameter is required");
+        }
+        if (destination == null || destination.isBlank()) {
+            throw new IllegalArgumentException("Destination parameter is required");
+        }
+
+        // Parse departureDate only if provided and not empty
+        Optional<LocalDateTime> departureTime = Optional.empty();
+        if (departureDate != null && !departureDate.isBlank()) {
+            try {
+                departureTime = Optional.of(LocalDateTime.parse(departureDate));
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        "Invalid departureDate format. Expected ISO-8601 datetime (e.g., 2025-11-14T10:00:00)");
+            }
+        }
+
+        TripDTOs.TripSearchResponse searchResponse = tripService.searchTrips(origin, destination, departureTime);
+        return ResponseEntity.ok(searchResponse);
     }
 
     @PreAuthorize("hasAnyAuthority('CLERK', 'ADMIN')")

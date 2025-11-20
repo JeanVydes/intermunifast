@@ -16,7 +16,5 @@ public interface RouteService {
 
     List<StopDTOs.StopResponse> getStopsByRouteId(Long id);
 
-    List<RouteDTOs.RouteResponse> findByOrigin(String origin);
-    List<RouteDTOs.RouteResponse> findByDestination(String destination);
-    List<RouteDTOs.RouteResponse> findByOriginAndDestination(String origin, String destination);
+    List<RouteDTOs.RouteResponse> getAllRoutes();
 }

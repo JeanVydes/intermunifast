@@ -1,6 +1,5 @@
 package com.example.domain.entities;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +37,6 @@ public class Trip extends TimestampedEntity {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDate date;
-
-    @Column(nullable = false)
     private LocalDateTime departureAt;
 
     @Column(nullable = false)
@@ -68,6 +64,10 @@ public class Trip extends TimestampedEntity {
     @OneToMany(mappedBy = "trip")
     @Builder.Default
     private List<Assignment> assignments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trip")
+    @Builder.Default
+    private List<Parcel> parcels = new ArrayList<>();
 
     @Transient
     private List<Incident> incidents;

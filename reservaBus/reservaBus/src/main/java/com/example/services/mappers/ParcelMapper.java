@@ -3,15 +3,8 @@ package com.example.services.mappers;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
 import com.example.api.dto.ParcelDTOs;
 import com.example.domain.entities.Parcel;
-
-
-
-
-
-
 
 @Mapper(componentModel = "spring")
 public interface ParcelMapper {

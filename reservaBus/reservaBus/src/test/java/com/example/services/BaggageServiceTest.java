@@ -6,7 +6,8 @@ import com.example.domain.entities.Ticket;
 import com.example.domain.repositories.BaggageRepository;
 import com.example.domain.repositories.TicketRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.BaggageServiceImpl;
+import com.example.services.extra.ConfigCacheService;
+import com.example.services.implementations.BaggageServiceImpl;
 import com.example.services.mappers.BaggageMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +37,9 @@ class BaggageServiceTest {
 
     @Mock
     private TicketRepository ticketRepository;
+
+    @Mock
+    private ConfigCacheService configCache;
 
     @InjectMocks
     private BaggageServiceImpl baggageService;
@@ -68,6 +72,8 @@ class BaggageServiceTest {
     void shouldCreateBaggage() {
         // Given
         when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+        when(configCache.getMaxBaggageWeightKg()).thenReturn(25.0);
+        when(configCache.getBaggageFeePercentage()).thenReturn(0.03);
         when(baggageRepository.save(any(Baggage.class))).thenReturn(baggage);
         when(baggageMapper.toResponse(baggage)).thenReturn(baggageResponse);
 
@@ -113,7 +119,7 @@ class BaggageServiceTest {
     void shouldUpdateBaggage() {
         // Given
         when(baggageRepository.findById(1L)).thenReturn(Optional.of(baggage));
-        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.existsById(1L)).thenReturn(true);
         when(baggageRepository.save(baggage)).thenReturn(baggage);
         when(baggageMapper.toResponse(baggage)).thenReturn(baggageResponse);
 

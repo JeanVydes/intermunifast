@@ -12,9 +12,24 @@ public interface TicketService {
     TicketDTOs.TicketResponse getTicketById(Long id);
 
     TicketDTOs.TicketResponse updateTicket(Long id, TicketDTOs.UpdateTicketRequest req);
+
     TicketDTOs.TicketResponse cancelTicket(Long id);
 
+    TicketDTOs.TicketResponse approveTicket(Long id);
+
+    TicketDTOs.TicketResponse cancelPendingTicket(Long id);
+
+    List<TicketDTOs.TicketResponse> getPendingApprovalTickets();
+
+    TicketDTOs.TicketResponse markTicketAsPaid(Long id, String paymentIntentId);
+
+    List<TicketDTOs.TicketResponse> markMultipleTicketsAsPaid(List<Long> ticketIds, String paymentIntentId);
+
+    List<TicketDTOs.TicketResponse> getTicketsForCurrentUser(String status);
+
     void deleteTicket(Long id);
+
+    List<TicketDTOs.TicketResponse> getAllTickets();
 
     List<TicketDTOs.TicketResponse> searchTickets(Long accountId, String seatNumber);
 

@@ -26,9 +26,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Route extends TimestampedEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

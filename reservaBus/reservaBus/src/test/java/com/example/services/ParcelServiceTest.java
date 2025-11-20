@@ -7,7 +7,7 @@ import com.example.domain.enums.ParcelStatus;
 import com.example.domain.repositories.ParcelRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.ParcelServiceImpl;
+import com.example.services.implementations.ParcelServiceImpl;
 import com.example.services.mappers.ParcelMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -124,8 +124,8 @@ class ParcelServiceTest {
     void shouldUpdateParcel() {
         // Given
         when(parcelRepository.findById(1L)).thenReturn(Optional.of(parcel));
-        when(stopRepository.findById(1L)).thenReturn(Optional.of(fromStop));
-        when(stopRepository.findById(2L)).thenReturn(Optional.of(toStop));
+        when(stopRepository.existsById(1L)).thenReturn(true);
+        when(stopRepository.existsById(2L)).thenReturn(true);
         when(parcelRepository.save(parcel)).thenReturn(parcel);
         when(parcelMapper.toResponse(parcel)).thenReturn(parcelResponse);
 

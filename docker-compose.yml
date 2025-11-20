@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: intermunifast-db
+    environment:
+      POSTGRES_DB: reservabus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intermunifast-network
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./reservaBus/reservaBus
+      dockerfile: Dockerfile
+    container_name: intermunifast-backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: reservabus
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET_KEY: intermunifast-secret-key-2025-ultra-secure-jwt-token-signature
+      JWT_EXPIRATION_MS: 86400000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/api/config || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
+    networks:
+      - intermunifast-network
+
+  # Frontend (Preact + Vite)
+  frontend:
+    build:
+      context: ./intermunifast-web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8080
+        - VITE_PRODUCTION=false
+    container_name: intermunifast-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - VITE_PRODUCTION=false
+    depends_on:
+      - backend
+    networks:
+      - intermunifast-network
+
+  # Database Seeder (runs after backend is healthy)
+  seeder:
+    image: alpine:latest
+    container_name: intermunifast-seeder
+    volumes:
+      - ./seed.sh:/seed.sh:ro
+    environment:
+      API_BASE_URL: http://backend:8080/api
+    entrypoint: [ "/bin/sh", "-c", "apk add --no-cache bash curl && /bin/bash /seed.sh" ]
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - intermunifast-network
+
+networks:
+  intermunifast-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -40,6 +40,12 @@ public class SeatController {
         return ResponseEntity.ok(seat);
     }
 
+    @GetMapping("/bus/{busId}")
+    public ResponseEntity<Iterable<SeatDTOs.SeatResponse>> getByBusId(@PathVariable Long busId) {
+        Iterable<SeatDTOs.SeatResponse> seats = seatService.getSeatsByBusId(busId);
+        return ResponseEntity.ok(seats);
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<SeatDTOs.SeatResponse> update(
             @PathVariable Long id,

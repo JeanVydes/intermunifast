@@ -7,7 +7,7 @@ import com.example.domain.entities.Stop;
 import com.example.domain.repositories.RouteRepository;
 import com.example.domain.repositories.StopRepository;
 import com.example.exceptions.NotFoundException;
-import com.example.services.definitions.RouteServiceImpl;
+import com.example.services.implementations.RouteServiceImpl;
 import com.example.services.mappers.RouteMapper;
 import com.example.services.mappers.StopMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -147,55 +147,6 @@ class RouteServiceTest {
 
         // Then
         verify(routeRepository).delete(route);
-    }
-
-    @Test
-    @DisplayName("Should find routes by origin")
-    void shouldFindRoutesByOrigin() {
-        // Given
-        List<Route> routes = Arrays.asList(route);
-        when(routeRepository.findByOrigin("Lima")).thenReturn(routes);
-        when(routeMapper.toResponse(route)).thenReturn(routeResponse);
-
-        // When
-        List<RouteDTOs.RouteResponse> result = routeService.findByOrigin("Lima");
-
-        // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).origin()).isEqualTo("Lima");
-    }
-
-    @Test
-    @DisplayName("Should find routes by destination")
-    void shouldFindRoutesByDestination() {
-        // Given
-        List<Route> routes = Arrays.asList(route);
-        when(routeRepository.findByDestination("Cusco")).thenReturn(routes);
-        when(routeMapper.toResponse(route)).thenReturn(routeResponse);
-
-        // When
-        List<RouteDTOs.RouteResponse> result = routeService.findByDestination("Cusco");
-
-        // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).destination()).isEqualTo("Cusco");
-    }
-
-    @Test
-    @DisplayName("Should find routes by origin and destination")
-    void shouldFindRoutesByOriginAndDestination() {
-        // Given
-        List<Route> routes = Arrays.asList(route);
-        when(routeRepository.findByOriginAndDestination("Lima", "Cusco")).thenReturn(routes);
-        when(routeMapper.toResponse(route)).thenReturn(routeResponse);
-
-        // When
-        List<RouteDTOs.RouteResponse> result = routeService.findByOriginAndDestination("Lima", "Cusco");
-
-        // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).origin()).isEqualTo("Lima");
-        assertThat(result.get(0).destination()).isEqualTo("Cusco");
     }
 
     @Test

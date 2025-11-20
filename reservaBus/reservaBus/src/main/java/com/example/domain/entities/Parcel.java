@@ -29,9 +29,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
-public class Parcel  extends TimestampedEntity {
-    
+public class Parcel extends TimestampedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -60,7 +58,7 @@ public class Parcel  extends TimestampedEntity {
 
     @Column(nullable = false)
     private String proofPhotoUrl;
-    
+
     @Column(nullable = false)
     private String deliveryOtp;
 
@@ -71,13 +69,12 @@ public class Parcel  extends TimestampedEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "to_stop_id", nullable = false)
     private Stop toStop;
-    
+
+    @ManyToOne
+    @JoinColumn(name = "trip_id")
+    private Trip trip;
+
     @Transient
     private List<Incident> incidents;
-    
-
-    
-
-
 
 }
