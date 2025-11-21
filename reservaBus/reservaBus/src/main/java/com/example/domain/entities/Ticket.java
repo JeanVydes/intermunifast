@@ -1,5 +1,6 @@
 package com.example.domain.entities;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,12 @@ public class Ticket extends TimestampedEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketStatus status;
+
+    @Column(nullable = false)
+    private boolean checkedIn;
+
+    @Column(nullable = true)
+    private LocalDateTime checkedInAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

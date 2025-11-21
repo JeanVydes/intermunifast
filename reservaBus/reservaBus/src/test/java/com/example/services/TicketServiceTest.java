@@ -140,7 +140,9 @@ class TicketServiceTest {
                                 "CONFIRMED", // status
                                 "COMPLETED", // paymentStatus
                                 50.0, // price
-                                "QR123" // qrCode
+                                "QR123", // qrCode
+                                false, // checkedIn
+                                null // checkedInAt
                 );
 
                 createRequest = new TicketDTOs.CreateTicketRequest(

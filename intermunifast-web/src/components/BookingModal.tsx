@@ -40,6 +40,7 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
     const [selectedSeat, setSelectedSeat] = useState<string | null>(null);
     const [seats, setSeats] = useState<SeatResponse[]>([]);
     const [occupiedTickets, setOccupiedTickets] = useState<TicketResponse[]>([]);
+    const [activeSeatHolds, setActiveSeatHolds] = useState<import('../api/types/Booking').SeatHoldResponse[]>([]);
     const [fromStop, setFromStop] = useState<number | null>(null);
     const [toStop, setToStop] = useState<number | null>(null);
     const [baggage, setBaggage] = useState<BaggageInfo | null>(null);
@@ -53,7 +54,38 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
     useEffect(() => {
         loadSeats();
         loadOccupiedTickets();
+        loadActiveSeatHolds();
     }, []);
+    // Reload active seat holds when stops change (to update available seats)
+    useEffect(() => {
+        if (step === 'seat') {
+            loadActiveSeatHolds();
+        }
+    }, [fromStop, toStop, step]);
+    // Load active seat holds for this trip
+    const loadActiveSeatHolds = async () => {
+        try {
+            // Only fetch holds that are not expired and match the selected segment
+            const response = await SeatHoldAPI.getByTripId(undefined, {
+                queryParams: { tripId: trip.id.toString() }
+            });
+            setActiveSeatHolds(response.data.filter((hold) => {
+                // Only include holds that have not expired
+                const now = Date.now();
+                const expiresAt = new Date(hold.expiresAt).getTime();
+                if (expiresAt < now) return false;
+
+                // Check if the hold overlaps with the selected segment
+                const fromSeq = fromStop ? stops.find(s => s.id === fromStop)?.sequence : -2147483648;
+                const toSeq = toStop ? stops.find(s => s.id === toStop)?.sequence : 2147483647;
+                const holdFromSeq = hold.fromStopId ? stops.find(s => s.id === hold.fromStopId)?.sequence ?? -2147483648 : -2147483648;
+                const holdToSeq = hold.toStopId ? stops.find(s => s.id === hold.toStopId)?.sequence ?? 2147483647 : 2147483647;
+                return fromSeq < holdToSeq && toSeq > holdFromSeq;
+            }));
+        } catch (error) {
+            console.error('Error loading active seat holds:', error);
+        }
+    };
 
     // Debug stops data
     useEffect(() => {
@@ -224,10 +256,17 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
             }
 
             // Delete seat hold after successful ticket creation
-            if (seatHoldId) {
-                await SeatHoldAPI.delete(undefined, {
-                    pathParams: { id: seatHoldId.toString() }
-                });
+            if (seatHoldId !== null && seatHoldId !== undefined) {
+                try {
+                    console.log('Deleting seat hold:', seatHoldId);
+                    await SeatHoldAPI.delete(undefined, {
+                        pathParams: { id: seatHoldId.toString() }
+                    });
+                } catch (err) {
+                    console.error('Error deleting seat hold:', err);
+                }
+            } else {
+                console.warn('No seatHoldId to delete');
             }
 
             // Pass ticket data to cart (including ticketId for later payment)
@@ -390,26 +429,35 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
 
     const renderSeatStep = () => {
         // Helper function to check if a seat is occupied for the selected route segment
-        const isSeatOccupied = (seatNumber: string): TicketResponse | undefined => {
+        // Returns either a TicketResponse (sold) or a SeatHoldResponse (held)
+        const isSeatOccupied = (seatNumber: string): TicketResponse | import('../api/types/Booking').SeatHoldResponse | undefined => {
             // Get sequence values for the selected segment
             const fromSeq = fromStop ? stops.find(s => s.id === fromStop)?.sequence : -2147483648;
             const toSeq = toStop ? stops.find(s => s.id === toStop)?.sequence : 2147483647;
 
             // Check if any ticket overlaps with our selected segment
-            return occupiedTickets.find(ticket => {
+            const ticket = occupiedTickets.find(ticket => {
                 if (ticket.seatNumber !== seatNumber) return false;
-
-                // Get ticket's from/to sequence
                 const ticketFromSeq = ticket.fromStopId
                     ? stops.find(s => s.id === ticket.fromStopId)?.sequence ?? -2147483648
                     : -2147483648;
                 const ticketToSeq = ticket.toStopId
                     ? stops.find(s => s.id === ticket.toStopId)?.sequence ?? 2147483647
                     : 2147483647;
-
-                // Check overlap: segment overlaps if it starts before ticket ends AND ends after ticket starts
                 return fromSeq < ticketToSeq && toSeq > ticketFromSeq;
             });
+            if (ticket) return ticket;
+
+            // Check if any active seat hold overlaps with our selected segment
+            const hold = activeSeatHolds.find(hold => {
+                if (hold.seatNumber !== seatNumber) return false;
+                const holdFromSeq = hold.fromStopId ? stops.find(s => s.id === hold.fromStopId)?.sequence ?? -2147483648 : -2147483648;
+                const holdToSeq = hold.toStopId ? stops.find(s => s.id === hold.toStopId)?.sequence ?? 2147483647 : 2147483647;
+                return fromSeq < holdToSeq && toSeq > holdFromSeq;
+            });
+            if (hold) return hold;
+
+            return undefined;
         };
 
         return (
@@ -438,8 +486,8 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                         {seats.map((seat) => {
                             const isSelected = selectedSeat === seat.number;
                             const isPreferential = seat.type === 'PREFERENTIAL';
-                            const occupiedTicket = isSeatOccupied(seat.number);
-                            const isOccupied = !!occupiedTicket;
+                            const occupied = isSeatOccupied(seat.number);
+                            const isOccupied = !!occupied;
 
                             return (
                                 <div key={seat.id} className="relative group">
@@ -447,61 +495,77 @@ export const BookingModal: FunctionComponent<BookingModalProps> = ({
                                         onClick={() => !isOccupied && handleSelectSeat(seat.number)}
                                         disabled={isOccupied}
                                         className={`w-full h-12 rounded-lg font-semibold text-sm transition-all ${isOccupied
-                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                                : isSelected
-                                                    ? 'bg-blue-500 text-white scale-105 shadow-lg'
-                                                    : isPreferential
-                                                        ? 'bg-amber-500 text-white hover:bg-amber-600'
-                                                        : 'bg-green-500 text-white hover:bg-green-600'
+                                            ? (occupied && 'expiresAt' in occupied ? 'bg-yellow-400 text-gray-900 cursor-not-allowed' : 'bg-gray-600 text-gray-400 cursor-not-allowed')
+                                            : isSelected
+                                                ? 'bg-blue-500 text-white scale-105 shadow-lg'
+                                                : isPreferential
+                                                    ? 'bg-amber-500 text-white hover:bg-amber-600'
+                                                    : 'bg-green-500 text-white hover:bg-green-600'
                                             }`}
                                     >
                                         {seat.number}
                                     </button>
 
-                                    {/* Tooltip for occupied seats */}
-                                    {isOccupied && occupiedTicket && (
+                                    {/* Tooltip for occupied/held seats */}
+                                    {isOccupied && occupied && (
                                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                                            <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl min-w-[200px]">
-                                                <p className="text-xs font-bold text-red-400 mb-2">OCUPADO</p>
+                                            <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl min-w-[220px]">
+                                                <p className={`text-xs font-bold mb-2 ${'expiresAt' in occupied ? 'text-yellow-500' : 'text-red-400'}`}>{'expiresAt' in occupied ? 'RESERVADO (Hold)' : 'OCUPADO'}</p>
                                                 <div className="space-y-1 text-xs">
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-400">Asiento:</span>
-                                                        <span className="text-white font-semibold">{occupiedTicket.seatNumber}</span>
+                                                        <span className="text-white font-semibold">{occupied.seatNumber}</span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-400">De:</span>
                                                         <span className="text-white">
-                                                            {occupiedTicket.fromStopId
-                                                                ? stops.find(s => s.id === occupiedTicket.fromStopId)?.name
+                                                            {'fromStopId' in occupied && occupied.fromStopId
+                                                                ? stops.find(s => s.id === occupied.fromStopId)?.name
                                                                 : route.origin}
                                                         </span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span className="text-gray-400">A:</span>
                                                         <span className="text-white">
-                                                            {occupiedTicket.toStopId
-                                                                ? stops.find(s => s.id === occupiedTicket.toStopId)?.name
+                                                            {'toStopId' in occupied && occupied.toStopId
+                                                                ? stops.find(s => s.id === occupied.toStopId)?.name
                                                                 : route.destination}
                                                         </span>
                                                     </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Tipo:</span>
-                                                        <span className="text-white">
-                                                            {occupiedTicket.passengerType === 'ADULT' && 'Adulto'}
-                                                            {occupiedTicket.passengerType === 'CHILD' && 'Niño'}
-                                                            {occupiedTicket.passengerType === 'SENIOR' && 'Anciano'}
-                                                            {occupiedTicket.passengerType === 'STUDENT' && 'Estudiante'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Estado:</span>
-                                                        <span className="text-yellow-400">
-                                                            {occupiedTicket.status === 'CONFIRMED' && 'Confirmado (Pagado)'}
-                                                            {occupiedTicket.status === 'PENDING_APPROVAL' && 'Pendiente Aprobación'}
-                                                            {occupiedTicket.status === 'CANCELLED' && 'Cancelado'}
-                                                            {occupiedTicket.status === 'NO_SHOW' && 'No se presentó'}
-                                                        </span>
-                                                    </div>
+                                                    {'expiresAt' in occupied ? (
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-400">Expira en:</span>
+                                                            <span className="text-yellow-400 font-semibold">{(() => {
+                                                                const now = Date.now();
+                                                                const expires = new Date(occupied.expiresAt).getTime();
+                                                                const seconds = Math.max(0, Math.floor((expires - now) / 1000));
+                                                                const mins = Math.floor(seconds / 60);
+                                                                const secs = seconds % 60;
+                                                                return `${mins}:${secs.toString().padStart(2, '0')}`;
+                                                            })()}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-gray-400">Tipo:</span>
+                                                                <span className="text-white">
+                                                                    {occupied.passengerType === 'ADULT' && 'Adulto'}
+                                                                    {occupied.passengerType === 'CHILD' && 'Niño'}
+                                                                    {occupied.passengerType === 'SENIOR' && 'Anciano'}
+                                                                    {occupied.passengerType === 'STUDENT' && 'Estudiante'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-gray-400">Estado:</span>
+                                                                <span className="text-yellow-400">
+                                                                    {occupied.status === 'CONFIRMED' && 'Confirmado (Pagado)'}
+                                                                    {occupied.status === 'PENDING_APPROVAL' && 'Pendiente Aprobación'}
+                                                                    {occupied.status === 'CANCELLED' && 'Cancelado'}
+                                                                    {occupied.status === 'NO_SHOW' && 'No se presentó'}
+                                                                </span>
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
                                                 {/* Arrow */}
                                                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">

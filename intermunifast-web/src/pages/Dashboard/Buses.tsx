@@ -19,6 +19,22 @@ const getStatusColor = (status: string) => {
 };
 
 export const BusesPage: FunctionComponent = () => {
+    const handleDeleteBus = async (busId: number) => {
+        if (!confirm('¿Seguro que deseas eliminar este bus?')) return;
+        try {
+            await BusAPI.delete(undefined, {
+                pathParams: { id: busId }
+            });
+            setBuses(buses.filter(b => b.id !== busId));
+        } catch (error: any) {
+            let message = '🚌 No se pudo eliminar el bus.';
+            if (error?.status === 500 && error?.data?.message?.includes('TransientObjectException')) {
+                message = '🚌 Este bus tiene viajes, asientos o asignaciones asociadas.\n\nElimina primero los elementos dependientes para poder borrarlo.';
+            }
+            window.alert(message);
+            console.error('Failed to delete bus:', error);
+        }
+    };
     const [buses, setBuses] = useState<BusResponse[]>([]);
     const [filteredBuses, setFilteredBuses] = useState<BusResponse[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -181,7 +197,10 @@ export const BusesPage: FunctionComponent = () => {
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
-                                        <button className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                                        <button
+                                            onClick={() => handleDeleteBus(bus.id)}
+                                            className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                        >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>

@@ -58,6 +58,8 @@ export interface TicketResponse {
     paymentStatus: PaymentStatus;  // Payment status (PENDING, COMPLETED, FAILED)
     price: number;                 // Ticket price
     qrCode?: string;               // QR code for validation
+    checkedIn?: boolean;           // Whether ticket has been checked in
+    checkedInAt?: string;          // ISO 8601 datetime when ticket was checked in
 }
 
 export interface CreateTicketRequest {
@@ -68,6 +70,10 @@ export interface CreateTicketRequest {
     paymentMethod: PaymentMethod;
     paymentIntentId?: string; // stripe payment intent id
     passengerType: PassengerType;
+}
+
+export interface CheckInRequest {
+    qrCode: string;
 }
 
 export interface UpdateTicketRequest {

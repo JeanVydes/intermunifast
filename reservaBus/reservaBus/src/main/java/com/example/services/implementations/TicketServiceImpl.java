@@ -119,6 +119,7 @@ public class TicketServiceImpl implements TicketService {
                 .price(price)
                 .status(status)
                 .paymentStatus(PaymentStatus.PENDING)
+                .checkedIn(false)
                 .passengerType(req.passengerType())
                 .build();
 
@@ -136,6 +137,13 @@ public class TicketServiceImpl implements TicketService {
     public void deleteTicket(Long id) {
         var ticket = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException(TICKET_NOT_FOUND.formatted(id)));
+
+        // Delete associated baggage first to avoid foreign key constraint violation
+        var baggages = baggageRepo.findByTicket_Id(id);
+        if (!baggages.isEmpty()) {
+            baggageRepo.deleteAll(baggages);
+        }
+
         repo.delete(ticket);
     }
 
@@ -406,6 +414,42 @@ public class TicketServiceImpl implements TicketService {
         return repo.findByStatus(TicketStatus.PENDING_APPROVAL).stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public TicketDTOs.TicketResponse checkInTicket(String qrCode) {
+        var ticket = repo.findByQrCode(qrCode);
+        if (ticket == null) {
+            throw new NotFoundException("Ticket with QR code not found");
+        }
+
+        if (ticket.getStatus() == TicketStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot check in a cancelled ticket");
+        }
+
+        if (ticket.getStatus() == TicketStatus.NO_SHOW) {
+            throw new IllegalStateException("Cannot check in a NO_SHOW ticket");
+        }
+
+        if (ticket.getPaymentStatus() != PaymentStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot check in an unpaid ticket");
+        }
+
+        if (ticket.isCheckedIn()) {
+            throw new IllegalStateException("Ticket is already checked in");
+        }
+
+        var trip = ticket.getTrip();
+        var now = LocalDateTime.now();
+
+        // Cannot check in after trip has departed
+        if (trip.getDepartureAt().isBefore(now)) {
+            throw new IllegalStateException("Cannot check in after trip has departed");
+        }
+
+        ticket.setCheckedIn(true);
+        ticket.setCheckedInAt(now);
+        return mapper.toResponse(repo.save(ticket));
     }
 
 }

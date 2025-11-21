@@ -72,7 +72,12 @@ export const RoutesPage: FunctionComponent = () => {
                 pathParams: { id: routeId }
             });
             removeRoute(routeId);
-        } catch (error) {
+        } catch (error: any) {
+            let message = 'No se pudo eliminar la ruta.';
+            if (error?.status === 500 && error?.data?.message?.includes('TransientObjectException')) {
+                message = 'No se puede eliminar la ruta porque tiene viajes, paradas o reglas de tarifa asociadas. Elimine primero los elementos dependientes.';
+            }
+            alert(message);
             console.error('Failed to delete route:', error);
         }
     };

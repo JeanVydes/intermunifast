@@ -1,5 +1,7 @@
 package com.example.api.controllers;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -51,5 +54,12 @@ public class SeatHoldController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         seatHoldService.deleteSeatHold(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<SeatHoldDTOs.SeatHoldResponse>> getByTripId(
+            @RequestParam Long tripId) {
+        List<SeatHoldDTOs.SeatHoldResponse> holds = seatHoldService.getActiveSeatHoldsByTripId(tripId);
+        return ResponseEntity.ok(holds);
     }
 }

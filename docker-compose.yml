@@ -68,21 +68,6 @@ services:
     networks:
       - intermunifast-network
 
-  # Database Seeder (runs after backend is healthy)
-  seeder:
-    image: alpine:latest
-    container_name: intermunifast-seeder
-    volumes:
-      - ./seed.sh:/seed.sh:ro
-    environment:
-      API_BASE_URL: http://backend:8080/api
-    entrypoint: [ "/bin/sh", "-c", "apk add --no-cache bash curl && /bin/bash /seed.sh" ]
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - intermunifast-network
-
 networks:
   intermunifast-network:
     driver: bridge

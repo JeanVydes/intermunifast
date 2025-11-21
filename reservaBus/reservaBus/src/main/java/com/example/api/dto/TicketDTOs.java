@@ -17,6 +17,10 @@ public class TicketDTOs {
                         FareRulePassengerType passengerType) implements java.io.Serializable {
         }
 
+        public record CheckInRequest(
+                        String qrCode) implements java.io.Serializable {
+        }
+
         public record UpdateTicketRequest(
                         String seatNumber,
                         Long tripId,
@@ -37,7 +41,9 @@ public class TicketDTOs {
                         String status, // CONFIRMED, PENDING_APPROVAL, CANCELLED, NO_SHOW
                         String paymentStatus, // PENDING, COMPLETED, FAILED
                         Double price, // ticket price
-                        String qrCode // QR code for validation
+                        String qrCode, // QR code for validation
+                        Boolean checkedIn, // whether ticket has been checked in
+                        String checkedInAt // ISO 8601 datetime when ticket was checked in
         ) implements java.io.Serializable {
         }
 }

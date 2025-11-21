@@ -30,6 +30,35 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     Ticket findByTrip_IdAndSeatNumber(Long tripId, String seatNumber);
 
+    // explain this query
+    /*
+     * This query retrieves a list of Ticket entities that meet the following
+     * criteria:
+     * 1. The ticket is associated with a specific trip, identified by the tripId
+     * parameter.
+     * 2. The ticket has a specific seat number, identified by the seatNumber
+     * parameter.
+     * 3. The ticket's status is 'CONFIRMED'.
+     * 4. The ticket's travel segment overlaps with a new travel segment defined by
+     * newFromSequence and newToSequence parameters.
+     * The overlap is determined by checking three conditions:
+     * a. The ticket's starting stop sequence (fromStop.sequence) is less than or
+     * equal
+     * to the new starting stop sequence (newFromSequence) and the ticket's ending
+     * stop sequence (toStop.sequence)
+     * is greater than the new starting stop sequence.
+     * b. The ticket's starting stop sequence is less than the new ending stop
+     * sequence (newToSequence)
+     * and the ticket's ending stop sequence is greater than or equal to the new
+     * ending stop sequence.
+     * c. The ticket's starting stop sequence is greater than or equal to the new
+     * starting stop sequence
+     * and the ticket's ending stop sequence is less than or equal to the new ending
+     * stop sequence.
+     * The use of COALESCE function ensures that if fromStop or toStop is null, it
+     * will be treated as the minimum or maximum integer value respectively,
+     * allowing for proper comparison in the overlap checks.
+     */
     @Query("""
             SELECT t FROM Ticket t
             WHERE t.trip.id = :tripId

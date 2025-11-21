@@ -2,6 +2,7 @@ import { createEndpoint } from './API';
 import {
     TicketResponse,
     CreateTicketRequest,
+    CheckInRequest,
     UpdateTicketRequest,
     TicketSearchParams,
     BaggageResponse,
@@ -145,6 +146,15 @@ export const TicketAPI = {
     getPendingApproval: createEndpoint<TicketResponse[], never>({
         url: '/api/tickets/pending-approval',
         method: 'GET',
+        requireAuth: true,
+    }),
+
+    /**
+     * Check in a ticket using QR code (CLERK/DRIVER/ADMIN only)
+     */
+    checkIn: createEndpoint<TicketResponse, CheckInRequest>({
+        url: '/api/tickets/check-in',
+        method: 'POST',
         requireAuth: true,
     }),
 };

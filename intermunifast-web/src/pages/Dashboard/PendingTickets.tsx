@@ -1,6 +1,6 @@
 import { FunctionComponent } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import { Check, X, Search, Filter } from 'lucide-preact';
+import { Check, X, Search, Filter, Clipboard } from 'lucide-preact';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { TicketAPI } from '../../api';
@@ -54,24 +54,18 @@ export const PendingTickets: FunctionComponent = () => {
     const filterTickets = () => {
         let filtered = [...tickets];
 
-        // Filter by ticket status
         if (ticketStatusFilter !== 'ALL') {
             filtered = filtered.filter(ticket => ticket.status === ticketStatusFilter);
         }
-
-        // Filter by payment status
         if (paymentStatusFilter !== 'ALL') {
             filtered = filtered.filter(ticket => ticket.paymentStatus === paymentStatusFilter);
         }
-
-        // Filter by search term (searches in: ID, seat number, trip ID, price, payment method)
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase().trim();
             filtered = filtered.filter(ticket =>
                 ticket.id.toString().includes(term) ||
                 ticket.seatNumber.toLowerCase().includes(term) ||
                 ticket.tripId.toString().includes(term) ||
-                ticket.price.toString().includes(term) ||
                 ticket.paymentMethod.toLowerCase().includes(term)
             );
         }
@@ -102,6 +96,26 @@ export const PendingTickets: FunctionComponent = () => {
             alert('Ticket cancelled successfully!');
         } catch (err: any) {
             alert(err.message || 'Failed to cancel ticket');
+        } finally {
+            setProcessingTicket(null);
+        }
+    };
+
+    const handleCheckIn = async (ticketId: number, qrCode: string) => {
+        if (!qrCode) {
+            alert('This ticket does not have a QR code yet. Payment may not be completed.');
+            return;
+        }
+
+        try {
+            setProcessingTicket(ticketId);
+            await TicketAPI.checkIn({ qrCode });
+            // Refresh tickets to show updated status
+            await fetchTickets();
+            alert('Ticket checked in successfully!');
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to check in ticket';
+            alert(errorMessage);
         } finally {
             setProcessingTicket(null);
         }
@@ -200,16 +214,16 @@ export const PendingTickets: FunctionComponent = () => {
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seat</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trip ID</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Method</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Status</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ticket Status</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-In</th>
                                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {filteredTickets.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500">No tickets found</td>
+                                                    <td colSpan={9} className="px-6 py-8 text-center text-gray-500">No tickets found</td>
                                                 </tr>
                                             ) : (
                                                 filteredTickets.map((ticket) => (
@@ -218,7 +232,6 @@ export const PendingTickets: FunctionComponent = () => {
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.seatNumber}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">#{ticket.tripId}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">${ticket.price.toFixed(2)}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.paymentMethod}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap">
                                                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${PAYMENT_STATUS_COLORS[ticket.paymentStatus]}`}>
                                                                 {ticket.paymentStatus}
@@ -229,29 +242,59 @@ export const PendingTickets: FunctionComponent = () => {
                                                                 {ticket.status.replace('_', ' ')}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                            {ticket.status === 'PENDING_APPROVAL' ? (
-                                                                <div className="flex gap-2 justify-end">
-                                                                    <button
-                                                                        onClick={() => handleApprove(ticket.id)}
-                                                                        disabled={processingTicket === ticket.id}
-                                                                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                                                                    >
-                                                                        <Check className="w-4 h-4" />
-                                                                        Approve
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleCancel(ticket.id)}
-                                                                        disabled={processingTicket === ticket.id}
-                                                                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                                                                    >
-                                                                        <X className="w-4 h-4" />
-                                                                        Cancel
-                                                                    </button>
-                                                                </div>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            {ticket.checkedIn ? (
+                                                                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                                    ✓ Checked In
+                                                                </span>
                                                             ) : (
-                                                                <span className="text-gray-400">No actions</span>
+                                                                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                                                    Not Checked In
+                                                                </span>
                                                             )}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                            <div className="flex gap-2 justify-end">
+                                                                {ticket.status === 'PENDING_APPROVAL' && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleApprove(ticket.id)}
+                                                                            disabled={processingTicket === ticket.id}
+                                                                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                                                                        >
+                                                                            <Check className="w-4 h-4" />
+                                                                            Approve
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleCancel(ticket.id)}
+                                                                            disabled={processingTicket === ticket.id}
+                                                                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                                                                        >
+                                                                            <X className="w-4 h-4" />
+                                                                            Cancel
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                                {ticket.status === 'CONFIRMED' && !ticket.checkedIn && ticket.qrCode && ticket.paymentStatus === 'COMPLETED' && (
+                                                                    <button
+                                                                        onClick={() => handleCheckIn(ticket.id, ticket.qrCode!)}
+                                                                        disabled={processingTicket === ticket.id}
+                                                                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                                                    >
+                                                                        <Clipboard className="w-4 h-4" />
+                                                                        Check In
+                                                                    </button>
+                                                                )}
+                                                                {!ticket.qrCode && ticket.status === 'CONFIRMED' && (
+                                                                    <span className="text-xs text-gray-400">No QR code</span>
+                                                                )}
+                                                                {ticket.checkedIn && (
+                                                                    <span className="text-xs text-gray-400">Checked In</span>
+                                                                )}
+                                                                {ticket.status === 'CANCELLED' || ticket.status === 'NO_SHOW' ? (
+                                                                    <span className="text-xs text-gray-400">—</span>
+                                                                ) : null}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))

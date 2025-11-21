@@ -1,6 +1,7 @@
 package com.example.services.implementations;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -124,5 +125,15 @@ public class SeatHoldServiceImpl implements SeatHoldService {
                 }
 
                 return mapper.toResponse(repo.save(seatHold));
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<SeatHoldDTOs.SeatHoldResponse> getActiveSeatHoldsByTripId(Long tripId) {
+                var now = LocalDateTime.now();
+                return repo.findByTrip_Id(tripId).stream()
+                                .filter(hold -> hold.getExpiresAt().isAfter(now))
+                                .map(mapper::toResponse)
+                                .toList();
         }
 }

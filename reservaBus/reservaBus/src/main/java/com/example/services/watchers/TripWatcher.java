@@ -32,14 +32,20 @@ public class TripWatcher {
         List<Trip> startingTrips = tripRepository.findStartingTripsInNextMinutes(now, futureTime);
 
         for (Trip trip : startingTrips) {
+            if (trip.getDepartureAt().isBefore(now.plusMinutes(30))) {
+                trip.setStatus(TripStatus.BOARDING);
+            }
+
             if (trip.getDepartureAt().isBefore(now.plusMinutes(5))) {
                 List<Ticket> tickets = trip.getTickets();
                 for (Ticket ticket : tickets) {
-                    ticket.setStatus(TicketStatus.NO_SHOW);
+                    if (ticket.getStatus() == TicketStatus.CONFIRMED && !ticket.isCheckedIn()) {
+                        ticket.setStatus(TicketStatus.NO_SHOW);
+                    }
                 }
-            } else if (trip.getDepartureAt().isBefore(now.plusMinutes(30))) {
-                trip.setStatus(TripStatus.BOARDING);
-            } else if (trip.getDepartureAt().isBefore(now)) {
+            }
+
+            if (trip.getDepartureAt().isBefore(now)) {
                 trip.setStatus(TripStatus.DEPARTED);
 
                 List<Parcel> parcels = trip.getParcels();

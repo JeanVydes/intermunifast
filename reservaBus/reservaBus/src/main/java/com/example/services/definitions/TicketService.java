@@ -27,6 +27,8 @@ public interface TicketService {
 
     List<TicketDTOs.TicketResponse> getTicketsForCurrentUser(String status);
 
+    TicketDTOs.TicketResponse checkInTicket(String qrCode);
+
     void deleteTicket(Long id);
 
     List<TicketDTOs.TicketResponse> getAllTickets();

@@ -76,11 +76,19 @@ public class TicketController {
         return ResponseEntity.ok(canceledTicket);
     }
 
-    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('CLERK', 'DISPATCHER', 'ADMIN')")
     @GetMapping("/pending-approval")
     public ResponseEntity<List<TicketDTOs.TicketResponse>> getPendingApproval() {
         List<TicketDTOs.TicketResponse> tickets = ticketService.getPendingApprovalTickets();
         return ResponseEntity.ok(tickets);
+    }
+
+    @PreAuthorize("hasAnyAuthority('CLERK', 'DRIVER', 'ADMIN')")
+    @PostMapping("/check-in")
+    public ResponseEntity<TicketDTOs.TicketResponse> checkIn(
+            @Validated @RequestBody TicketDTOs.CheckInRequest req) {
+        TicketDTOs.TicketResponse checkedInTicket = ticketService.checkInTicket(req.qrCode());
+        return ResponseEntity.ok(checkedInTicket);
     }
 
     @PostMapping("/payments/{id}")

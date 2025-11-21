@@ -14,6 +14,12 @@ export const SeatHoldAPI = {
         requireAuth: true,
     }),
 
+    getByTripId: createEndpoint<SeatHoldResponse[]>({
+        url: '/api/seat-holds',
+        method: 'GET',
+        requireAuth: true,
+    }),
+
     update: createEndpoint<SeatHoldResponse, UpdateSeatHoldRequest>({
         url: '/api/seat-holds/{id}',
         method: 'PATCH',
